@@ -114,6 +114,7 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
                 .getOrDefault(NameStyle.SOUNDING_FIRST),
             keepScreenOn = prefs.getBoolean(KEY_KEEP_SCREEN_ON, false),
             themeMode = readThemeMode(prefs.getString(KEY_THEME_MODE, null)),
+            showCapoOnStart = prefs.getBoolean(KEY_SHOW_CAPO_ON_START, false),
         )
     )
     val settings: StateFlow<Settings> = _settings.asStateFlow()
@@ -126,6 +127,11 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
     fun setThemeMode(mode: ThemeMode) {
         _settings.value = _settings.value.copy(themeMode = mode)
         prefs.edit { putString(KEY_THEME_MODE, mode.name) }
+    }
+
+    fun setShowCapoOnStart(on: Boolean) {
+        _settings.value = _settings.value.copy(showCapoOnStart = on)
+        prefs.edit { putBoolean(KEY_SHOW_CAPO_ON_START, on) }
     }
 
     fun setCapo(fret: Int) {
@@ -183,7 +189,15 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     /** Stop listening and go back to the idle screen. */
-    fun cancel() {
+    fun cancel() = showDetect()
+
+    /**
+     * Show the detect page without opening the microphone.
+     *
+     * The side panel navigates rather than acts: arriving here should leave the user looking at the
+     * button, free to get the guitar into position before the app starts listening.
+     */
+    fun showDetect() {
         job?.cancel()
         job = null
         _state.value = DetectState.Idle
@@ -215,5 +229,6 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
         const val KEY_NAME_STYLE = "name_style"
         const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
         const val KEY_THEME_MODE = "theme_mode"
+        const val KEY_SHOW_CAPO_ON_START = "show_capo_on_start"
     }
 }

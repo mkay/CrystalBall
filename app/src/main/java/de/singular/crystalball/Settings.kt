@@ -22,6 +22,12 @@ data class Settings(
     /** Hold the display awake — you are holding a guitar, not the phone. Off by default: battery. */
     val keepScreenOn: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    /**
+     * Open the capo sheet on launch, for players who clamp a capo somewhere new most sessions.
+     * Off by default: the capo persists, so most users would only be dismissing a sheet that
+     * already says what they want.
+     */
+    val showCapoOnStart: Boolean = false,
 )
 
 /**

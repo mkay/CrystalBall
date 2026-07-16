@@ -6,11 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,17 +24,19 @@ import androidx.compose.ui.unit.dp
 /**
  * The side panel: where you are going, and how the app behaves.
  *
- * Split deliberately from the chord-settings sheet. Capo and chord naming are *musical context* you
- * change with a guitar in your hands, mid-session, and they belong in a sheet you can flick open
- * over the chord you are looking at. Everything here is either navigation or an app preference —
- * things you set once and forget.
+ * Split deliberately from the capo sheet. The capo is *musical context* you change with a guitar in
+ * your hands, mid-session, so it is not buried in here — it sits on the detect page itself, one tap
+ * from the button you are already reaching for. Everything here is either navigation or an app
+ * preference — things you set once and forget.
+ *
+ * The panel navigates, it does not act: [onDetect] lands on the detect page with the microphone
+ * still closed, leaving the press that opens it to the user.
  */
 @Composable
 fun CrystalDrawer(
     onDetect: () -> Unit,
     onShowChords: () -> Unit,
-    onChordSettings: () -> Unit,
-    onAppSettings: () -> Unit,
+    onSettings: () -> Unit,
     onQuickHelp: () -> Unit,
 ) {
     // Take 4/5 of the screen width, leaving a strip of dimmed scrim on the right to tap-to-close.
@@ -56,26 +57,17 @@ fun CrystalDrawer(
                 modifier = itemPadding,
             )
             NavigationDrawerItem(
-                label = { Text("Show chords") },
-                icon = { Icon(Icons.Default.GridView, contentDescription = null) },
+                label = { Text("Chord Library") },
+                icon = { Icon(Icons.Default.LibraryMusic, contentDescription = null) },
                 selected = false,
                 onClick = onShowChords,
                 modifier = itemPadding,
             )
-
-            DrawerSectionLabel("Settings")
             NavigationDrawerItem(
-                label = { Text("Capo & chord names") },
-                icon = { Icon(Icons.Default.Tune, contentDescription = null) },
-                selected = false,
-                onClick = onChordSettings,
-                modifier = itemPadding,
-            )
-            NavigationDrawerItem(
-                label = { Text("App settings") },
+                label = { Text("Settings") },
                 icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                 selected = false,
-                onClick = onAppSettings,
+                onClick = onSettings,
                 modifier = itemPadding,
             )
 
@@ -93,14 +85,4 @@ fun CrystalDrawer(
             )
         }
     }
-}
-
-@Composable
-private fun DrawerSectionLabel(text: String) {
-    Text(
-        text.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 28.dp, top = 16.dp, bottom = 4.dp),
-    )
 }

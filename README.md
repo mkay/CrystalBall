@@ -17,8 +17,8 @@ Early-stage release — expect rough edges. Feedback and bug reports welcome via
 - **Ranked alternatives** — the best fit is a guess, not ground truth, so the runner-ups sit under it and one tap swaps the page over to any of them.
 - **Chord shapes, not just names** — the most idiomatic grip drawn large, plus other voicings walking up the neck. Open shapes are the ones a player expects to see, by name.
 - **Capo-aware** — detection is unaffected (the microphone hears the real chord either way), but the shapes are redrawn behind the capo, fret numbers stay as printed on your neck, and anything the capo pushes off the end is dropped rather than offered.
-- **Chord dictionary** — *Show chords* looks any chord in the vocabulary up by hand, without playing a note.
-- **Session comforts** — System/Light/Dark themes, keep-screen-on with a quiet notice that it is on, and an in-app quick help sheet. Preferences persist across launches.
+- **Chord dictionary** — *Chord Library* looks any chord in the vocabulary up by hand, without playing a note.
+- **Session comforts** — System/Light/Dark themes, keep-screen-on with a quiet notice that it is on, an optional capo prompt at launch, and an in-app quick help sheet. Preferences persist across launches.
 
 ## How it works
 
@@ -92,8 +92,8 @@ app/src/main/java/de/singular/crystalball/
     ChordDiagram.kt        the chord box (Canvas)
     DetectScreen.kt        detect / listening / result / browse panes
     CrystalDrawer.kt       the side panel
-    ChordSettingsSheet.kt  capo + chord naming
-    AppSettingsSheet.kt    theme + keep screen on
+    CapoSheet.kt           the capo
+    AppSettingsSheet.kt    theme, chord naming, switches
     QuickHelpSheet.kt      what it does, and what it won't
     Theme.kt               colours
 ```

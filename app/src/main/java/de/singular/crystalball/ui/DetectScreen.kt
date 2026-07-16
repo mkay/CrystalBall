@@ -75,7 +75,7 @@ fun DetectScreen(
     onDetect: () -> Unit,
     onCancel: () -> Unit,
     onSelect: (Chord) -> Unit,
-    onShowChords: () -> Unit,
+    onSetCapo: () -> Unit,
     onOpenMenu: () -> Unit,
     onOpenAppSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -89,8 +89,8 @@ fun DetectScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             when (state) {
-                is DetectState.Idle -> IdlePane(onDetect, onShowChords)
-                is DetectState.Silence -> SilencePane(onDetect, onShowChords)
+                is DetectState.Idle -> IdlePane(onDetect, settings.capo, onSetCapo)
+                is DetectState.Silence -> SilencePane(onDetect, settings.capo, onSetCapo)
                 is DetectState.Listening -> ListeningPane(state, onCancel)
                 is DetectState.Result -> ResultPane(state, settings, onDetect, onSelect)
                 is DetectState.Browse -> BrowsePane(state, settings, onSelect, onDetect)
@@ -164,7 +164,7 @@ fun DetectScreen(
 }
 
 @Composable
-private fun IdlePane(onDetect: () -> Unit, onShowChords: () -> Unit) {
+private fun IdlePane(onDetect: () -> Unit, capo: Int, onSetCapo: () -> Unit) {
     Spacer(Modifier.height(40.dp))
     Logo()
     Spacer(Modifier.height(16.dp))
@@ -177,11 +177,11 @@ private fun IdlePane(onDetect: () -> Unit, onShowChords: () -> Unit) {
     Spacer(Modifier.height(28.dp))
     DetectButton(onDetect)
     Spacer(Modifier.height(4.dp))
-    ShowChordsLink(onShowChords)
+    SetCapoLink(capo, onSetCapo)
 }
 
 @Composable
-private fun SilencePane(onDetect: () -> Unit, onShowChords: () -> Unit) {
+private fun SilencePane(onDetect: () -> Unit, capo: Int, onSetCapo: () -> Unit) {
     Spacer(Modifier.height(40.dp))
     Logo()
     Spacer(Modifier.height(16.dp))
@@ -200,21 +200,32 @@ private fun SilencePane(onDetect: () -> Unit, onShowChords: () -> Unit) {
     Spacer(Modifier.height(28.dp))
     DetectButton(onDetect)
     Spacer(Modifier.height(4.dp))
-    ShowChordsLink(onShowChords)
+    SetCapoLink(capo, onSetCapo)
 }
 
-/** Secondary action: look a chord up by hand instead of playing it. */
+/**
+ * Secondary action: reach the capo without going through the side panel.
+ *
+ * It sits here rather than in the panel because the capo is the one setting you change with a
+ * guitar already in your hands, and the idle screen is where you are when you notice. The label
+ * states the fret rather than just inviting a change: there is no diagram on this page to show an
+ * accent-coloured nut, so without it a capo left set from yesterday would be invisible until the
+ * first result came back.
+ */
 @Composable
-private fun ShowChordsLink(onShowChords: () -> Unit) {
+private fun SetCapoLink(capo: Int, onSetCapo: () -> Unit) {
     TextButton(
-        onClick = onShowChords,
+        onClick = onSetCapo,
         shape = ControlShape,
         modifier = Modifier
             .fillMaxWidth()
             .widthIn(max = BUTTON_MAX_WIDTH)
             .height(48.dp),
     ) {
-        Text("Show Chords", style = MaterialTheme.typography.titleSmall)
+        Text(
+            if (capo == 0) "Set capo" else "Capo set to $capo (change)",
+            style = MaterialTheme.typography.titleSmall,
+        )
     }
 }
 

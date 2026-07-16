@@ -49,7 +49,7 @@ fun QuickHelpSheet(onDismiss: () -> Unit) {
             )
             HelpSection(
                 "Using a capo",
-                "Set it under Capo & chord names. It does not change detection — the microphone " +
+                "Press Set Capo, under the Detect Chord button. It does not change detection — the microphone " +
                     "hears the real chord either way — but it changes the shapes you are shown so " +
                     "they match your hands, and fret numbers are the ones printed on your neck.",
             )

@@ -28,12 +28,12 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import de.singular.crystalball.ui.AppSettingsSheet
-import de.singular.crystalball.ui.ChordSettingsSheet
+import de.singular.crystalball.ui.CapoSheet
 import de.singular.crystalball.ui.CrystalBallTheme
 import de.singular.crystalball.ui.CrystalDrawer
 import de.singular.crystalball.ui.QuickHelpSheet
 import de.singular.crystalball.ui.DetectScreen
+import de.singular.crystalball.ui.SettingsScreen
 import de.singular.crystalball.ui.isDark
 import kotlinx.coroutines.launch
 
@@ -70,8 +70,11 @@ class MainActivity : ComponentActivity() {
                     else permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 }
 
-                var chordSettingsOpen by rememberSaveable { mutableStateOf(false) }
-                var appSettingsOpen by rememberSaveable { mutableStateOf(false) }
+                // Opens itself at launch when the user asked for it — a capo moved since yesterday
+                // is then the first thing they set. Saveable, so a rotation does not bring the
+                // sheet back after it has been dismissed.
+                var capoOpen by rememberSaveable { mutableStateOf(settings.showCapoOnStart) }
+                var settingsOpen by rememberSaveable { mutableStateOf(false) }
                 var helpOpen by rememberSaveable { mutableStateOf(false) }
 
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -79,6 +82,27 @@ class MainActivity : ComponentActivity() {
                 fun closeThen(action: () -> Unit) {
                     scope.launch { drawerState.close() }
                     action()
+                }
+
+                // Hold the display awake while the app is open. Released on dispose, so the setting
+                // can never leak the flag into whatever the user opens next.
+                DisposableEffect(settings.keepScreenOn) {
+                    view.keepScreenOn = settings.keepScreenOn
+                    onDispose { view.keepScreenOn = false }
+                }
+
+                // Settings is a full screen shown over everything else, with a back arrow and its
+                // own back handler.
+                if (settingsOpen) {
+                    SettingsScreen(
+                        settings = settings,
+                        onKeepScreenOnChange = viewModel::setKeepScreenOn,
+                        onThemeModeChange = viewModel::setThemeMode,
+                        onNameStyleChange = viewModel::setNameStyle,
+                        onShowCapoOnStartChange = viewModel::setShowCapoOnStart,
+                        onClose = { settingsOpen = false },
+                    )
+                    return@CrystalBallTheme
                 }
 
                 // Listening is home. A chord's detail page is somewhere you came *to*, so the back
@@ -91,13 +115,6 @@ class MainActivity : ComponentActivity() {
                     viewModel.cancel()
                 }
 
-                // Hold the display awake while the app is open. Released on dispose, so the setting
-                // can never leak the flag into whatever the user opens next.
-                DisposableEffect(settings.keepScreenOn) {
-                    view.keepScreenOn = settings.keepScreenOn
-                    onDispose { view.keepScreenOn = false }
-                }
-
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     // Only while it is open, so swiping it shut still works but a closed drawer
@@ -105,10 +122,9 @@ class MainActivity : ComponentActivity() {
                     gesturesEnabled = drawerState.isOpen,
                     drawerContent = {
                         CrystalDrawer(
-                            onDetect = { closeThen { onDetect() } },
+                            onDetect = { closeThen { viewModel.showDetect() } },
                             onShowChords = { closeThen { viewModel.showChords() } },
-                            onChordSettings = { closeThen { chordSettingsOpen = true } },
-                            onAppSettings = { closeThen { appSettingsOpen = true } },
+                            onSettings = { closeThen { settingsOpen = true } },
                             onQuickHelp = { closeThen { helpOpen = true } },
                         )
                     },
@@ -120,27 +136,18 @@ class MainActivity : ComponentActivity() {
                             onDetect = onDetect,
                             onCancel = viewModel::cancel,
                             onSelect = viewModel::select,
-                            onShowChords = viewModel::showChords,
+                            onSetCapo = { capoOpen = true },
                             onOpenMenu = { scope.launch { drawerState.open() } },
-                            onOpenAppSettings = { appSettingsOpen = true },
+                            onOpenAppSettings = { settingsOpen = true },
                             modifier = Modifier.padding(
                                 WindowInsets.systemBars.asPaddingValues(),
                             ),
                         )
-                        if (chordSettingsOpen) {
-                            ChordSettingsSheet(
+                        if (capoOpen) {
+                            CapoSheet(
                                 settings = settings,
                                 onCapoChange = viewModel::setCapo,
-                                onNameStyleChange = viewModel::setNameStyle,
-                                onDismiss = { chordSettingsOpen = false },
-                            )
-                        }
-                        if (appSettingsOpen) {
-                            AppSettingsSheet(
-                                settings = settings,
-                                onKeepScreenOnChange = viewModel::setKeepScreenOn,
-                                onThemeModeChange = viewModel::setThemeMode,
-                                onDismiss = { appSettingsOpen = false },
+                                onDismiss = { capoOpen = false },
                             )
                         }
                         if (helpOpen) {
