@@ -9,7 +9,7 @@ Early-stage release — expect rough edges. Feedback and bug reports welcome via
 
 ## Screenshots
 
-<img src="docs/screenshot.png" alt="Crystal Ball ready to listen" width="320" />
+<img src="docs/screenshot.png" alt="Crystal Ball ready to listen, with the capo sheet open" width="320" />
 
 ## Features
 
