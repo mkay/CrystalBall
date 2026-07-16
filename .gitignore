@@ -10,3 +10,6 @@
 .cxx
 *.apk
 *.idsig
+
+# Design scaffolding for the songs feature — the decisions live in KDoc once the code lands.
+docs/songs.md

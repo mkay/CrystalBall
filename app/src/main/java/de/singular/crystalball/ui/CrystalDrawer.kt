@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun CrystalDrawer(
     onDetect: () -> Unit,
+    onSongs: () -> Unit,
     onShowChords: () -> Unit,
     onSettings: () -> Unit,
     onQuickHelp: () -> Unit,
@@ -54,6 +56,13 @@ fun CrystalDrawer(
                 icon = { Icon(Icons.Default.Mic, contentDescription = null) },
                 selected = false,
                 onClick = onDetect,
+                modifier = itemPadding,
+            )
+            NavigationDrawerItem(
+                label = { Text("Songs") },
+                icon = { Icon(Icons.Default.QueueMusic, contentDescription = null) },
+                selected = false,
+                onClick = onSongs,
                 modifier = itemPadding,
             )
             NavigationDrawerItem(

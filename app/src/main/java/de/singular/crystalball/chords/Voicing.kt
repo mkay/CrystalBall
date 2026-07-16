@@ -38,6 +38,21 @@ data class Voicing(
      */
     val baseFret: Int get() = if (isOpenPosition) 1 else lowestFret
 
+    /**
+     * The compact form [parse] reads back, e.g. "x32010" or "10-12-12-11-10-10".
+     *
+     * This is what a stored voicing *is*: the frets are the shape's identity (they are what
+     * [equals] compares), so a song records them rather than an index into [ChordLibrary], which
+     * would be a promise that the library never changes.
+     */
+    val spec: String
+        get() {
+            val tokens = frets.map { if (it == MUTED) "x" else it.toString() }
+            // Single digits need no separators; anything wider must have them to stay readable back.
+            return if (tokens.all { it.length == 1 }) tokens.joinToString("")
+            else tokens.joinToString("-")
+        }
+
     /** The pitch classes this voicing actually sounds. */
     fun soundedPitchClasses(tuning: IntArray = STANDARD_TUNING): Set<Int> =
         buildSet {

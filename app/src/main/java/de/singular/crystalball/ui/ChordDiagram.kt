@@ -74,7 +74,14 @@ fun ChordDiagram(
     }
 }
 
-private fun DrawScope.drawChordBox(
+/**
+ * The chord box itself, on whatever surface you hand it.
+ *
+ * Colours and the measurer come in rather than being read from the theme, which is what lets the
+ * PDF export replay this exact painter onto a page — black on white, at print size — instead of
+ * keeping a second renderer that would drift from this one.
+ */
+internal fun DrawScope.drawChordBox(
     voicing: Voicing,
     capo: Int,
     lineColor: Color,
@@ -203,7 +210,7 @@ private fun barreSpan(voicing: Voicing): IntRange? {
 }
 
 /** Height of the box as a multiple of its width — a chord chart is taller than it is wide. */
-private const val BOX_ASPECT = 1.25f
+internal const val BOX_ASPECT = 1.25f
 
 /** Share of the height reserved above the grid for open/muted markers. */
 private const val MARKER_BAND = 0.17f
@@ -215,5 +222,5 @@ private const val THIN_STROKE = 0.012f
 private const val NUT_STROKE_FACTOR = 4f
 private const val DOT_RADIUS = 0.30f
 private const val MARKER_RADIUS = 0.19f
-private const val LABEL_TEXT_RATIO = 0.10f
+internal const val LABEL_TEXT_RATIO = 0.10f
 private const val MIN_BARRE_SPAN = 3

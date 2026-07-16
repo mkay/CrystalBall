@@ -1,17 +1,6 @@
 package de.singular.crystalball.ui
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -46,11 +34,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.singular.crystalball.Capo
 import de.singular.crystalball.ChordView
@@ -62,11 +48,6 @@ import de.singular.crystalball.audio.ChordCandidate
 import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.audio.ROOT_NAMES
 import de.singular.crystalball.chords.ChordLibrary
-import kotlin.math.log10
-
-/** Diagram sizes: one to read at arm's length, one to scan a row of. */
-private val BEST_DIAGRAM_WIDTH = 172.dp
-private val SMALL_DIAGRAM_WIDTH = 74.dp
 
 @Composable
 fun DetectScreen(
@@ -177,7 +158,7 @@ private fun IdlePane(onDetect: () -> Unit, capo: Int, onSetCapo: () -> Unit) {
     Spacer(Modifier.height(28.dp))
     DetectButton(onDetect)
     Spacer(Modifier.height(4.dp))
-    SetCapoLink(capo, onSetCapo)
+    CapoLink(capo, onSetCapo)
 }
 
 @Composable
@@ -200,33 +181,7 @@ private fun SilencePane(onDetect: () -> Unit, capo: Int, onSetCapo: () -> Unit) 
     Spacer(Modifier.height(28.dp))
     DetectButton(onDetect)
     Spacer(Modifier.height(4.dp))
-    SetCapoLink(capo, onSetCapo)
-}
-
-/**
- * Secondary action: reach the capo without going through the side panel.
- *
- * It sits here rather than in the panel because the capo is the one setting you change with a
- * guitar already in your hands, and the idle screen is where you are when you notice. The label
- * states the fret rather than just inviting a change: there is no diagram on this page to show an
- * accent-coloured nut, so without it a capo left set from yesterday would be invisible until the
- * first result came back.
- */
-@Composable
-private fun SetCapoLink(capo: Int, onSetCapo: () -> Unit) {
-    TextButton(
-        onClick = onSetCapo,
-        shape = ControlShape,
-        modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = BUTTON_MAX_WIDTH)
-            .height(48.dp),
-    ) {
-        Text(
-            if (capo == 0) "Set capo" else "Capo set to $capo (change)",
-            style = MaterialTheme.typography.titleSmall,
-        )
-    }
+    CapoLink(capo, onSetCapo)
 }
 
 /**
@@ -311,32 +266,6 @@ private fun BrowsePane(
     Spacer(Modifier.height(16.dp))
 }
 
-/** A scrolling row of choices — twelve roots do not fit across a phone. */
-@Composable
-private fun ChipRow(content: @Composable () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        content()
-    }
-}
-
-/** The app mark. [rotation] turns the swirl, which the listening screen animates. */
-@Composable
-private fun Logo(rotation: Float = 0f, modifier: Modifier = Modifier) {
-    Image(
-        painter = painterResource(R.drawable.ic_ball),
-        contentDescription = null,
-        modifier = modifier
-            .size(LOGO_SIZE)
-            .graphicsLayer { rotationZ = rotation },
-    )
-}
-
 /**
  * The primary action. Deliberately big: it is pressed with a guitar already in your hands, often
  * without looking, so it spans the width and stands well clear of the 48dp minimum touch target.
@@ -359,21 +288,8 @@ private fun DetectButton(onDetect: () -> Unit, label: String = "Detect Chord") {
 
 @Composable
 private fun ListeningPane(state: DetectState.Listening, onCancel: () -> Unit) {
-    // The swirl turns while the microphone is open — the one moving thing on screen, so it is
-    // obvious the app is still listening and has not simply frozen.
-    val spin = rememberInfiniteTransition(label = "spin")
-    val angle by spin.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(SPIN_PERIOD_MS, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "angle",
-    )
-
     Spacer(Modifier.height(40.dp))
-    Logo(rotation = angle)
+    SpinningLogo()
     Spacer(Modifier.height(16.dp))
     Text(
         if (state.heardStrum) "Listening…" else "Strum a chord",
@@ -394,49 +310,6 @@ private fun ListeningPane(state: DetectState.Listening, onCancel: () -> Unit) {
         Text("Cancel", style = MaterialTheme.typography.titleMedium)
     }
 }
-
-/** Clearance for the icon row floating at the top-right of the screen. */
-private val ICON_ROW_HEIGHT = 40.dp
-
-private val LOGO_SIZE = 132.dp
-private val BUTTON_HEIGHT = 64.dp
-private val BUTTON_MAX_WIDTH = 340.dp
-private const val SPIN_PERIOD_MS = 9000
-
-/**
- * Input level, so it is obvious the microphone is actually hearing the guitar.
- *
- * Scaled in decibels rather than linearly. Hearing is logarithmic and the signals here span a huge
- * range — an unplugged hollow-body sits near -50 dBFS where a linear meter shows a sliver of movement
- * indistinguishable from nothing, which is exactly the case where the user most needs to see that
- * the app can hear them.
- */
-@Composable
-private fun LevelMeter(level: Float) {
-    val db = 20f * log10(level.coerceAtLeast(MIN_LEVEL))
-    val target = ((db - METER_FLOOR_DB) / -METER_FLOOR_DB).coerceIn(0f, 1f)
-    val width by animateFloatAsState(target, tween(90), label = "level")
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(6.dp)
-            .clip(RoundedCornerShape(3.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth(width)
-                .height(6.dp)
-                .background(MaterialTheme.colorScheme.primary),
-        )
-    }
-}
-
-/** Bottom of the meter's range. Below this it is room tone, not an instrument. */
-private const val METER_FLOOR_DB = -60f
-
-/** Floor for the log, guarding log10(0) on digital silence. */
-private const val MIN_LEVEL = 0.001f
 
 @Composable
 private fun ResultPane(
@@ -530,31 +403,3 @@ private fun AlternativeDiagram(
         ChordDiagram(voicing = voicing, width = SMALL_DIAGRAM_WIDTH, capo = settings.capo)
     }
 }
-
-@Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
-    )
-}
-
-/** The rows scroll sideways: five chord boxes do not fit across a phone at a readable size. */
-@Composable
-private fun DiagramRow(content: @Composable () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(GAP),
-        verticalAlignment = Alignment.Top,
-    ) {
-        content()
-    }
-}
-
-private val GAP: Dp = 10.dp

@@ -58,4 +58,7 @@ dependencies {
 
     // Local JVM unit tests — the recogniser and chord library are pure Kotlin.
     testImplementation("junit:junit:4.13.2")
+    // The android.jar stub throws "not mocked" for org.json, and the song library's format is
+    // exactly the thing worth testing. This is the same API, as an actual implementation.
+    testImplementation("org.json:json:20240303")
 }

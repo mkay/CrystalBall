@@ -2,6 +2,7 @@ package de.singular.crystalball
 
 import android.Manifest
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -17,6 +18,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +36,7 @@ import de.singular.crystalball.ui.CrystalDrawer
 import de.singular.crystalball.ui.QuickHelpSheet
 import de.singular.crystalball.ui.DetectScreen
 import de.singular.crystalball.ui.SettingsScreen
+import de.singular.crystalball.ui.SongScreen
 import de.singular.crystalball.ui.isDark
 import kotlinx.coroutines.launch
 
@@ -44,6 +47,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val view = LocalView.current
             val viewModel: DetectViewModel = viewModel()
+            val songViewModel: SongViewModel = viewModel()
             val settings by viewModel.settings.collectAsStateWithLifecycle()
 
             // Keep the system bar icons legible against whichever theme is in effect (the
@@ -61,13 +65,30 @@ class MainActivity : ComponentActivity() {
                 // Detection is the only thing the app does, so the permission is requested on the
                 // first press rather than at launch — by then it is obvious what it is for. Granting
                 // it starts the pass immediately, so one press is enough.
+                // Which of the two microphone actions a pending grant belongs to: detecting one
+                // chord, or capturing a part.
+                var pendingCapture by rememberSaveable { mutableStateOf(false) }
                 val permissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestPermission(),
-                ) { granted -> if (granted) viewModel.detectOnPermissionGranted() }
+                ) { granted ->
+                    if (granted) {
+                        if (pendingCapture) songViewModel.startCaptureOnPermissionGranted()
+                        else viewModel.detectOnPermissionGranted()
+                    }
+                    pendingCapture = false
+                }
 
                 val onDetect = {
                     if (viewModel.hasMicPermission) viewModel.detect()
                     else permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+
+                val onCapturePart = {
+                    if (songViewModel.hasMicPermission) songViewModel.startCapture()
+                    else {
+                        pendingCapture = true
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
                 }
 
                 // Opens itself at launch when the user asked for it — a capo moved since yesterday
@@ -75,6 +96,8 @@ class MainActivity : ComponentActivity() {
                 // sheet back after it has been dismissed.
                 var capoOpen by rememberSaveable { mutableStateOf(settings.showCapoOnStart) }
                 var settingsOpen by rememberSaveable { mutableStateOf(false) }
+                var songsOpen by rememberSaveable { mutableStateOf(false) }
+                var songCapoOpen by rememberSaveable { mutableStateOf(false) }
                 var helpOpen by rememberSaveable { mutableStateOf(false) }
 
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -89,6 +112,82 @@ class MainActivity : ComponentActivity() {
                 DisposableEffect(settings.keepScreenOn) {
                     view.keepScreenOn = settings.keepScreenOn
                     onDispose { view.keepScreenOn = false }
+                }
+
+                // Songs is a full screen too, and owns the microphone while it is up — which is why
+                // it and the detect screen must never be on top of each other. See [SongViewModel].
+                if (songsOpen) {
+                    val song by songViewModel.song.collectAsStateWithLifecycle()
+                    val songState by songViewModel.state.collectAsStateWithLifecycle()
+                    val library by songViewModel.library.collectAsStateWithLifecycle()
+                    val songError by songViewModel.error.collectAsStateWithLifecycle()
+                    val exported by songViewModel.exported.collectAsStateWithLifecycle()
+
+                    // The system picker chooses where it lands, so the file is the user's from
+                    // the moment it exists — no storage permission, nothing left in our sandbox.
+                    val pdfLauncher = rememberLauncherForActivityResult(
+                        ActivityResultContracts.CreateDocument("application/pdf"),
+                    ) { uri -> if (uri != null) songViewModel.exportPdf(uri, settings.nameStyle) }
+
+                    LaunchedEffect(exported) {
+                        if (exported) {
+                            Toast.makeText(view.context, "PDF saved", Toast.LENGTH_SHORT).show()
+                            songViewModel.consumeExported()
+                        }
+                    }
+
+                    SongScreen(
+                        song = song,
+                        state = songState,
+                        library = library,
+                        error = songError,
+                        settings = settings,
+                        onTitleDone = songViewModel::titleDone,
+                        onEditTitle = songViewModel::editTitle,
+                        onCancelTitle = songViewModel::cancelTitle,
+                        onAddPart = onCapturePart,
+                        onSetCapo = { songCapoOpen = true },
+                        onRemovePart = songViewModel::removePart,
+                        onMovePart = songViewModel::movePart,
+                        onStopCapture = songViewModel::stopCapture,
+                        onDiscardCapture = songViewModel::discardCapture,
+                        onEditChord = songViewModel::editChord,
+                        onRemoveChord = songViewModel::removeChord,
+                        onSelectChord = songViewModel::selectChord,
+                        onSelectVoicing = songViewModel::selectVoicing,
+                        onOpenPart = songViewModel::openPart,
+                        onViewSong = songViewModel::viewSong,
+                        onExportPdf = { pdfLauncher.launch(pdfFileName(song.title)) },
+                        onEditComment = songViewModel::editComment,
+                        onCommentDone = songViewModel::commentDone,
+                        onCancelComment = songViewModel::cancelComment,
+                        onEditPartChord = songViewModel::editPartChord,
+                        onSelectPartVoicing = songViewModel::selectPartVoicing,
+                        onBackToPart = songViewModel::backToPart,
+                        onBackToEditor = songViewModel::backToEditor,
+                        onBackToReview = songViewModel::backToReview,
+                        onReviewDone = songViewModel::reviewDone,
+                        onNamePart = songViewModel::namePart,
+                        onNewSong = { songViewModel.startNewSong(settings.capo) },
+                        onOpenSong = songViewModel::openSong,
+                        onDeleteSong = songViewModel::deleteSong,
+                        onBackToLibrary = songViewModel::backToLibrary,
+                        // Releases the microphone on the way out, whatever page we leave from.
+                        onClose = { songViewModel.discardCapture(); songsOpen = false },
+                    )
+                    if (songCapoOpen) {
+                        // Shows the song's capo, not the live one — and moving it moves both,
+                        // because there is only one capo and it is on the guitar.
+                        CapoSheet(
+                            settings = settings.copy(capo = song.capo),
+                            onCapoChange = { fret ->
+                                songViewModel.setCapo(fret)
+                                viewModel.setCapo(fret)
+                            },
+                            onDismiss = { songCapoOpen = false },
+                        )
+                    }
+                    return@CrystalBallTheme
                 }
 
                 // Settings is a full screen shown over everything else, with a back arrow and its
@@ -123,6 +222,7 @@ class MainActivity : ComponentActivity() {
                     drawerContent = {
                         CrystalDrawer(
                             onDetect = { closeThen { viewModel.showDetect() } },
+                            onSongs = { closeThen { songViewModel.open(); songsOpen = true } },
                             onShowChords = { closeThen { viewModel.showChords() } },
                             onSettings = { closeThen { settingsOpen = true } },
                             onQuickHelp = { closeThen { helpOpen = true } },
@@ -158,4 +258,15 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+/**
+ * A file name the picker can offer and a filesystem will accept.
+ *
+ * Titles are free text and end up as a real file name, so anything a path might choke on comes out
+ * — rather than trusting every filesystem this could be saved to.
+ */
+private fun pdfFileName(title: String): String {
+    val safe = title.replace(Regex("[^A-Za-z0-9 ()_-]"), "").trim().ifEmpty { "song" }
+    return "$safe.pdf"
 }
