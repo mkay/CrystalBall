@@ -187,9 +187,33 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
         _state.value = SongState.Editor
     }
 
-    fun deleteSong(id: String) {
+    /** Delete [ids] — one song from its own menu, or a whole selection at once. */
+    fun deleteSongs(ids: Set<String>) {
+        if (ids.isEmpty()) return
         viewModelScope.launch {
-            runCatching { repository.remove(id) }.onFailure { _error.value = it.readable() }
+            runCatching { repository.removeAll(ids) }.onFailure { _error.value = it.readable() }
+            reload()
+        }
+    }
+
+    /**
+     * Rename the song with [id] where it lies, without opening it.
+     *
+     * Reads the song back from the library rather than taking one handed in, so a rename writes the
+     * stored song with a new title and nothing else — the copy the list is holding could be a
+     * moment stale, and saving that would quietly undo whatever changed in between.
+     *
+     * Blank is refused here as it is on the title page: a song with no name is not something the
+     * library can show you.
+     */
+    fun renameSong(id: String, title: String) {
+        val trimmed = title.trim()
+        if (trimmed.isEmpty()) return
+        viewModelScope.launch {
+            runCatching {
+                repository.list().firstOrNull { it.id == id }
+                    ?.let { repository.save(it.copy(title = trimmed)) }
+            }.onFailure { _error.value = it.readable() }
             reload()
         }
     }

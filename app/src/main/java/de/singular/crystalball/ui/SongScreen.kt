@@ -1,9 +1,12 @@
 package de.singular.crystalball.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,14 +20,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -33,20 +42,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import de.singular.crystalball.Capo
 import de.singular.crystalball.ChordView
@@ -113,11 +130,32 @@ fun SongScreen(
     onNamePart: (String) -> Unit,
     onNewSong: () -> Unit,
     onOpenSong: (Song) -> Unit,
-    onDeleteSong: (String) -> Unit,
+    onDeleteSongs: (Set<String>) -> Unit,
+    onRenameSong: (String, String) -> Unit,
     onBackToLibrary: () -> Unit,
     onClose: () -> Unit,
 ) {
     val songSettings = settings.copy(capo = song.capo)
+
+    // The library's selection: the ids picked out by long-press, empty when not selecting. Screen
+    // state rather than the view-model's, because it is a thing the finger is doing to a list and
+    // means nothing to the songs themselves.
+    var selection by remember { mutableStateOf(emptySet<String>()) }
+    val selecting = state is SongState.Library && selection.isNotEmpty()
+
+    // The songs picked out to delete, from a row's own menu or from the whole selection. One place
+    // for both, so there is one dialog and one last word before songs go.
+    var pendingDelete by remember { mutableStateOf(emptySet<String>()) }
+
+    // Keep the selection honest: drop ids the library no longer has — deleted here, or replaced
+    // wholesale by a restore — and abandon it on the way out of the list entirely.
+    LaunchedEffect(library, state) {
+        selection = if (state is SongState.Library) {
+            selection intersect library.map { it.id }.toSet()
+        } else {
+            emptySet()
+        }
+    }
 
     // Back means "up one page in the flow", which is not the same page for each of them.
     val back: () -> Unit = when (state) {
@@ -135,17 +173,42 @@ fun SongScreen(
         is SongState.EditPartChord -> onBackToPart
         is SongState.Naming -> onBackToReview
     }
-    BackHandler(onBack = back)
+    // A selection is the innermost thing on screen, so back drops it before it navigates.
+    BackHandler { if (selecting) selection = emptySet() else back() }
 
     Scaffold(
         topBar = {
             TopAppBar(
+                // While songs are selected the bar becomes a contextual one — count, a way out, and
+                // the delete action — tinted so there is no mistaking the mode. The bar's usual
+                // business steps aside until the selection is done with.
+                colors = if (selecting) {
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                } else {
+                    TopAppBarDefaults.topAppBarColors()
+                },
                 navigationIcon = {
-                    IconButton(onClick = back) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    if (selecting) {
+                        IconButton(onClick = { selection = emptySet() }) {
+                            Icon(Icons.Default.Close, contentDescription = "Cancel selection")
+                        }
+                    } else {
+                        IconButton(onClick = back) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
                 },
                 actions = {
+                    if (selecting) {
+                        IconButton(onClick = { pendingDelete = selection }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete selected")
+                        }
+                    }
                     // The title is the top bar now, so renaming belongs here rather than as a
                     // field competing with Save for what "commit" means.
                     if (state is SongState.Editor) {
@@ -162,7 +225,7 @@ fun SongScreen(
                 },
                 title = {
                     Text(
-                        when (state) {
+                        if (selecting) "${selection.size} selected" else when (state) {
                             is SongState.Library -> "Songs"
                             is SongState.Title ->
                                 if (song.title.isBlank()) "New song" else "Rename"
@@ -192,7 +255,18 @@ fun SongScreen(
         ) {
             when (state) {
                 is SongState.Library ->
-                    LibraryPane(library, error, onOpenSong, onDeleteSong, onNewSong)
+                    LibraryPane(
+                        library = library,
+                        error = error,
+                        selection = selection,
+                        onOpenSong = onOpenSong,
+                        onToggleSelect = { id ->
+                            selection = if (id in selection) selection - id else selection + id
+                        },
+                        onRequestDelete = { pendingDelete = setOf(it) },
+                        onRenameSong = onRenameSong,
+                        onNewSong = onNewSong,
+                    )
                 is SongState.Title -> TitlePane(song, onTitleDone)
                 is SongState.Editor ->
                     SongEditorPane(
@@ -224,6 +298,41 @@ fun SongScreen(
             }
         }
     }
+
+    // One dialog for both ways songs get deleted — a row's own menu, and the selection's bulk
+    // action. There is no undo, so this is the last word.
+    if (pendingDelete.isNotEmpty()) {
+        val doomed = pendingDelete
+        val single = doomed.singleOrNull()?.let { id -> library.firstOrNull { it.id == id } }
+        AlertDialog(
+            onDismissRequest = { pendingDelete = emptySet() },
+            title = {
+                Text(
+                    if (single != null) "Delete ${single.title}?"
+                    else "Delete ${doomed.size} songs?",
+                )
+            },
+            text = {
+                Text(
+                    if (single != null) {
+                        "Its parts and the shapes you chose go with it. This can't be undone."
+                    } else {
+                        "Their parts and the shapes you chose go with them. This can't be undone."
+                    },
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDeleteSongs(doomed)
+                    pendingDelete = emptySet()
+                    selection = emptySet()
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = emptySet() }) { Text("Cancel") }
+            },
+        )
+    }
 }
 
 /**
@@ -231,16 +340,25 @@ fun SongScreen(
  *
  * Home for the flow, and where a save lands — a song you cannot see afterwards is a song you cannot
  * tell was saved.
+ *
+ * Long-press picks songs out for a bulk delete, the way Rubber Ring's library does; [selection] is
+ * which ones, and non-empty means the list is in that mode. Deleting is asked for rather than done —
+ * [onRequestDelete] hands the id up to the one confirmation dialog the screen owns, because the
+ * selection's own delete action lives up in the app bar and both must ask the same question.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LibraryPane(
     library: List<Song>,
     error: String?,
+    selection: Set<String>,
     onOpenSong: (Song) -> Unit,
-    onDeleteSong: (String) -> Unit,
+    onToggleSelect: (String) -> Unit,
+    onRequestDelete: (String) -> Unit,
+    onRenameSong: (String, String) -> Unit,
     onNewSong: () -> Unit,
 ) {
-    var confirmDelete by rememberSaveable { mutableStateOf<String?>(null) }
+    var renameTarget by remember { mutableStateOf<Song?>(null) }
 
     Spacer(Modifier.height(8.dp))
     when {
@@ -278,30 +396,15 @@ private fun LibraryPane(
         }
 
         else -> library.forEach { song ->
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(ControlShape)
-                    .clickable { onOpenSong(song) }
-                    .padding(vertical = 10.dp, horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(song.title, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        songSummary(song),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                IconButton(onClick = { confirmDelete = song.id }) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete ${song.title}",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            SongRow(
+                song = song,
+                selected = song.id in selection,
+                selecting = selection.isNotEmpty(),
+                onOpen = { onOpenSong(song) },
+                onToggleSelect = { onToggleSelect(song.id) },
+                onRename = { renameTarget = song },
+                onDelete = { onRequestDelete(song.id) },
+            )
         }
     }
 
@@ -315,23 +418,145 @@ private fun LibraryPane(
         Text("New song", style = MaterialTheme.typography.titleMedium)
     }
 
-    val target = confirmDelete
-    if (target != null) {
-        val song = library.firstOrNull { it.id == target }
-        AlertDialog(
-            onDismissRequest = { confirmDelete = null },
-            title = { Text("Delete ${song?.title.orEmpty()}?") },
-            text = { Text("Its parts and the shapes you chose go with it. This can't be undone.") },
-            confirmButton = {
-                TextButton(onClick = { confirmDelete = null; onDeleteSong(target) }) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmDelete = null }) { Text("Cancel") }
-            },
+    renameTarget?.let { target ->
+        RenameSongDialog(
+            song = target,
+            onRename = { onRenameSong(target.id, it); renameTarget = null },
+            onDismiss = { renameTarget = null },
         )
     }
+}
+
+/**
+ * One song in the list: what it is, and the two ways to act on it.
+ *
+ * Long-press starts a selection, as it does in Rubber Ring's library. While one is running a tap
+ * picks rather than opens — one meaning per tap — and the row's own menu gives way to a tick, since
+ * a per-song menu would be competing with the app bar's action over the same songs.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun SongRow(
+    song: Song,
+    selected: Boolean,
+    selecting: Boolean,
+    onOpen: () -> Unit,
+    onToggleSelect: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+
+    Surface(
+        shape = ControlShape,
+        // Only the picked rows are tinted; the rest keep the plain background this list has always
+        // had, so a library at rest looks exactly as it did.
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(ControlShape)
+            .combinedClickable(
+                onClick = { if (selecting) onToggleSelect() else onOpen() },
+                onLongClick = {
+                    // Confirm the grab in the hand: the gesture has no on-screen affordance, and a
+                    // guitar player is not watching the screen closely.
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onToggleSelect()
+                },
+            ),
+    ) {
+        Row(
+            Modifier.padding(start = 4.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
+                Text(
+                    song.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    songSummary(song),
+                    style = MaterialTheme.typography.bodySmall,
+                    // Follows the row it is written on. The title needs no such help — it takes the
+                    // Surface's content colour — but naming a colour here opts out of that, so a
+                    // picked row would go on drawing its summary for the background it used to have.
+                    color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            if (selecting) {
+                Box(Modifier.padding(12.dp)) {
+                    Icon(
+                        if (selected) Icons.Default.CheckCircle
+                        else Icons.Default.RadioButtonUnchecked,
+                        contentDescription = if (selected) "Selected" else "Not selected",
+                        tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                Box {
+                    IconButton(onClick = { menu = true }) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = "Options for ${song.title}",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Rename") },
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            onClick = { menu = false; onRename() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete") },
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                            onClick = { menu = false; onDelete() },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Renaming from the list, in a dialog rather than on [TitlePane].
+ *
+ * That page is a step in writing a song down — name it, then get on with the music — and reaching it
+ * from the library would mean opening the song to rename it and landing in the editor afterwards.
+ * From a list, a rename should leave you in the list. Same rule as the page, though: the name
+ * arrives whole, on the button, and blank is not a name.
+ */
+@Composable
+private fun RenameSongDialog(song: Song, onRename: (String) -> Unit, onDismiss: () -> Unit) {
+    var text by rememberSaveable(song.id) { mutableStateOf(song.title) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rename song") },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text("Song title") },
+                singleLine = true,
+                shape = ControlShape,
+                keyboardOptions = NameKeyboard,
+            )
+        },
+        confirmButton = {
+            TextButton(enabled = text.isNotBlank(), onClick = { onRename(text) }) {
+                Text("Rename")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 /** A song at a glance: what it asks of your hands, and what is in it. */

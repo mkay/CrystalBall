@@ -88,6 +88,22 @@ class SongRepositoryTest {
     }
 
     @Test
+    fun `removeAll drops the whole selection and keeps the rest`() = runBlocking {
+        val (repo, _) = repo()
+        listOf("a", "b", "c", "d").forEach { repo.save(song(it)) }
+        repo.removeAll(setOf("a", "c", "nope"))
+        assertEquals(listOf("b", "d"), repo.list().map { it.id })
+    }
+
+    @Test
+    fun `removeAll of nothing leaves the library alone`() = runBlocking {
+        val (repo, _) = repo()
+        repo.save(song("a"))
+        repo.removeAll(emptySet())
+        assertEquals(listOf("a"), repo.list().map { it.id })
+    }
+
+    @Test
     fun `a second repository over the same file sees the songs`() = runBlocking {
         val (repo, file) = repo()
         repo.save(song("a"))

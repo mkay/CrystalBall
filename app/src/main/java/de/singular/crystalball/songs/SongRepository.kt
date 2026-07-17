@@ -55,8 +55,15 @@ class SongRepository(private val file: File) {
     }
 
     /** Drop the song with [id], if it is there. */
-    suspend fun remove(id: String) = withContext(Dispatchers.IO) {
-        mutex.withLock { write(read().filterNot { it.id == id }) }
+    suspend fun remove(id: String) = removeAll(setOf(id))
+
+    /**
+     * Drop every song in [ids]. The file is rewritten once for the whole batch, so clearing out a
+     * selection costs one write rather than one per song — and cannot half-succeed.
+     */
+    suspend fun removeAll(ids: Set<String>) = withContext(Dispatchers.IO) {
+        if (ids.isEmpty()) return@withContext
+        mutex.withLock { write(read().filterNot { it.id in ids }) }
     }
 
     // ---- Backup / restore ----

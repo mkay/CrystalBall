@@ -240,7 +240,8 @@ class MainActivity : ComponentActivity() {
                         onNamePart = songViewModel::namePart,
                         onNewSong = { songViewModel.startNewSong(settings.capo) },
                         onOpenSong = songViewModel::openSong,
-                        onDeleteSong = songViewModel::deleteSong,
+                        onDeleteSongs = songViewModel::deleteSongs,
+                        onRenameSong = songViewModel::renameSong,
                         onBackToLibrary = songViewModel::backToLibrary,
                         // Releases the microphone on the way out, whatever page we leave from.
                         onClose = { songViewModel.discardCapture(); songsOpen = false },
