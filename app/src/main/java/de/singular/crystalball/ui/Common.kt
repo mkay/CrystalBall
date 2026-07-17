@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.singular.crystalball.ChordView
@@ -64,27 +66,41 @@ val BUTTON_MAX_WIDTH = 340.dp
 const val SPIN_PERIOD_MS = 9000
 
 /**
- * The wordmark and what the app is for, in one drawn line above the mark on the home screen.
+ * The wordmark and what the app is for, stacked above the mark on the home screen.
  *
- * A single-colour vector — the type is already outlined to paths — so it is tinted here rather than
- * carrying its own colour, and reads in either theme. Sized to the width it is given, keeping the
- * banner's aspect, so it never runs off the edge of a narrow phone.
+ * The wordmark is a single-colour vector — the type is already outlined to paths — so it is tinted
+ * here rather than carrying its own colour, and reads in either theme. Sized to the width it is
+ * given, keeping the banner's aspect, so it never runs off the edge of a narrow phone. The tagline
+ * underneath is live text rather than more outlined paths, so it stays legible at any size and is
+ * read aloud as words; the wordmark carries no description of its own to keep it from being spoken
+ * twice.
  */
 @Composable
 fun Claim(modifier: Modifier = Modifier) {
-    Icon(
-        painter = painterResource(R.drawable.claim),
-        contentDescription = "Crystal Ball — detects guitar chords and lets you combine them " +
-            "into song sheets",
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier
-            .width(300.dp)
-            .aspectRatio(CLAIM_ASPECT),
-    )
+    Column(
+        modifier = modifier.width(300.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.claim),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(CLAIM_ASPECT),
+        )
+        Text(
+            text = "detects guitar chords\nand combines them into song sheets",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+    }
 }
 
-/** The claim banner's width-to-height, from its 1263×378 artwork. */
-private const val CLAIM_ASPECT = 1263f / 378f
+/** The wordmark's width-to-height, from its 1263×270 artwork. */
+private const val CLAIM_ASPECT = 1263f / 270f
 
 /** The app mark. [rotation] turns the swirl, which the listening screens animate. */
 @Composable
