@@ -40,8 +40,10 @@ sealed interface DetectState {
     /**
      * Looking a chord up by hand rather than playing it — the same page as [Result] minus the
      * runner-ups, because nothing was guessed here and there is nothing to have meant instead.
+     *
+     * [voicing] is the shape the user promoted to the big diagram, or null to let the library lead.
      */
-    data class Browse(val chord: Chord) : DetectState
+    data class Browse(val chord: Chord, val voicing: Voicing? = null) : DetectState
 
     /**
      * A chord was read. [selected] and [candidates] are always the **sounding** chords — what the
@@ -50,10 +52,16 @@ sealed interface DetectState {
      * [selected] starts as the best fit but follows the user if they tap one of the alternatives:
      * the recogniser's ranking is a good guess, not gospel, and the player can see at a glance
      * which one they actually played.
+     *
+     * [voicing] is the same bargain one level down: the library's first shape is a good guess at
+     * which grip you want, so tapping a variation promotes it to the big diagram. Null means the
+     * library still leads. Picking a different [selected] clears it — a shape belongs to the chord
+     * it was chosen for, and carrying it across would draw a grip for the wrong chord.
      */
     data class Result(
         val candidates: List<ChordCandidate>,
         val selected: Chord,
+        val voicing: Voicing? = null,
     ) : DetectState {
         /** The runner-up chords, for the "did you mean" row. */
         val alternatives: List<ChordCandidate>
@@ -61,7 +69,14 @@ sealed interface DetectState {
     }
 
     companion object {
-        const val VARIATION_COUNT = 5
+        /**
+         * How many further shapes the result screen offers — about two wrapped rows on a phone.
+         *
+         * No chord in the library has more than nine shapes, so this no longer truncates anything
+         * today; it stays as a bound in case the library grows a quality with far more forms, since
+         * a screen of near-identical grips up at the 12th fret is noise, not choice.
+         */
+        const val VARIATION_COUNT = 10
         const val ALTERNATIVE_COUNT = 4
     }
 }
@@ -69,6 +84,9 @@ sealed interface DetectState {
 /**
  * Everything the result screen draws for one sounding chord: the shape to finger (which is the
  * chord itself when there is no capo), its diagrams, and the two names.
+ *
+ * [chosen] is the shape the user promoted to the big diagram; null leaves the library's ranking in
+ * charge. Read it through [best] rather than directly — it is a request, not a guarantee.
  */
 data class ChordView(
     val sounding: Chord,
@@ -76,15 +94,29 @@ data class ChordView(
     val title: String,
     val subtitle: String?,
     val voicings: List<Voicing>,
+    val chosen: Voicing? = null,
 ) {
-    /** The shape shown large. */
-    val best: Voicing get() = voicings.first()
+    /**
+     * The shape shown large: the one the user promoted, else the library's first.
+     *
+     * [chosen] is checked for membership rather than trusted, because it outlives the list it came
+     * from: moving the capo re-generates the shapes, and one picked at the old capo may be gone.
+     * Falling back to the leader beats drawing a grip this chord no longer has.
+     */
+    val best: Voicing get() = chosen?.takeIf { it in voicings } ?: voicings.first()
 
-    /** Up to five further ways to play the same chord, walking up the neck. */
-    val variations: List<Voicing> get() = voicings.drop(1).take(DetectState.VARIATION_COUNT)
+    /**
+     * The other ways to play the same chord, walking up the neck, capped at
+     * [DetectState.VARIATION_COUNT].
+     *
+     * [best] is filtered out rather than dropped by position, so promoting a variation swaps it with
+     * the one already big instead of hiding it — the same trade the "did you mean" row makes.
+     */
+    val variations: List<Voicing>
+        get() = voicings.filter { it != best }.take(DetectState.VARIATION_COUNT)
 
     companion object {
-        fun of(sounding: Chord, settings: Settings): ChordView {
+        fun of(sounding: Chord, settings: Settings, chosen: Voicing? = null): ChordView {
             val shape = Capo.shapeChord(sounding, settings.capo)
             return ChordView(
                 sounding = sounding,
@@ -92,6 +124,7 @@ data class ChordView(
                 title = Capo.title(sounding, settings.capo, settings.nameStyle),
                 subtitle = Capo.subtitle(sounding, settings.capo, settings.nameStyle),
                 voicings = ChordLibrary.voicingsFor(shape, settings.capo),
+                chosen = chosen,
             )
         }
     }
@@ -210,11 +243,25 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
         _state.value = DetectState.Browse(Chord(0, Quality.MAJ))
     }
 
-    /** Pick a chord: a different candidate from the ranked list, or a different one to look up. */
+    /**
+     * Pick a chord: a different candidate from the ranked list, or a different one to look up.
+     *
+     * Any promoted voicing is dropped: it was a shape for the chord being left behind, and the new
+     * one has its own.
+     */
     fun select(chord: Chord) {
         when (val current = _state.value) {
-            is DetectState.Result -> _state.value = current.copy(selected = chord)
-            is DetectState.Browse -> _state.value = current.copy(chord = chord)
+            is DetectState.Result -> _state.value = current.copy(selected = chord, voicing = null)
+            is DetectState.Browse -> _state.value = current.copy(chord = chord, voicing = null)
+            else -> Unit
+        }
+    }
+
+    /** Promote one of the variations to the big diagram. */
+    fun selectVoicing(voicing: Voicing) {
+        when (val current = _state.value) {
+            is DetectState.Result -> _state.value = current.copy(voicing = voicing)
+            is DetectState.Browse -> _state.value = current.copy(voicing = voicing)
             else -> Unit
         }
     }

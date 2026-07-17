@@ -236,6 +236,7 @@ class MainActivity : ComponentActivity() {
                             onDetect = onDetect,
                             onCancel = viewModel::cancel,
                             onSelect = viewModel::select,
+                            onSelectVoicing = viewModel::selectVoicing,
                             onSetCapo = { capoOpen = true },
                             onOpenMenu = { scope.launch { drawerState.open() } },
                             onOpenAppSettings = { settingsOpen = true },

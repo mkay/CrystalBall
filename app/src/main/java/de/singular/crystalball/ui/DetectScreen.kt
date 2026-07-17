@@ -48,6 +48,7 @@ import de.singular.crystalball.audio.ChordCandidate
 import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.audio.ROOT_NAMES
 import de.singular.crystalball.chords.ChordLibrary
+import de.singular.crystalball.chords.Voicing
 
 @Composable
 fun DetectScreen(
@@ -56,6 +57,7 @@ fun DetectScreen(
     onDetect: () -> Unit,
     onCancel: () -> Unit,
     onSelect: (Chord) -> Unit,
+    onSelectVoicing: (Voicing) -> Unit,
     onSetCapo: () -> Unit,
     onOpenMenu: () -> Unit,
     onOpenAppSettings: () -> Unit,
@@ -73,8 +75,8 @@ fun DetectScreen(
                 is DetectState.Idle -> IdlePane(onDetect, settings.capo, onSetCapo)
                 is DetectState.Silence -> SilencePane(onDetect, settings.capo, onSetCapo)
                 is DetectState.Listening -> ListeningPane(state, onCancel)
-                is DetectState.Result -> ResultPane(state, settings, onDetect, onSelect)
-                is DetectState.Browse -> BrowsePane(state, settings, onSelect, onDetect)
+                is DetectState.Result -> ResultPane(state, settings, onDetect, onSelect, onSelectVoicing)
+                is DetectState.Browse -> BrowsePane(state, settings, onSelect, onSelectVoicing, onDetect)
             }
         }
         var showKeepAwakeInfo by rememberSaveable { mutableStateOf(false) }
@@ -195,9 +197,10 @@ private fun BrowsePane(
     state: DetectState.Browse,
     settings: Settings,
     onSelect: (Chord) -> Unit,
+    onSelectVoicing: (Voicing) -> Unit,
     onDetect: () -> Unit,
 ) {
-    val view = ChordView.of(state.chord, settings)
+    val view = ChordView.of(state.chord, settings, state.voicing)
 
     // The settings and keep-awake icons float over this column, and the root chips scroll the full
     // width — without this they would pass underneath them.
@@ -246,20 +249,7 @@ private fun BrowsePane(
         capo = settings.capo,
     )
 
-    if (view.variations.isNotEmpty()) {
-        Spacer(Modifier.height(28.dp))
-        SectionLabel("Other ways to play ${view.title}")
-        DiagramRow {
-            view.variations.forEach { voicing ->
-                ChordDiagram(
-                    voicing = voicing,
-                    width = SMALL_DIAGRAM_WIDTH,
-                    caption = voicing.label,
-                    capo = settings.capo,
-                )
-            }
-        }
-    }
+    VariationsSection(view, settings, onSelectVoicing)
 
     Spacer(Modifier.height(28.dp))
     DetectButton(onDetect)
@@ -317,8 +307,9 @@ private fun ResultPane(
     settings: Settings,
     onDetect: () -> Unit,
     onSelect: (Chord) -> Unit,
+    onSelectVoicing: (Voicing) -> Unit,
 ) {
-    val view = ChordView.of(state.selected, settings)
+    val view = ChordView.of(state.selected, settings, state.voicing)
 
     // Clear the floating title row — the chord name is centred and would otherwise run into it.
     Spacer(Modifier.height(ICON_ROW_HEIGHT))
@@ -343,22 +334,8 @@ private fun ResultPane(
         capo = settings.capo,
     )
 
-    Spacer(Modifier.height(28.dp))
-
-    if (view.variations.isNotEmpty()) {
-        SectionLabel("Other ways to play ${view.title}")
-        DiagramRow {
-            view.variations.forEach { voicing ->
-                ChordDiagram(
-                    voicing = voicing,
-                    width = SMALL_DIAGRAM_WIDTH,
-                    caption = voicing.label,
-                    capo = settings.capo,
-                )
-            }
-        }
-        Spacer(Modifier.height(24.dp))
-    }
+    VariationsSection(view, settings, onSelectVoicing)
+    Spacer(Modifier.height(24.dp))
 
     if (state.alternatives.isNotEmpty()) {
         SectionLabel("Or did you mean")
@@ -376,6 +353,40 @@ private fun ResultPane(
 
     DetectButton(onDetect, label = "Detect Again")
     Spacer(Modifier.height(16.dp))
+}
+
+/**
+ * The other ways to play the chord that is already big, each one tappable to take its place.
+ *
+ * Shared by both panes that draw a chord, so the browser and a detection result stay the same page
+ * — which is the [BrowsePane] premise, and would rot the moment one of them grew a row the other
+ * lacked. Draws nothing when there are no variations, leading spacer included, so a chord with a
+ * single shape does not leave a gap where a section would have been.
+ */
+@Composable
+private fun VariationsSection(
+    view: ChordView,
+    settings: Settings,
+    onSelectVoicing: (Voicing) -> Unit,
+) {
+    if (view.variations.isEmpty()) return
+
+    Spacer(Modifier.height(28.dp))
+    SectionLabel("Other ways to play ${view.title}")
+    DiagramFlow {
+        view.variations.forEach { voicing ->
+            ChordDiagram(
+                voicing = voicing,
+                width = SMALL_DIAGRAM_WIDTH,
+                caption = voicing.label,
+                capo = settings.capo,
+                modifier = Modifier
+                    .clip(ControlShape)
+                    .clickable { onSelectVoicing(voicing) }
+                    .padding(4.dp),
+            )
+        }
+    }
 }
 
 /** A tappable runner-up: its own name above its most idiomatic shape. */
