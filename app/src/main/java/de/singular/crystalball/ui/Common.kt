@@ -9,6 +9,8 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +36,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import de.singular.crystalball.ChordView
 import de.singular.crystalball.R
+import de.singular.crystalball.chords.Voicing
 import kotlin.math.log10
 
 /**
@@ -229,4 +233,46 @@ fun SectionLabel(text: String) {
             .fillMaxWidth()
             .padding(bottom = 8.dp),
     )
+}
+
+/**
+ * The variations row, made a picker — the whole reason a song is worth more than a list of chord
+ * names: tapping one records *the shape your hands make*, rather than the one the library leads with.
+ *
+ * Shared by the detect screen's captured-chord editor and the song screen's part-chord editor, so a
+ * chord is chosen the same way whether it is on its way into a song or already in one. It wraps
+ * rather than scrolls — a chord with eight ways to play it would otherwise hide most of them.
+ *
+ * The choice is marked with a ring rather than a filled card. [ChordDiagram] draws its lines and
+ * dots in colours picked for the surface underneath, so tinting that surface puts light on light in
+ * the dark theme and dark on dark in the light one — the selected shape would be the one you could
+ * not read. A ring sits outside the diagram and leaves it on the background it was drawn for.
+ */
+@Composable
+fun VoicingPicker(
+    view: ChordView,
+    chosen: Voicing,
+    capo: Int,
+    onSelectVoicing: (Voicing) -> Unit,
+) {
+    SectionLabel("Other ways to play ${view.title}")
+    DiagramFlow {
+        view.voicings.forEach { voicing ->
+            val selected = voicing == chosen
+            ChordDiagram(
+                voicing = voicing,
+                width = SMALL_DIAGRAM_WIDTH,
+                caption = voicing.label,
+                capo = capo,
+                modifier = Modifier
+                    .clip(ControlShape)
+                    .then(
+                        if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, ControlShape)
+                        else Modifier,
+                    )
+                    .clickable { onSelectVoicing(voicing) }
+                    .padding(6.dp),
+            )
+        }
+    }
 }

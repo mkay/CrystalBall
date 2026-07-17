@@ -16,10 +16,12 @@ import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.audio.ListenEvent
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.Voicing
+import de.singular.crystalball.songs.CapturedChord
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /** Parse a stored [ThemeMode] name, falling back to [ThemeMode.SYSTEM] for null/unknown values. */
@@ -67,6 +69,25 @@ sealed interface DetectState {
         val alternatives: List<ChordCandidate>
             get() = candidates.filter { it.chord != selected }.take(ALTERNATIVE_COUNT)
     }
+
+    /**
+     * Detecting a run of chords, one per strum, best diagrams stacking as they land.
+     *
+     * The same one-shot listener [Listening] uses, run over and over — see [startCapture]. This is
+     * where a song comes from now: capture the chords here, then say where they go. [captured] holds
+     * **sounding** chords, so the shapes are drawn again at whatever capo the song is saved behind.
+     */
+    data class Capturing(
+        val captured: List<CapturedChord> = emptyList(),
+        val level: Float = 0f,
+        val heardStrum: Boolean = false,
+    ) : DetectState
+
+    /** The captured run, stopped and held: fix a misheard chord, then save it as a part. */
+    data class CaptureReview(val captured: List<CapturedChord>) : DetectState
+
+    /** One captured chord, open for a correction or a choice of grip. */
+    data class EditCaptured(val captured: List<CapturedChord>, val index: Int) : DetectState
 
     companion object {
         /**
@@ -268,10 +289,127 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // ---- Capturing a run of chords ----
+    //
+    // The mic-facing half of writing a song down. It lives here, with the single-chord detector,
+    // because both are the same job — listen to the guitar — and keeping them on one screen means
+    // one microphone and one listener. Where the run *goes* is the song library's business; this
+    // only produces the chords and hands them over. See [SongViewModel.saveCapture].
+
+    /** Start capturing a run. No-ops without the microphone. */
+    fun startCapture() {
+        if (!hasMicPermission) return
+        beginCapture()
+    }
+
+    /** See [detectOnPermissionGranted] for why the grant path is separate. */
+    fun startCaptureOnPermissionGranted() = beginCapture()
+
+    /**
+     * Take chords one per strum, by running the ordinary one-shot listener over and over.
+     *
+     * Crude on purpose, and it holds up on the guitar: each chord gets the strum-and-wait treatment
+     * the recogniser was actually tuned for. The condition is that the player mutes between chords —
+     * a chord left ringing is still sounding when the next pass opens and gets read as the next
+     * chord. That makes a forgotten mute a *wrong* answer rather than a missing one, which is what
+     * [CaptureReview] is for.
+     *
+     * Ends on [ListenEvent.Silence], the listener's own timeout with nothing heard, so putting the
+     * guitar down finishes the run without touching the phone.
+     */
+    @SuppressLint("MissingPermission") // callers above establish the grant
+    private fun beginCapture() {
+        job?.cancel()
+        _state.value = DetectState.Capturing()
+        job = viewModelScope.launch {
+            val captured = mutableListOf<CapturedChord>()
+            while (isActive) {
+                var heard = false
+                listener.listen().collect { event ->
+                    when (event) {
+                        is ListenEvent.Level -> _state.value =
+                            DetectState.Capturing(captured.toList(), event.rms, event.heardStrum)
+                        is ListenEvent.Detected -> {
+                            heard = true
+                            captured += CapturedChord(event.candidates)
+                            _state.value =
+                                DetectState.Capturing(captured.toList(), heardStrum = true)
+                        }
+                        ListenEvent.Silence -> Unit
+                    }
+                }
+                if (!heard) break
+            }
+            _state.value = DetectState.CaptureReview(captured.toList())
+        }
+    }
+
+    /**
+     * Stop capturing and keep what was heard.
+     *
+     * The state is set here rather than left to [beginCapture]'s tail, which cancellation skips.
+     */
+    fun stopCapture() {
+        job?.cancel()
+        job = null
+        val current = _state.value
+        if (current is DetectState.Capturing) _state.value = DetectState.CaptureReview(current.captured)
+    }
+
+    /** Open one captured chord to correct it or choose its grip. */
+    fun editCaptured(index: Int) {
+        val current = _state.value
+        if (current is DetectState.CaptureReview && index in current.captured.indices) {
+            _state.value = DetectState.EditCaptured(current.captured, index)
+        }
+    }
+
+    /** Back out of the captured-chord editor to the run. */
+    fun backToCaptureReview() {
+        val current = _state.value as? DetectState.EditCaptured ?: return
+        _state.value = DetectState.CaptureReview(current.captured)
+    }
+
+    /**
+     * Correct a misheard chord to one of the recogniser's runner-ups.
+     *
+     * Drops any grip chosen for it: the voicing was a way of playing a *different* chord, and keeping
+     * it would silently document a shape that does not sound what the name says.
+     */
+    fun selectCapturedChord(chord: Chord) {
+        val current = _state.value as? DetectState.EditCaptured ?: return
+        _state.value = current.copy(
+            captured = current.captured.replaceAt(current.index) {
+                it.copy(selected = chord, voicing = null)
+            },
+        )
+    }
+
+    /** Record how this captured chord is actually played. */
+    fun selectCapturedVoicing(voicing: Voicing) {
+        val current = _state.value as? DetectState.EditCaptured ?: return
+        _state.value = current.copy(
+            captured = current.captured.replaceAt(current.index) { it.copy(voicing = voicing) },
+        )
+    }
+
+    /** Drop a captured chord — a stray strum, or a chord read twice. */
+    fun removeCaptured(index: Int) {
+        val remaining = when (val current = _state.value) {
+            is DetectState.CaptureReview -> current.captured
+            is DetectState.EditCaptured -> current.captured
+            else -> return
+        }.filterIndexed { i, _ -> i != index }
+        _state.value = DetectState.CaptureReview(remaining)
+    }
+
     override fun onCleared() {
         job?.cancel()
         super.onCleared()
     }
+
+    private fun <T> List<T>.replaceAt(index: Int, transform: (T) -> T): List<T> =
+        mapIndexed { i, item -> if (i == index) transform(item) else item }
 
     private companion object {
         const val KEY_CAPO = "capo"

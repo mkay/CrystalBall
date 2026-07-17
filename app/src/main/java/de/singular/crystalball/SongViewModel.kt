@@ -1,16 +1,9 @@
 package de.singular.crystalball
 
-import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Application
-import android.content.pm.PackageManager
 import android.net.Uri
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import de.singular.crystalball.audio.Chord
-import de.singular.crystalball.audio.ChordListener
-import de.singular.crystalball.audio.ListenEvent
 import de.singular.crystalball.chords.Voicing
 import de.singular.crystalball.songs.CapturedChord
 import de.singular.crystalball.songs.defaultVoicing
@@ -22,44 +15,27 @@ import de.singular.crystalball.ui.SongPdf
 import de.singular.crystalball.songs.movePart
 import de.singular.crystalball.songs.upsertPart
 import de.singular.crystalball.songs.removePart
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
-/** Which page of the song flow is showing. */
+/**
+ * Which page of the song library is showing.
+ *
+ * Capturing chords is no longer here — it lives on the detect screen, with the microphone (see
+ * [DetectViewModel]). This is the library and its editor: viewing, ordering, and refining songs the
+ * capture flow has already saved.
+ */
 sealed interface SongState {
-    /** The saved songs: home for the song flow, and where a save lands. */
+    /** The saved songs: home for the library, and where a save lands. */
     data object Library : SongState
-
-    /**
-     * Naming the song, as its own step — before any of the music, and again on a rename.
-     *
-     * Separate from [Editor] because typing a title and capturing chords are different jobs, and a
-     * text field sitting next to a Save button reads as though the two are the same commit.
-     */
-    data object Title : SongState
 
     /** The song itself: its capo, and the parts captured so far. */
     data object Editor : SongState
-
-    /** The microphone is open, taking one chord per strum. */
-    data class Capturing(
-        val captured: List<CapturedChord> = emptyList(),
-        val level: Float = 0f,
-        val heardStrum: Boolean = false,
-    ) : SongState
-
-    /** What the capture heard, before it becomes a part. */
-    data class Review(val captured: List<CapturedChord>) : SongState
-
-    /** One captured chord, open for a correction or a choice of grip. */
-    data class EditChord(val captured: List<CapturedChord>, val index: Int) : SongState
 
     /**
      * A saved part, drawn out: its chords as shapes rather than names.
@@ -75,11 +51,34 @@ sealed interface SongState {
     /** The whole song on one page: every part, and the shapes it asks for. */
     data object SongView : SongState
 
-    /** Writing the song's comment, on its own page like the title. */
+    /** Writing the song's comment, on its own page. */
     data object Comment : SongState
+}
 
-    /** Naming the reviewed run, which is what turns it into a part. */
-    data class Naming(val captured: List<CapturedChord>) : SongState
+/**
+ * Where a captured run is saved: onto a new song, or onto one already in the library.
+ *
+ * The capture happens before either exists as a decision — that is the point of the rework — so the
+ * choice is carried here and resolved once, in [SongViewModel.saveCapture].
+ */
+sealed interface SaveTarget {
+    /** A song that does not exist yet: its title, and the capo it was captured behind. */
+    data class NewSong(val title: String, val capo: Int) : SaveTarget
+
+    /** A song already in the library, addressed by id so a stale copy cannot overwrite it. */
+    data class Existing(val id: String) : SaveTarget
+}
+
+/**
+ * How a save from the capture flow went, for a one-shot toast on the detect screen.
+ *
+ * The capture screen is not the library, so a failure there cannot fall to [SongViewModel] error
+ * state the way an edit does — that surfaces only on the library screen. This carries the outcome
+ * back to where the user actually is.
+ */
+sealed interface SaveResult {
+    data class Saved(val songTitle: String, val partName: String) : SaveResult
+    data class Failed(val reason: String) : SaveResult
 }
 
 /**
@@ -96,21 +95,17 @@ sealed interface BackupResult {
 }
 
 /**
- * Writing a song down: capture a part, fix what was misheard, say how you play it, name it.
+ * The song library and its editor: the songs a capture has saved, and the ways to view and refine
+ * them — order the parts, move the capo, choose grips, write a comment, print a sheet.
  *
- * Separate from [DetectViewModel] because the jobs are different — that one answers "what is this
- * chord", this one records a document — and folding songs into it would double its size.
- *
- * It owns a second [ChordListener], and therefore a second possible `AudioRecord`. That is safe
- * only because the song screen and the detect screen are never on top of each other, which is an
- * invariant held by the UI rather than by anything here. If the screens ever overlap, this is the
- * thing that breaks, and the fix is a shared capture loop rather than a listener each.
+ * Separate from [DetectViewModel] because the jobs are different — that one listens to the guitar,
+ * this one keeps a document — and folding them together would double its size. The microphone lives
+ * entirely on that side now; capture hands its chords here through [saveCapture], and nothing in
+ * this class opens an `AudioRecord`.
  */
 class SongViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = SongRepository(application)
-    private val listener = ChordListener()
-    private var job: Job? = null
 
     private val _song = MutableStateFlow(emptySong(capo = 0))
     val song: StateFlow<Song> = _song.asStateFlow()
@@ -146,12 +141,17 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
     private val _backupResult = MutableStateFlow<BackupResult?>(null)
     val backupResult: StateFlow<BackupResult?> = _backupResult.asStateFlow()
 
-    val hasMicPermission: Boolean
-        get() = ContextCompat.checkSelfPermission(
-            getApplication(), Manifest.permission.RECORD_AUDIO,
-        ) == PackageManager.PERMISSION_GRANTED
+    /** How the last [saveCapture] went, for a toast; cleared by [consumeSaveResult]. */
+    private val _saveResult = MutableStateFlow<SaveResult?>(null)
+    val saveResult: StateFlow<SaveResult?> = _saveResult.asStateFlow()
 
-    /** Open the song flow at the library, and go and read it. */
+    init {
+        // Read the library up front, not just when the songs screen opens: the detect screen's
+        // "Save to an existing song" needs it too, and that is reachable without ever opening songs.
+        refresh()
+    }
+
+    /** Open the library, and go and read it. */
     fun open() {
         _state.value = SongState.Library
         refresh()
@@ -159,30 +159,62 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Back to the library, dropping anything the current song had not saved. */
     fun backToLibrary() {
-        job?.cancel()
-        job = null
         _state.value = SongState.Library
         refresh()
     }
 
     /**
-     * Begin a new song at [capo].
+     * Save a captured run as a part, onto a new song or one already in the library.
      *
-     * The capo comes from the live setting because that is the fret you are actually playing
-     * behind right now — but from here it is the *song's*, and every voicing in it will be counted
-     * from it. See [Song].
+     * This is where a song is born now — not from a Title page before any music, but from chords
+     * already in hand. [target] says which song; either way the part's grips are counted from
+     * *that song's* capo, which is the whole reason [CapturedChord] stores sounding chords: a run
+     * captured behind one capo drops cleanly onto a song sitting behind another. See [Song].
+     *
+     * Lands on the saved song's editor, so the save is something you can see — and, when the run
+     * was captured from an open song, returns you to it. [SaveResult] carries the outcome back to
+     * the detect screen for a toast, since a failure here cannot fall to the library's error line.
      */
-    fun startNewSong(capo: Int) {
-        job?.cancel()
-        job = null
-        _song.value = emptySong(capo)
-        _state.value = SongState.Title
+    fun saveCapture(captured: List<CapturedChord>, partName: String, target: SaveTarget) {
+        val name = partName.trim()
+        if (name.isEmpty() || captured.isEmpty()) return
+        viewModelScope.launch {
+            val base = when (target) {
+                is SaveTarget.NewSong -> {
+                    val title = target.title.trim()
+                    if (title.isEmpty()) return@launch
+                    emptySong(target.capo).copy(title = title)
+                }
+                is SaveTarget.Existing -> {
+                    val found = runCatching { repository.list() }
+                        .onFailure { _saveResult.value = SaveResult.Failed(it.readable()) }
+                        .getOrNull()?.firstOrNull { it.id == target.id }
+                    found ?: run {
+                        if (_saveResult.value == null) {
+                            _saveResult.value = SaveResult.Failed("That song is no longer in your library.")
+                        }
+                        return@launch
+                    }
+                }
+            }
+            val updated = base.upsertPart(Part(name, captured.map { it.toSongChord(base.capo) }))
+            runCatching { repository.save(updated) }
+                .onSuccess {
+                    _song.value = it
+                    _state.value = SongState.Editor
+                    _saveResult.value = SaveResult.Saved(it.title, name)
+                }
+                .onFailure { _saveResult.value = SaveResult.Failed(it.readable()) }
+            reload()
+        }
     }
 
-    /** Open a saved song to add to it. */
+    fun consumeSaveResult() {
+        _saveResult.value = null
+    }
+
+    /** Open a saved song to view or refine it. */
     fun openSong(song: Song) {
-        job?.cancel()
-        job = null
         _song.value = song
         _state.value = SongState.Editor
     }
@@ -235,28 +267,18 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
     private fun Throwable.readable() =
         message ?: "The song library could not be read."
 
-    /** Rename the song: the naming step again, reached from the editor. */
-    fun editTitle() {
-        if (_state.value is SongState.Editor) _state.value = SongState.Title
-    }
-
     /**
-     * Commit the name and get on with the music.
+     * Rename the song open in the editor.
      *
-     * The title arrives here whole rather than keystroke by keystroke: a field bound live to the
-     * song looks committed while it is not, which is the confusion this step exists to remove.
+     * Reached from the editor's own rename dialog, so it works on [_song] directly rather than
+     * reading back by id the way [renameSong] does for the library list. Blank is refused: a song
+     * with no name is not something the library can show you.
      */
-    fun titleDone(title: String) {
+    fun renameCurrentSong(title: String) {
         val trimmed = title.trim()
         if (trimmed.isEmpty()) return
         _song.value = _song.value.copy(title = trimmed)
-        _state.value = SongState.Editor
         persist()
-    }
-
-    /** Back out of a rename, leaving the name as it was. */
-    fun cancelTitle() {
-        if (_state.value is SongState.Title) _state.value = SongState.Editor
     }
 
     /**
@@ -377,150 +399,6 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
         persist()
     }
 
-    /** Start capturing a part. No-ops without the microphone. */
-    fun startCapture() {
-        if (!hasMicPermission) return
-        beginCapture()
-    }
-
-    /** See [DetectViewModel.detectOnPermissionGranted] for why the grant path is separate. */
-    fun startCaptureOnPermissionGranted() = beginCapture()
-
-    /**
-     * Take chords one per strum, by running the ordinary one-shot listener over and over.
-     *
-     * Crude on purpose, and it holds up on the guitar: each chord gets the strum-and-wait treatment
-     * the recogniser was actually tuned for, which is the whole reason stepped capture beats
-     * listening continuously. Reopening the recorder between chords costs nothing you can feel.
-     *
-     * The condition is that the player mutes between chords — a chord left ringing is still
-     * sounding when the next pass opens and gets read as the next chord. The capture screen asks
-     * for it in as many words. That makes a forgotten mute a *wrong* answer rather than a missing
-     * one, which is what [SongState.Review] is for.
-     *
-     * Ends on [ListenEvent.Silence], the listener's own timeout with nothing heard, so putting the
-     * guitar down finishes the part without touching the phone.
-     */
-    @SuppressLint("MissingPermission") // callers above establish the grant
-    private fun beginCapture() {
-        job?.cancel()
-        _state.value = SongState.Capturing()
-        job = viewModelScope.launch {
-            val captured = mutableListOf<CapturedChord>()
-            while (isActive) {
-                var heard = false
-                listener.listen().collect { event ->
-                    when (event) {
-                        is ListenEvent.Level -> _state.value =
-                            SongState.Capturing(captured.toList(), event.rms, event.heardStrum)
-                        is ListenEvent.Detected -> {
-                            heard = true
-                            captured += CapturedChord(event.candidates)
-                            _state.value =
-                                SongState.Capturing(captured.toList(), heardStrum = true)
-                        }
-                        ListenEvent.Silence -> Unit
-                    }
-                }
-                if (!heard) break
-            }
-            _state.value = SongState.Review(captured.toList())
-        }
-    }
-
-    /**
-     * Stop capturing and keep what was heard.
-     *
-     * The state is set here rather than left to [beginCapture]'s tail, which cancellation skips.
-     */
-    fun stopCapture() {
-        job?.cancel()
-        job = null
-        val current = _state.value
-        if (current is SongState.Capturing) _state.value = SongState.Review(current.captured)
-    }
-
-    /** Throw the capture away and go back to the song. */
-    fun discardCapture() {
-        job?.cancel()
-        job = null
-        _state.value = SongState.Editor
-    }
-
-    /** Open one captured chord to correct it or choose its grip. */
-    fun editChord(index: Int) {
-        val current = _state.value
-        if (current is SongState.Review && index in current.captured.indices) {
-            _state.value = SongState.EditChord(current.captured, index)
-        }
-    }
-
-    /** Back out of the chord editor or the naming page, to the reviewed run. */
-    fun backToReview() {
-        _state.value = when (val current = _state.value) {
-            is SongState.EditChord -> SongState.Review(current.captured)
-            is SongState.Naming -> SongState.Review(current.captured)
-            else -> return
-        }
-    }
-
-    /**
-     * Correct a misheard chord to one of the recogniser's runner-ups.
-     *
-     * This drops any grip chosen for it: the voicing was a way of playing a *different* chord, and
-     * keeping it would silently document a shape that does not sound what the name says.
-     */
-    fun selectChord(chord: Chord) {
-        val current = _state.value as? SongState.EditChord ?: return
-        _state.value = current.copy(
-            captured = current.captured.replaceAt(current.index) {
-                it.copy(selected = chord, voicing = null)
-            },
-        )
-    }
-
-    /** Record how this chord is actually played. */
-    fun selectVoicing(voicing: Voicing) {
-        val current = _state.value as? SongState.EditChord ?: return
-        _state.value = current.copy(
-            captured = current.captured.replaceAt(current.index) { it.copy(voicing = voicing) },
-        )
-    }
-
-    /** Drop a chord that should not have been captured — a stray strum, or a chord read twice. */
-    fun removeChord(index: Int) {
-        val remaining = when (val current = _state.value) {
-            is SongState.Review -> current.captured
-            is SongState.EditChord -> current.captured
-            else -> return
-        }.filterIndexed { i, _ -> i != index }
-        _state.value = SongState.Review(remaining)
-    }
-
-    /** Done reviewing: on to naming, which is what makes it a part. */
-    fun reviewDone() {
-        val current = _state.value as? SongState.Review ?: return
-        if (current.captured.isEmpty()) return
-        _state.value = SongState.Naming(current.captured)
-    }
-
-    /**
-     * Commit the captured run as [name].
-     *
-     * Recapturing an existing part replaces it: `upsertPart` is where the one-of-each rule lives.
-     */
-    fun namePart(name: String) {
-        val current = _state.value as? SongState.Naming ?: return
-        val trimmed = name.trim()
-        if (trimmed.isEmpty()) return
-        val capo = _song.value.capo
-        _song.value = _song.value.upsertPart(
-            Part(trimmed, current.captured.map { it.toSongChord(capo) }),
-        )
-        _state.value = SongState.Editor
-        persist()
-    }
-
     /**
      * Write the song down, if there is a song yet.
      *
@@ -603,8 +481,6 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
                 .onSuccess { count ->
-                    job?.cancel()
-                    job = null
                     _song.value = emptySong(capo = 0)
                     _state.value = SongState.Library
                     // Reload before reporting, so the list is the restored one by the time the
@@ -632,14 +508,6 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
         _error.value = null
     }
 
-    override fun onCleared() {
-        job?.cancel()
-        super.onCleared()
-    }
-
     private fun emptySong(capo: Int) =
         Song(id = UUID.randomUUID().toString(), title = "", capo = capo)
-
-    private fun <T> List<T>.replaceAt(index: Int, transform: (T) -> T): List<T> =
-        mapIndexed { i, item -> if (i == index) transform(item) else item }
 }

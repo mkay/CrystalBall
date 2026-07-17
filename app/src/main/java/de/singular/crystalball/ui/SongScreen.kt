@@ -2,7 +2,6 @@ package de.singular.crystalball.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.clickable
@@ -35,7 +34,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -69,14 +67,10 @@ import de.singular.crystalball.Capo
 import de.singular.crystalball.ChordView
 import de.singular.crystalball.Settings
 import de.singular.crystalball.SongState
-import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.chords.Voicing
-import de.singular.crystalball.songs.CapturedChord
-import de.singular.crystalball.songs.PART_NAMES
 import de.singular.crystalball.songs.Part
 import de.singular.crystalball.songs.Song
 import de.singular.crystalball.songs.SongChord
-import de.singular.crystalball.songs.defaultVoicing
 
 /**
  * Names here are titles — "Wonderwall", "Chorus" — so the keyboard starts them in caps rather than
@@ -102,19 +96,11 @@ fun SongScreen(
     library: List<Song>,
     error: String?,
     settings: Settings,
-    onTitleDone: (String) -> Unit,
-    onEditTitle: () -> Unit,
-    onCancelTitle: () -> Unit,
+    onRenameCurrentSong: (String) -> Unit,
     onAddPart: () -> Unit,
     onSetCapo: () -> Unit,
     onRemovePart: (String) -> Unit,
     onMovePart: (Int, Int) -> Unit,
-    onStopCapture: () -> Unit,
-    onDiscardCapture: () -> Unit,
-    onEditChord: (Int) -> Unit,
-    onRemoveChord: (Int) -> Unit,
-    onSelectChord: (Chord) -> Unit,
-    onSelectVoicing: (Voicing) -> Unit,
     onOpenPart: (String) -> Unit,
     onViewSong: () -> Unit,
     onExportPdf: () -> Unit,
@@ -125,10 +111,6 @@ fun SongScreen(
     onSelectPartVoicing: (Voicing) -> Unit,
     onBackToPart: () -> Unit,
     onBackToEditor: () -> Unit,
-    onBackToReview: () -> Unit,
-    onReviewDone: () -> Unit,
-    onNamePart: (String) -> Unit,
-    onNewSong: () -> Unit,
     onOpenSong: (Song) -> Unit,
     onDeleteSongs: (Set<String>) -> Unit,
     onRenameSong: (String, String) -> Unit,
@@ -147,6 +129,10 @@ fun SongScreen(
     // for both, so there is one dialog and one last word before songs go.
     var pendingDelete by remember { mutableStateOf(emptySet<String>()) }
 
+    // The editor's rename dialog. Renaming is a dialog here, as it is from the library list — a
+    // detour that leaves you where it found you, not a page in a flow.
+    var renameOpen by remember { mutableStateOf(false) }
+
     // Keep the selection honest: drop ids the library no longer has — deleted here, or replaced
     // wholesale by a restore — and abandon it on the way out of the list entirely.
     LaunchedEffect(library, state) {
@@ -160,18 +146,11 @@ fun SongScreen(
     // Back means "up one page in the flow", which is not the same page for each of them.
     val back: () -> Unit = when (state) {
         is SongState.Library -> onClose
-        // Backing out of the first naming abandons the new song; out of a rename, only the
-        // rename.
-        is SongState.Title -> if (song.title.isBlank()) onBackToLibrary else onCancelTitle
         is SongState.Editor -> onBackToLibrary
-        is SongState.Capturing -> onDiscardCapture
-        is SongState.Review -> onDiscardCapture
-        is SongState.EditChord -> onBackToReview
         is SongState.PartView -> onBackToEditor
         is SongState.SongView -> onBackToEditor
         is SongState.Comment -> onCancelComment
         is SongState.EditPartChord -> onBackToPart
-        is SongState.Naming -> onBackToReview
     }
     // A selection is the innermost thing on screen, so back drops it before it navigates.
     BackHandler { if (selecting) selection = emptySet() else back() }
@@ -212,7 +191,7 @@ fun SongScreen(
                     // The title is the top bar now, so renaming belongs here rather than as a
                     // field competing with Save for what "commit" means.
                     if (state is SongState.Editor) {
-                        IconButton(onClick = onEditTitle) {
+                        IconButton(onClick = { renameOpen = true }) {
                             Icon(Icons.Default.Edit, contentDescription = "Rename song")
                         }
                     }
@@ -227,17 +206,11 @@ fun SongScreen(
                     Text(
                         if (selecting) "${selection.size} selected" else when (state) {
                             is SongState.Library -> "Songs"
-                            is SongState.Title ->
-                                if (song.title.isBlank()) "New song" else "Rename"
                             is SongState.Editor -> song.title.ifBlank { "Song" }
-                            is SongState.Capturing -> "Capture a part"
-                            is SongState.Review -> "What I heard"
-                            is SongState.EditChord -> "Chord ${state.index + 1}"
                             is SongState.PartView -> state.partName
                             is SongState.SongView -> song.title.ifBlank { "Song" }
                             is SongState.Comment -> "Comment"
                             is SongState.EditPartChord -> "Chord ${state.index + 1}"
-                            is SongState.Naming -> "Name the part"
                         },
                     )
                 },
@@ -265,19 +238,12 @@ fun SongScreen(
                         },
                         onRequestDelete = { pendingDelete = setOf(it) },
                         onRenameSong = onRenameSong,
-                        onNewSong = onNewSong,
                     )
-                is SongState.Title -> TitlePane(song, onTitleDone)
                 is SongState.Editor ->
                     SongEditorPane(
                         song, songSettings, onAddPart, onSetCapo, onRemovePart, onMovePart,
                         onOpenPart, onViewSong, onEditComment,
                     )
-                is SongState.Capturing -> CapturePane(state, songSettings, onStopCapture)
-                is SongState.Review ->
-                    ReviewPane(state, songSettings, onEditChord, onReviewDone, onDiscardCapture)
-                is SongState.EditChord ->
-                    EditChordPane(state, songSettings, onSelectChord, onSelectVoicing, onRemoveChord)
                 is SongState.SongView -> SongViewPane(song, songSettings)
                 is SongState.Comment -> CommentPane(song, onCommentDone)
                 is SongState.PartView ->
@@ -292,9 +258,16 @@ fun SongScreen(
                                 song, part, state.index, songSettings, onSelectPartVoicing,
                             )
                         }
-                is SongState.Naming -> NamingPane(song, onNamePart)
             }
         }
+    }
+
+    if (renameOpen) {
+        RenameSongDialog(
+            song = song,
+            onRename = { onRenameCurrentSong(it); renameOpen = false },
+            onDismiss = { renameOpen = false },
+        )
     }
 
     // One dialog for both ways songs get deleted — a row's own menu, and the selection's bulk
@@ -354,7 +327,6 @@ private fun LibraryPane(
     onToggleSelect: (String) -> Unit,
     onRequestDelete: (String) -> Unit,
     onRenameSong: (String, String) -> Unit,
-    onNewSong: () -> Unit,
 ) {
     var renameTarget by remember { mutableStateOf<Song?>(null) }
 
@@ -386,7 +358,8 @@ private fun LibraryPane(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Write one down: play its parts and it remembers the chords and how you play them.",
+                "Write one down: on the detect screen, tap “Detect multiple chords”, play its parts, " +
+                    "and save them here.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -404,16 +377,6 @@ private fun LibraryPane(
                 onDelete = { onRequestDelete(song.id) },
             )
         }
-    }
-
-    Spacer(Modifier.height(24.dp))
-    Button(
-        onClick = onNewSong,
-        shape = ControlShape,
-        enabled = error == null,
-        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
-    ) {
-        Text("New song", style = MaterialTheme.typography.titleMedium)
     }
 
     renameTarget?.let { target ->
@@ -562,47 +525,6 @@ private fun songSummary(song: Song): String {
     val capo = if (song.capo == 0) "No capo" else "Capo ${song.capo}"
     val parts = song.parts.joinToString(", ") { it.name }
     return if (parts.isEmpty()) capo else "$capo · $parts"
-}
-
-/**
- * The variations row, made a picker.
- *
- * The whole reason a song is worth more than a list of chord names: tapping one records *the shape
- * your hands make*, rather than the one the library happens to lead with. It wraps rather than
- * scrolls — a chord with eight ways to play it would otherwise hide most of them off the edge.
- *
- * The choice is marked with a ring rather than a filled card. [ChordDiagram] draws its lines and
- * dots in colours picked for the surface underneath, so tinting that surface puts light on light in
- * the dark theme and dark on dark in the light one — the selected shape would be the one you could
- * not read. A ring sits outside the diagram and leaves it on the background it was drawn for.
- */
-@Composable
-private fun VoicingPicker(
-    view: ChordView,
-    chosen: Voicing,
-    capo: Int,
-    onSelectVoicing: (Voicing) -> Unit,
-) {
-    SectionLabel("Other ways to play ${view.title}")
-    DiagramFlow {
-        view.voicings.forEach { voicing ->
-            val selected = voicing == chosen
-            ChordDiagram(
-                voicing = voicing,
-                width = SMALL_DIAGRAM_WIDTH,
-                caption = voicing.label,
-                capo = capo,
-                modifier = Modifier
-                    .clip(ControlShape)
-                    .then(
-                        if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, ControlShape)
-                        else Modifier,
-                    )
-                    .clickable { onSelectVoicing(voicing) }
-                    .padding(6.dp),
-            )
-        }
-    }
 }
 
 /**
@@ -793,47 +715,6 @@ private fun EditPartChordPane(
     VoicingPicker(view, chord.voicing, song.capo, onSelectVoicing)
 }
 
-/**
- * Naming the song, on its own, before any of the music.
- *
- * The text is held here and handed over whole on Next, rather than bound to the song keystroke by
- * keystroke. That is the point of the step: a field wired straight into the song looks saved while
- * it is not, and a Save button sitting beside it made it unclear which one you were committing.
- */
-@Composable
-private fun TitlePane(song: Song, onTitleDone: (String) -> Unit) {
-    var text by rememberSaveable(song.title) { mutableStateOf(song.title) }
-
-    Spacer(Modifier.height(24.dp))
-    Text(
-        "What's it called?",
-        style = MaterialTheme.typography.titleMedium,
-        textAlign = TextAlign.Center,
-    )
-    Spacer(Modifier.height(16.dp))
-    OutlinedTextField(
-        value = text,
-        onValueChange = { text = it },
-        label = { Text("Song title") },
-        singleLine = true,
-        shape = ControlShape,
-        keyboardOptions = NameKeyboard,
-        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH),
-    )
-    Spacer(Modifier.height(16.dp))
-    Button(
-        onClick = { onTitleDone(text) },
-        shape = ControlShape,
-        enabled = text.isNotBlank(),
-        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
-    ) {
-        Text(
-            if (song.title.isBlank()) "Next" else "Rename",
-            style = MaterialTheme.typography.titleMedium,
-        )
-    }
-}
-
 /** The song: what it was played behind, and the parts written down so far. */
 @Composable
 private fun SongEditorPane(
@@ -971,284 +852,3 @@ private fun SongEditorPane(
     )
 }
 
-/**
- * Capturing a part: strum, let it ring, watch it land, mute, strum the next.
- *
- * The muting is not fussiness, it is the technique the capture needs, and testing on the guitar is
- * what established it: a chord left ringing is still sounding when the next pass opens, so its
- * decay is read as the next chord — the reading comes back wrong rather than absent. Silence
- * between chords is what separates them, so the screen has to ask for it in as many words.
- */
-@Composable
-private fun CapturePane(
-    state: SongState.Capturing,
-    settings: Settings,
-    onDone: () -> Unit,
-) {
-    Spacer(Modifier.height(8.dp))
-    SpinningLogo()
-    Spacer(Modifier.height(16.dp))
-    Text(
-        if (state.captured.isEmpty() && !state.heardStrum) "Strum the first chord"
-        else "Chord ${state.captured.size + 1} — strum and let it ring",
-        style = MaterialTheme.typography.titleMedium,
-        textAlign = TextAlign.Center,
-    )
-    Spacer(Modifier.height(4.dp))
-    Text(
-        "Mute the strings once it lands. A chord still ringing bleeds into the next one and blurs it.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-    )
-    Spacer(Modifier.height(12.dp))
-    CapturedRow(state.captured, settings)
-    Spacer(Modifier.height(20.dp))
-    LevelMeter(state.level)
-    Spacer(Modifier.height(28.dp))
-    OutlinedButton(
-        onClick = onDone,
-        shape = ControlShape,
-        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
-    ) {
-        Text("Done", style = MaterialTheme.typography.titleMedium)
-    }
-    Spacer(Modifier.height(8.dp))
-    Text(
-        "Or just stop playing — it ends on its own.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-    )
-}
-
-/**
- * The captured run, before it is committed.
- *
- * Review is not optional and this is why: a forgotten mute produces a *wrong* chord rather than a
- * missing one, and nothing about it looks broken. Tapping one opens the same question the result
- * page answers.
- */
-@Composable
-private fun ReviewPane(
-    state: SongState.Review,
-    settings: Settings,
-    onEditChord: (Int) -> Unit,
-    onDone: () -> Unit,
-    onDiscard: () -> Unit,
-) {
-    Spacer(Modifier.height(8.dp))
-    if (state.captured.isEmpty()) {
-        Text("Nothing captured.", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Hold the phone near the guitar and try again.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    } else {
-        Text(
-            "${state.captured.size} chords",
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "Tap a chord to fix it, or to say how you play it.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(12.dp))
-        CapturedRow(state.captured, settings, onClick = onEditChord)
-    }
-
-    Spacer(Modifier.height(28.dp))
-    Button(
-        onClick = onDone,
-        shape = ControlShape,
-        enabled = state.captured.isNotEmpty(),
-        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
-    ) {
-        Text("Name the part", style = MaterialTheme.typography.titleMedium)
-    }
-    Spacer(Modifier.height(4.dp))
-    TextButton(
-        onClick = onDiscard,
-        shape = ControlShape,
-        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(48.dp),
-    ) {
-        Text("Discard", style = MaterialTheme.typography.titleSmall)
-    }
-}
-
-/**
- * One captured chord: what it is, and how you play it.
- *
- * The same two rows the result page shows, both live here: the runner-ups fix what was misheard,
- * and the variations are the whole reason a song is worth more than a list of chord names — tapping
- * one records *the shape your hands make*, rather than the one the library happens to lead with.
- */
-@Composable
-private fun EditChordPane(
-    state: SongState.EditChord,
-    settings: Settings,
-    onSelectChord: (Chord) -> Unit,
-    onSelectVoicing: (Voicing) -> Unit,
-    onRemoveChord: (Int) -> Unit,
-) {
-    val captured = state.captured[state.index]
-    val view = ChordView.of(captured.selected, settings)
-    val chosen = captured.voicing ?: view.best
-
-    Spacer(Modifier.height(8.dp))
-    Text(view.title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
-    if (view.subtitle != null) {
-        Text(
-            view.subtitle,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-    Spacer(Modifier.height(8.dp))
-    ChordDiagram(
-        voicing = chosen,
-        width = BEST_DIAGRAM_WIDTH,
-        caption = chosen.label,
-        capo = settings.capo,
-    )
-
-    Spacer(Modifier.height(28.dp))
-    VoicingPicker(view, chosen, settings.capo, onSelectVoicing)
-
-    if (captured.alternatives.isNotEmpty()) {
-        Spacer(Modifier.height(24.dp))
-        SectionLabel("Or did you mean")
-        DiagramRow {
-            captured.alternatives.forEach { candidate ->
-                val voicing = defaultVoicing(candidate.chord, settings.capo)
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clip(ControlShape)
-                        .clickable { onSelectChord(candidate.chord) }
-                        .padding(4.dp),
-                ) {
-                    Text(
-                        Capo.shortName(candidate.chord, settings.capo, settings.nameStyle),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    ChordDiagram(
-                        voicing = voicing,
-                        width = SMALL_DIAGRAM_WIDTH,
-                        capo = settings.capo,
-                    )
-                }
-            }
-        }
-    }
-
-    Spacer(Modifier.height(24.dp))
-    TextButton(
-        onClick = { onRemoveChord(state.index) },
-        shape = ControlShape,
-        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(48.dp),
-    ) {
-        Text("Remove this chord", style = MaterialTheme.typography.titleSmall)
-    }
-}
-
-/**
- * Naming the run, which is what turns it into a part.
- *
- * Naming comes after playing on purpose: typing "Chorus" with a guitar on your lap is the worst
- * moment to ask for it, so the common names are one tap. A name already used is disabled rather
- * than hidden — that is the one-of-each rule showing its work, and it doubles as a reminder of
- * what the song already has.
- */
-@Composable
-private fun NamingPane(song: Song, onNamePart: (String) -> Unit) {
-    var custom by rememberSaveable { mutableStateOf("") }
-    val used = song.parts.map { it.name }.toSet()
-
-    Spacer(Modifier.height(8.dp))
-    Text(
-        "What was that?",
-        style = MaterialTheme.typography.titleMedium,
-        textAlign = TextAlign.Center,
-    )
-    Spacer(Modifier.height(12.dp))
-    ChipRow {
-        PART_NAMES.forEach { name ->
-            FilterChip(
-                selected = false,
-                enabled = name !in used,
-                onClick = { onNamePart(name) },
-                shape = ControlShape,
-                label = { Text(name) },
-            )
-        }
-    }
-    Spacer(Modifier.height(20.dp))
-    OutlinedTextField(
-        value = custom,
-        onValueChange = { custom = it },
-        label = { Text("Or a name of your own") },
-        singleLine = true,
-        shape = ControlShape,
-        keyboardOptions = NameKeyboard,
-        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH),
-    )
-    Spacer(Modifier.height(12.dp))
-    Button(
-        onClick = { onNamePart(custom) },
-        shape = ControlShape,
-        enabled = custom.isNotBlank(),
-        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
-    ) {
-        Text("Save part", style = MaterialTheme.typography.titleMedium)
-    }
-    if (custom.trim() in used) {
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "\"${custom.trim()}\" already exists — saving replaces it.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-/** The captured run, in order. Named through [Capo], so the song's capo decides what to call it. */
-@Composable
-private fun CapturedRow(
-    captured: List<CapturedChord>,
-    settings: Settings,
-    onClick: ((Int) -> Unit)? = null,
-) {
-    if (captured.isEmpty()) {
-        Text(
-            "—",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        return
-    }
-    // Enabled even where there is nothing to tap: during capture these are feedback, not controls,
-    // and a disabled chip greys out exactly the word you are waiting to read.
-    ChipFlow {
-        captured.forEachIndexed { index, chord ->
-            FilterChip(
-                selected = false,
-                onClick = { onClick?.invoke(index) },
-                shape = ControlShape,
-                label = {
-                    Text(Capo.shortName(chord.selected, settings.capo, settings.nameStyle))
-                },
-            )
-        }
-    }
-}

@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -24,6 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,11 +41,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import de.singular.crystalball.Capo
 import de.singular.crystalball.ChordView
 import de.singular.crystalball.DetectState
+import de.singular.crystalball.SaveTarget
 import de.singular.crystalball.Settings
 import de.singular.crystalball.R
 import de.singular.crystalball.audio.Chord
@@ -49,15 +56,30 @@ import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.audio.ROOT_NAMES
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.Voicing
+import de.singular.crystalball.songs.CapturedChord
+import de.singular.crystalball.songs.PART_NAMES
+import de.singular.crystalball.songs.Song
+import de.singular.crystalball.songs.defaultVoicing
 
 @Composable
 fun DetectScreen(
     state: DetectState,
     settings: Settings,
+    library: List<Song>,
+    captureTargetId: String?,
     onDetect: () -> Unit,
+    onCapture: () -> Unit,
     onCancel: () -> Unit,
     onSelect: (Chord) -> Unit,
     onSelectVoicing: (Voicing) -> Unit,
+    onStopCapture: () -> Unit,
+    onDiscardCapture: () -> Unit,
+    onEditCaptured: (Int) -> Unit,
+    onSelectCapturedChord: (Chord) -> Unit,
+    onSelectCapturedVoicing: (Voicing) -> Unit,
+    onRemoveCaptured: (Int) -> Unit,
+    onBackToCaptureReview: () -> Unit,
+    onSaveCapture: (List<CapturedChord>, String, SaveTarget) -> Unit,
     onSetCapo: () -> Unit,
     onOpenMenu: () -> Unit,
     onOpenAppSettings: () -> Unit,
@@ -72,12 +94,23 @@ fun DetectScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             when (state) {
-                is DetectState.Idle -> IdlePane(onDetect, settings.capo, onSetCapo)
-                is DetectState.Silence -> SilencePane(onDetect, settings.capo, onSetCapo)
+                is DetectState.Idle -> IdlePane(onDetect, onCapture, settings.capo, onSetCapo)
+                is DetectState.Silence -> SilencePane(onDetect, onCapture, settings.capo, onSetCapo)
                 is DetectState.Listening -> ListeningPane(state, onCancel)
                 is DetectState.Result -> ResultPane(state, settings, onDetect, onSelect, onSelectVoicing)
                 is DetectState.Browse ->
                     BrowsePane(state, settings, onSelect, onSelectVoicing, onSetCapo, onDetect)
+                is DetectState.Capturing -> CapturingPane(state, settings, onStopCapture)
+                is DetectState.CaptureReview ->
+                    CaptureReviewPane(
+                        state, settings, library, captureTargetId,
+                        onEditCaptured, onDiscardCapture, onSaveCapture,
+                    )
+                is DetectState.EditCaptured ->
+                    EditCapturedPane(
+                        state, settings, onSelectCapturedChord, onSelectCapturedVoicing,
+                        onRemoveCaptured,
+                    )
             }
         }
         var showKeepAwakeInfo by rememberSaveable { mutableStateOf(false) }
@@ -148,8 +181,13 @@ fun DetectScreen(
 }
 
 @Composable
-private fun IdlePane(onDetect: () -> Unit, capo: Int, onSetCapo: () -> Unit) {
-    Spacer(Modifier.height(40.dp))
+private fun IdlePane(
+    onDetect: () -> Unit,
+    onCapture: () -> Unit,
+    capo: Int,
+    onSetCapo: () -> Unit,
+) {
+    Spacer(Modifier.height(ICON_ROW_HEIGHT))
     Logo()
     Spacer(Modifier.height(16.dp))
     Text(
@@ -159,14 +197,19 @@ private fun IdlePane(onDetect: () -> Unit, capo: Int, onSetCapo: () -> Unit) {
         textAlign = TextAlign.Center,
     )
     Spacer(Modifier.height(28.dp))
-    DetectButton(onDetect)
+    DetectButtons(onDetect, onCapture)
     Spacer(Modifier.height(4.dp))
     CapoLink(capo, onSetCapo)
 }
 
 @Composable
-private fun SilencePane(onDetect: () -> Unit, capo: Int, onSetCapo: () -> Unit) {
-    Spacer(Modifier.height(40.dp))
+private fun SilencePane(
+    onDetect: () -> Unit,
+    onCapture: () -> Unit,
+    capo: Int,
+    onSetCapo: () -> Unit,
+) {
+    Spacer(Modifier.height(ICON_ROW_HEIGHT))
     Logo()
     Spacer(Modifier.height(16.dp))
     Text(
@@ -182,9 +225,39 @@ private fun SilencePane(onDetect: () -> Unit, capo: Int, onSetCapo: () -> Unit) 
         textAlign = TextAlign.Center,
     )
     Spacer(Modifier.height(28.dp))
-    DetectButton(onDetect)
+    DetectButtons(onDetect, onCapture)
     Spacer(Modifier.height(4.dp))
     CapoLink(capo, onSetCapo)
+}
+
+/**
+ * The two ways in: name one chord, or take a run of them.
+ *
+ * The single-chord button keeps the weight — it is what the app is for, and what the hands reach for
+ * without looking. Capturing a run is the deliberate act, so it sits below as the quieter outlined
+ * button and carries two microphones to say, at a glance, that it hears more than one.
+ */
+@Composable
+private fun DetectButtons(onDetect: () -> Unit, onCapture: () -> Unit) {
+    DetectButton(onDetect, label = "Detect single chord")
+    Spacer(Modifier.height(12.dp))
+    OutlinedButton(
+        onClick = onCapture,
+        shape = ControlShape,
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = BUTTON_MAX_WIDTH)
+            .height(BUTTON_HEIGHT),
+    ) {
+        Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(24.dp))
+        Icon(
+            Icons.Default.Mic,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp).offset(x = (-8).dp),
+        )
+        Spacer(Modifier.width(4.dp))
+        Text("Detect multiple chords", style = MaterialTheme.typography.titleMedium)
+    }
 }
 
 /**
@@ -432,3 +505,402 @@ private fun AlternativeDiagram(
         ChordDiagram(voicing = voicing, width = SMALL_DIAGRAM_WIDTH, capo = settings.capo)
     }
 }
+
+/**
+ * Detecting a run of chords: strum, let it ring, watch its shape land, mute, strum the next.
+ *
+ * The muting is the technique, not fussiness — a chord left ringing bleeds into the next pass and is
+ * read as the next chord. Each landed chord shows the shape you'd play it with, stacking down the
+ * page, so a wrong read is something you can see the moment it happens rather than at the end.
+ */
+@Composable
+private fun CapturingPane(
+    state: DetectState.Capturing,
+    settings: Settings,
+    onDone: () -> Unit,
+) {
+    Spacer(Modifier.height(8.dp))
+    SpinningLogo()
+    Spacer(Modifier.height(16.dp))
+    Text(
+        if (state.captured.isEmpty() && !state.heardStrum) "Strum the first chord"
+        else "Chord ${state.captured.size + 1} — strum and let it ring",
+        style = MaterialTheme.typography.titleMedium,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        "Mute the strings once it lands. A chord still ringing bleeds into the next one and blurs it.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(16.dp))
+    CapturedDiagrams(state.captured, settings)
+    Spacer(Modifier.height(20.dp))
+    LevelMeter(state.level)
+    Spacer(Modifier.height(28.dp))
+    Button(
+        onClick = onDone,
+        shape = ControlShape,
+        enabled = state.captured.isNotEmpty(),
+        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
+    ) {
+        Text("Done", style = MaterialTheme.typography.titleMedium)
+    }
+    Spacer(Modifier.height(8.dp))
+    Text(
+        "Or just stop playing — it ends on its own.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
+}
+
+/**
+ * The captured run, stopped and held: fix what was misheard, then say where it goes.
+ *
+ * Review is not optional and this is why: a forgotten mute produces a *wrong* chord rather than a
+ * missing one, and nothing about it looks broken. Tapping one opens the same question the result
+ * page answers. Nothing is a song yet — [SaveAsDialog] is where the run becomes a part.
+ */
+@Composable
+private fun CaptureReviewPane(
+    state: DetectState.CaptureReview,
+    settings: Settings,
+    library: List<Song>,
+    captureTargetId: String?,
+    onEditCaptured: (Int) -> Unit,
+    onDiscard: () -> Unit,
+    onSaveCapture: (List<CapturedChord>, String, SaveTarget) -> Unit,
+) {
+    var saveOpen by rememberSaveable { mutableStateOf(false) }
+
+    Spacer(Modifier.height(ICON_ROW_HEIGHT))
+    if (state.captured.isEmpty()) {
+        Text("Nothing captured.", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Hold the phone near the guitar and try again.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(24.dp))
+        OutlinedButton(
+            onClick = onDiscard,
+            shape = ControlShape,
+            modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
+        ) {
+            Text("Back", style = MaterialTheme.typography.titleMedium)
+        }
+        return
+    }
+
+    Text(
+        "${state.captured.size} chords",
+        style = MaterialTheme.typography.displaySmall,
+        fontWeight = FontWeight.SemiBold,
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        "Tap a chord to fix it, or to say how you play it.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(16.dp))
+    CapturedDiagrams(state.captured, settings, onEdit = onEditCaptured)
+
+    Spacer(Modifier.height(28.dp))
+    Button(
+        onClick = { saveOpen = true },
+        shape = ControlShape,
+        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
+    ) {
+        Text("Save as…", style = MaterialTheme.typography.titleMedium)
+    }
+    Spacer(Modifier.height(4.dp))
+    TextButton(
+        onClick = onDiscard,
+        shape = ControlShape,
+        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(48.dp),
+    ) {
+        Text("Discard", style = MaterialTheme.typography.titleSmall)
+    }
+
+    if (saveOpen) {
+        SaveAsDialog(
+            settings = settings,
+            library = library,
+            presetTargetId = captureTargetId,
+            onDismiss = { saveOpen = false },
+            onSave = { partName, target ->
+                saveOpen = false
+                onSaveCapture(state.captured, partName, target)
+            },
+        )
+    }
+}
+
+/**
+ * The run so far, each chord as the shape you'd play it, stacking as they land.
+ *
+ * In review [onEdit] makes each one tappable to fix; during capture it is null and these are
+ * feedback, not controls — the diagram appearing is how you know that chord landed.
+ */
+@Composable
+private fun CapturedDiagrams(
+    captured: List<CapturedChord>,
+    settings: Settings,
+    onEdit: ((Int) -> Unit)? = null,
+) {
+    if (captured.isEmpty()) {
+        Text(
+            "—",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
+    DiagramFlow {
+        captured.forEachIndexed { index, chord ->
+            val voicing = chord.voicing ?: defaultVoicing(chord.selected, settings.capo)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clip(ControlShape)
+                    .then(if (onEdit != null) Modifier.clickable { onEdit(index) } else Modifier)
+                    .padding(4.dp),
+            ) {
+                Text(
+                    Capo.shortName(chord.selected, settings.capo, settings.nameStyle),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                )
+                Spacer(Modifier.height(4.dp))
+                ChordDiagram(voicing = voicing, width = SMALL_DIAGRAM_WIDTH, capo = settings.capo)
+            }
+        }
+    }
+}
+
+/**
+ * One captured chord: what it is, and how you play it.
+ *
+ * The same two rows the result page shows: the runner-ups fix what was misheard, and the variations
+ * record *the shape your hands make*. The twin of the song editor's chord page, on the detect side —
+ * because fixing a misread belongs in the moment you played it, before it is a song at all.
+ */
+@Composable
+private fun EditCapturedPane(
+    state: DetectState.EditCaptured,
+    settings: Settings,
+    onSelectChord: (Chord) -> Unit,
+    onSelectVoicing: (Voicing) -> Unit,
+    onRemove: (Int) -> Unit,
+) {
+    val captured = state.captured.getOrNull(state.index) ?: return
+    val view = ChordView.of(captured.selected, settings)
+    val chosen = captured.voicing ?: view.best
+
+    Spacer(Modifier.height(ICON_ROW_HEIGHT))
+    Text(view.title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
+    if (view.subtitle != null) {
+        Text(
+            view.subtitle,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    Spacer(Modifier.height(8.dp))
+    ChordDiagram(
+        voicing = chosen,
+        width = BEST_DIAGRAM_WIDTH,
+        caption = chosen.label,
+        capo = settings.capo,
+    )
+
+    Spacer(Modifier.height(28.dp))
+    VoicingPicker(view, chosen, settings.capo, onSelectVoicing)
+
+    if (captured.alternatives.isNotEmpty()) {
+        Spacer(Modifier.height(24.dp))
+        SectionLabel("Or did you mean")
+        DiagramRow {
+            captured.alternatives.forEach { candidate ->
+                AlternativeDiagram(
+                    candidate = candidate,
+                    settings = settings,
+                    onClick = { onSelectChord(candidate.chord) },
+                )
+            }
+        }
+    }
+
+    Spacer(Modifier.height(24.dp))
+    TextButton(
+        onClick = { onRemove(state.index) },
+        shape = ControlShape,
+        modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(48.dp),
+    ) {
+        Text("Remove this chord", style = MaterialTheme.typography.titleSmall)
+    }
+}
+
+/**
+ * Where the captured run goes: a part name, and a song — new or one already in the library.
+ *
+ * The two decisions the old flow made you take *before* playing a note, asked once at the end when
+ * the chords are already in hand. Naming leads with the common section names as chips, because
+ * typing "Chorus" with a guitar on your lap is the worst moment to ask for it.
+ *
+ * Adding to an existing song at a different capo is safe — the chords are stored as they sound, so
+ * only the shapes change — but it is said out loud rather than done silently, so the shapes turning
+ * out different from what you just played is never a surprise.
+ */
+@Composable
+private fun SaveAsDialog(
+    settings: Settings,
+    library: List<Song>,
+    presetTargetId: String?,
+    onDismiss: () -> Unit,
+    onSave: (String, SaveTarget) -> Unit,
+) {
+    val preset = library.firstOrNull { it.id == presetTargetId }
+    var partName by rememberSaveable { mutableStateOf("") }
+    var toExisting by rememberSaveable { mutableStateOf(preset != null) }
+    var title by rememberSaveable { mutableStateOf("") }
+    var selectedId by rememberSaveable { mutableStateOf(preset?.id ?: library.firstOrNull()?.id) }
+
+    val selectedSong = library.firstOrNull { it.id == selectedId }
+    val used = if (toExisting) selectedSong?.parts?.map { it.name }?.toSet().orEmpty() else emptySet()
+    val name = partName.trim()
+
+    val canSave = name.isNotEmpty() &&
+        if (toExisting) selectedId != null else title.isNotBlank()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Save these chords") },
+        text = {
+            Column(
+                Modifier
+                    .heightIn(max = 420.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                SectionLabel("Name this part")
+                ChipFlow {
+                    PART_NAMES.forEach { partLabel ->
+                        FilterChip(
+                            selected = name == partLabel,
+                            enabled = partLabel !in used,
+                            onClick = { partName = partLabel },
+                            shape = ControlShape,
+                            label = { Text(partLabel) },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = partName,
+                    onValueChange = { partName = it },
+                    label = { Text("Or a name of your own") },
+                    singleLine = true,
+                    shape = ControlShape,
+                    keyboardOptions = NameKeyboard,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (name in used) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "\"$name\" already exists in that song — saving replaces it.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
+                SectionLabel("Save it to")
+                RadioRow("A new song", selected = !toExisting) { toExisting = false }
+                if (!toExisting) {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Song title") },
+                        singleLine = true,
+                        shape = ControlShape,
+                        keyboardOptions = NameKeyboard,
+                        modifier = Modifier.fillMaxWidth().padding(start = 32.dp),
+                    )
+                }
+                if (library.isNotEmpty()) {
+                    RadioRow("An existing song", selected = toExisting) { toExisting = true }
+                    if (toExisting) {
+                        Column(Modifier.padding(start = 32.dp)) {
+                            ChipFlow {
+                                library.forEach { song ->
+                                    FilterChip(
+                                        selected = selectedId == song.id,
+                                        onClick = { selectedId = song.id },
+                                        shape = ControlShape,
+                                        label = { Text(song.title) },
+                                    )
+                                }
+                            }
+                            if (selectedSong != null && selectedSong.capo != settings.capo) {
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    capoMoveNote(settings.capo, selectedSong.capo),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = canSave,
+                onClick = {
+                    val target =
+                        if (toExisting) SaveTarget.Existing(selectedId!!)
+                        else SaveTarget.NewSong(title, settings.capo)
+                    onSave(name, target)
+                },
+            ) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+/** A radio option with its label, the whole row tappable. */
+@Composable
+private fun RadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(ControlShape)
+            .clickable(onClick = onSelect)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = onSelect)
+        Text(label, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+/** Say what moving the run onto a song at a different capo does — and, quietly, what it does not. */
+private fun capoMoveNote(from: Int, to: Int): String {
+    val here = if (from == 0) "without a capo" else "behind capo $from"
+    val there = if (to == 0) "has no capo" else "is at capo $to"
+    return "You played this $here; that song $there. The chords keep their sound — only the shapes change."
+}
+
+/**
+ * Names here are titles — "Wonderwall", "Chorus" — so the keyboard starts them in caps rather than
+ * making you reach for shift with a guitar in your lap.
+ */
+private val NameKeyboard = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)

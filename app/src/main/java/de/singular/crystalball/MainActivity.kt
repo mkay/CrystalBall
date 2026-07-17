@@ -68,30 +68,38 @@ class MainActivity : ComponentActivity() {
             }
             CrystalBallTheme(settings.themeMode) {
                 val state by viewModel.state.collectAsStateWithLifecycle()
+                // Collected out here, not just inside the songs screen: the detect screen's
+                // "Save to an existing song" reads it too.
+                val library by songViewModel.library.collectAsStateWithLifecycle()
 
                 // Detection is the only thing the app does, so the permission is requested on the
                 // first press rather than at launch — by then it is obvious what it is for. Granting
                 // it starts the pass immediately, so one press is enough.
                 // Which of the two microphone actions a pending grant belongs to: detecting one
-                // chord, or capturing a part.
+                // chord, or capturing a run of them. Both live on [DetectViewModel] now.
                 var pendingCapture by rememberSaveable { mutableStateOf(false) }
                 val permissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestPermission(),
                 ) { granted ->
                     if (granted) {
-                        if (pendingCapture) songViewModel.startCaptureOnPermissionGranted()
+                        if (pendingCapture) viewModel.startCaptureOnPermissionGranted()
                         else viewModel.detectOnPermissionGranted()
                     }
                     pendingCapture = false
                 }
+
+                // The song this capture will be offered to first, set when the run is started from an
+                // open song's editor. Null for a capture begun from the home screen. Saveable, so a
+                // permission dialog or a rotation cannot lose which song we were adding to.
+                var captureTarget by rememberSaveable { mutableStateOf<String?>(null) }
 
                 val onDetect = {
                     if (viewModel.hasMicPermission) viewModel.detect()
                     else permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 }
 
-                val onCapturePart = {
-                    if (songViewModel.hasMicPermission) songViewModel.startCapture()
+                val onCapture = {
+                    if (viewModel.hasMicPermission) viewModel.startCapture()
                     else {
                         pendingCapture = true
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -154,6 +162,29 @@ class MainActivity : ComponentActivity() {
                     songViewModel.consumeBackupResult()
                 }
 
+                // A capture saved from the detect screen lands here: say what happened, and on
+                // success step into the songs screen, which [saveCapture] has already opened at the
+                // saved song's editor — so a save is something you see, not just a toast.
+                val saveResult by songViewModel.saveResult.collectAsStateWithLifecycle()
+                LaunchedEffect(saveResult) {
+                    when (val result = saveResult) {
+                        null -> return@LaunchedEffect
+                        is SaveResult.Saved -> {
+                            Toast.makeText(
+                                view.context,
+                                "Saved “${result.partName}” to ${result.songTitle}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            captureTarget = null
+                            viewModel.showDetect()
+                            songsOpen = true
+                        }
+                        is SaveResult.Failed ->
+                            Toast.makeText(view.context, result.reason, Toast.LENGTH_LONG).show()
+                    }
+                    songViewModel.consumeSaveResult()
+                }
+
                 if (confirmRestore) {
                     AlertDialog(
                         onDismissRequest = { confirmRestore = false },
@@ -189,7 +220,6 @@ class MainActivity : ComponentActivity() {
                 if (songsOpen) {
                     val song by songViewModel.song.collectAsStateWithLifecycle()
                     val songState by songViewModel.state.collectAsStateWithLifecycle()
-                    val library by songViewModel.library.collectAsStateWithLifecycle()
                     val songError by songViewModel.error.collectAsStateWithLifecycle()
                     val exported by songViewModel.exported.collectAsStateWithLifecycle()
 
@@ -212,19 +242,17 @@ class MainActivity : ComponentActivity() {
                         library = library,
                         error = songError,
                         settings = settings,
-                        onTitleDone = songViewModel::titleDone,
-                        onEditTitle = songViewModel::editTitle,
-                        onCancelTitle = songViewModel::cancelTitle,
-                        onAddPart = onCapturePart,
+                        onRenameCurrentSong = songViewModel::renameCurrentSong,
+                        // Adding a part is a capture, and capture lives on the detect screen — so
+                        // leave songs, remember which song this run is for, and start listening.
+                        onAddPart = {
+                            captureTarget = song.id
+                            songsOpen = false
+                            onCapture()
+                        },
                         onSetCapo = { songCapoOpen = true },
                         onRemovePart = songViewModel::removePart,
                         onMovePart = songViewModel::movePart,
-                        onStopCapture = songViewModel::stopCapture,
-                        onDiscardCapture = songViewModel::discardCapture,
-                        onEditChord = songViewModel::editChord,
-                        onRemoveChord = songViewModel::removeChord,
-                        onSelectChord = songViewModel::selectChord,
-                        onSelectVoicing = songViewModel::selectVoicing,
                         onOpenPart = songViewModel::openPart,
                         onViewSong = songViewModel::viewSong,
                         onExportPdf = { pdfLauncher.launch(pdfFileName(song.title)) },
@@ -235,16 +263,11 @@ class MainActivity : ComponentActivity() {
                         onSelectPartVoicing = songViewModel::selectPartVoicing,
                         onBackToPart = songViewModel::backToPart,
                         onBackToEditor = songViewModel::backToEditor,
-                        onBackToReview = songViewModel::backToReview,
-                        onReviewDone = songViewModel::reviewDone,
-                        onNamePart = songViewModel::namePart,
-                        onNewSong = { songViewModel.startNewSong(settings.capo) },
                         onOpenSong = songViewModel::openSong,
                         onDeleteSongs = songViewModel::deleteSongs,
                         onRenameSong = songViewModel::renameSong,
                         onBackToLibrary = songViewModel::backToLibrary,
-                        // Releases the microphone on the way out, whatever page we leave from.
-                        onClose = { songViewModel.discardCapture(); songsOpen = false },
+                        onClose = { songsOpen = false },
                     )
                     if (songCapoOpen) {
                         // Shows the song's capo, not the live one — and moving it moves both,
@@ -281,10 +304,18 @@ class MainActivity : ComponentActivity() {
                 // gesture — a swipe in from the screen edge — returns there rather than dropping
                 // out of the app. From home itself, back keeps its usual meaning and exits.
                 //
-                // Stood down while the drawer is open, so back closes the drawer first (its own
-                // handler) instead of teleporting the page out from underneath it.
+                // Editing one captured chord steps back to the run; everything else backs out to
+                // home, which for a captured run means dropping it. Stood down while the drawer is
+                // open, so back closes the drawer first (its own handler) instead of teleporting the
+                // page out from underneath it.
                 BackHandler(enabled = state !is DetectState.Idle && !drawerState.isOpen) {
-                    viewModel.cancel()
+                    when (state) {
+                        is DetectState.EditCaptured -> viewModel.backToCaptureReview()
+                        else -> {
+                            viewModel.cancel()
+                            captureTarget = null
+                        }
+                    }
                 }
 
                 ModalNavigationDrawer(
@@ -306,10 +337,23 @@ class MainActivity : ComponentActivity() {
                         DetectScreen(
                             state = state,
                             settings = settings,
+                            library = library,
+                            captureTargetId = captureTarget,
                             onDetect = onDetect,
+                            onCapture = { captureTarget = null; onCapture() },
                             onCancel = viewModel::cancel,
                             onSelect = viewModel::select,
                             onSelectVoicing = viewModel::selectVoicing,
+                            onStopCapture = viewModel::stopCapture,
+                            onDiscardCapture = { viewModel.showDetect(); captureTarget = null },
+                            onEditCaptured = viewModel::editCaptured,
+                            onSelectCapturedChord = viewModel::selectCapturedChord,
+                            onSelectCapturedVoicing = viewModel::selectCapturedVoicing,
+                            onRemoveCaptured = viewModel::removeCaptured,
+                            onBackToCaptureReview = viewModel::backToCaptureReview,
+                            onSaveCapture = { captured, partName, target ->
+                                songViewModel.saveCapture(captured, partName, target)
+                            },
                             onSetCapo = { capoOpen = true },
                             onOpenMenu = { scope.launch { drawerState.open() } },
                             onOpenAppSettings = { settingsOpen = true },
