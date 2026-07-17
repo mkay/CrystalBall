@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Adaptive-icon foreground, converted from the supplied artwork (icon.svg): an orbital swirl
-  around the ball, in the app accent. The source is 493x490, scaled here into the central 72x72
-  safe zone of the 108 canvas so no launcher mask can clip it. The scale is uniform on both axes
-  and the shorter one is centred in the leftover 0.44, rather than stretching the artwork square.
+  around the ball, in the app accent. The source is 493x490, scaled here to ~62x62 and centred in
+  the 108 canvas, leaving ~23 of padding. That is well inside the 72x72 safe zone, which is the
+  clipping floor rather than the size to draw to: RubberRing's icon insets to ~20.4 and this one
+  goes a little further still, because the swirl reaches the corners of its own bounding box where
+  RubberRing's loop is round and falls away from them — matching the numbers would draw this icon
+  bigger than that one. The scale is uniform on both axes and the shorter one is centred in the
+  leftover 0.44, rather than stretching the artwork square.
 
   The artwork is drawn in two mid-tones on a transparent ground, so it reads against a light or a
   dark background. @color/ic_launcher_background stays dark all the same: the paler #CAD2F6 arcs
@@ -16,10 +20,10 @@
     android:viewportHeight="108">
 
     <group
-        android:scaleX="0.146045"
-        android:scaleY="0.146045"
-        android:translateX="18"
-        android:translateY="18.219">
+        android:scaleX="0.125817"
+        android:scaleY="0.125817"
+        android:translateX="22.999"
+        android:translateY="23.221">
 
         <path
             android:fillColor="#919AC5"
