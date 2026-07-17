@@ -94,22 +94,33 @@ internal fun DrawScope.drawChordBox(
     val w = size.width
     val h = size.height
 
-    // Room above the grid for the open/muted markers, and to the right for the "5fr" label.
+    val open = voicing.isOpenPosition
+    val base = voicing.baseFret
+    val thin = (w * THIN_STROKE).coerceAtLeast(1f)
+
+    // Room above the grid for the open/muted markers, and to the right for the "5fr" label. The
+    // right gutter is measured rather than guessed: it has to hold the label *plus* the rounded cap
+    // of a barre, which overhangs the outermost string by a dot radius. A fixed share of the width
+    // either clipped "10fr" or wasted a gutter's worth of grid on shapes that carry no label.
+    // The label says which fret the window starts at, as numbered on the guitar — so the capo is
+    // added back on. The shape's own frets are counted from the capo, but the player reads the dots
+    // on their neck, and a number that means neither is just confusing. The capo's own position is
+    // not written here; the caption under the diagram already carries it.
+    val label = if (open) null else measurer.measure("${base + capo}fr", labelStyle)
     val markerBand = h * MARKER_BAND
-    val sideGutter = w * SIDE_GUTTER
-    val gridLeft = sideGutter
-    val gridRight = w - sideGutter
+    val gridLeft = w * SIDE_GUTTER
+    // Solve for the grid width that leaves room for the barre overhang the grid itself implies.
+    val overhangRatio = DOT_RADIUS / (STRING_COUNT - 1)
+    val labelSpace = if (label == null) 0f else label.size.width + thin * 2f
+    val gridRight = ((w - gridLeft - labelSpace) + gridLeft * overhangRatio) / (1f + overhangRatio)
     val gridTop = markerBand
     val gridBottom = h
     val gridWidth = gridRight - gridLeft
     val fretGap = (gridBottom - gridTop) / Voicing.WINDOW_FRETS
     val stringGap = gridWidth / (STRING_COUNT - 1)
-    val thin = (w * THIN_STROKE).coerceAtLeast(1f)
+    val dotRadius = stringGap * DOT_RADIUS
 
     fun stringX(s: Int) = gridLeft + s * stringGap
-
-    val open = voicing.isOpenPosition
-    val base = voicing.baseFret
 
     // Strings.
     for (s in 0 until STRING_COUNT) {
@@ -130,23 +141,16 @@ internal fun DrawScope.drawChordBox(
         )
     }
 
-    // Which fret the window starts at, as numbered on the guitar — so the capo is added back on.
-    // The shape's own frets are counted from the capo, but the player reads the dots on their neck,
-    // and a number that means neither is just confusing. The capo's own position is not written
-    // here: the gutter is sized for "5fr", "capo 2" would overflow it at the small size, and the
-    // caption under the diagram already carries it.
-    if (!open) {
-        val text = measurer.measure("${base + capo}fr", labelStyle)
+    if (label != null) {
         drawText(
-            text,
+            label,
             topLeft = Offset(
-                gridRight + thin * 2f,
-                gridTop + fretGap * 0.5f - text.size.height / 2f,
+                gridRight + dotRadius + thin * 2f,
+                gridTop + fretGap * 0.5f - label.size.height / 2f,
             ),
         )
     }
 
-    val dotRadius = stringGap * DOT_RADIUS
     val markerRadius = stringGap * MARKER_RADIUS
 
     // Open and muted markers above the grid.
@@ -215,7 +219,7 @@ internal const val BOX_ASPECT = 1.25f
 /** Share of the height reserved above the grid for open/muted markers. */
 private const val MARKER_BAND = 0.17f
 
-/** Share of the width left free on each side, so the "5fr" label has somewhere to sit. */
+/** Share of the width left free on the left, so a dot on the low E string is not clipped. */
 private const val SIDE_GUTTER = 0.11f
 
 private const val THIN_STROKE = 0.012f
