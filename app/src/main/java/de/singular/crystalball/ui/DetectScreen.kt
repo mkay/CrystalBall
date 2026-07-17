@@ -129,11 +129,15 @@ fun DetectScreen(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(
-                "Crystal Ball",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            // Named in the corner everywhere except home, where the wordmark banner already says it
+            // — twice over would be one Crystal Ball too many.
+            if (state !is DetectState.Idle) {
+                Text(
+                    "Crystal Ball",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
         // A quiet notice that the display is being kept awake (it drains battery); tap for an
@@ -188,6 +192,8 @@ private fun IdlePane(
     onSetCapo: () -> Unit,
 ) {
     Spacer(Modifier.height(ICON_ROW_HEIGHT))
+    Claim()
+    Spacer(Modifier.height(20.dp))
     Logo()
     Spacer(Modifier.height(16.dp))
     Text(

@@ -17,13 +17,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,6 +62,29 @@ val LOGO_SIZE = 132.dp
 val BUTTON_HEIGHT = 64.dp
 val BUTTON_MAX_WIDTH = 340.dp
 const val SPIN_PERIOD_MS = 9000
+
+/**
+ * The wordmark and what the app is for, in one drawn line above the mark on the home screen.
+ *
+ * A single-colour vector — the type is already outlined to paths — so it is tinted here rather than
+ * carrying its own colour, and reads in either theme. Sized to the width it is given, keeping the
+ * banner's aspect, so it never runs off the edge of a narrow phone.
+ */
+@Composable
+fun Claim(modifier: Modifier = Modifier) {
+    Icon(
+        painter = painterResource(R.drawable.claim),
+        contentDescription = "Crystal Ball — detects guitar chords and lets you combine them " +
+            "into song sheets",
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+            .width(300.dp)
+            .aspectRatio(CLAIM_ASPECT),
+    )
+}
+
+/** The claim banner's width-to-height, from its 1263×378 artwork. */
+private const val CLAIM_ASPECT = 1263f / 378f
 
 /** The app mark. [rotation] turns the swirl, which the listening screens animate. */
 @Composable
