@@ -280,8 +280,6 @@ fun SongScreen(
                     EditChordPane(state, songSettings, onSelectChord, onSelectVoicing, onRemoveChord)
                 is SongState.SongView -> SongViewPane(song, songSettings)
                 is SongState.Comment -> CommentPane(song, onCommentDone)
-                is SongState.SongView -> SongViewPane(song, songSettings)
-                is SongState.Comment -> CommentPane(song, onCommentDone)
                 is SongState.PartView ->
                     song.parts.firstOrNull { it.name == state.partName }?.let { part ->
                         PartViewPane(song, part, songSettings, onEditPartChord)
