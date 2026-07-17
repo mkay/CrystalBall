@@ -13,15 +13,19 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -39,6 +43,9 @@ import de.singular.crystalball.ui.SettingsScreen
 import de.singular.crystalball.ui.SongScreen
 import de.singular.crystalball.ui.isDark
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,6 +119,69 @@ class MainActivity : ComponentActivity() {
                 DisposableEffect(settings.keepScreenOn) {
                     view.keepScreenOn = settings.keepScreenOn
                     onDispose { view.keepScreenOn = false }
+                }
+
+                // Backup writes a zip wherever the user points; restore reads one back over every
+                // song. Both are reached from Settings, but they live out here: that screen returns
+                // early, so a launcher or dialog composed inside it would leave the composition the
+                // moment it closed — and the picker closes it on the way out.
+                val backupResult by songViewModel.backupResult.collectAsStateWithLifecycle()
+                val backupLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.CreateDocument("application/zip"),
+                ) { uri -> if (uri != null) songViewModel.backupSongs(uri) }
+                val restoreLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.OpenDocument(),
+                ) { uri -> if (uri != null) songViewModel.restoreSongs(uri) }
+                var confirmRestore by rememberSaveable { mutableStateOf(false) }
+
+                val backupName = remember {
+                    val day = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                    "crystalball-backup-$day.zip"
+                }
+
+                LaunchedEffect(backupResult) {
+                    val message = when (val result = backupResult) {
+                        null -> return@LaunchedEffect
+                        is BackupResult.Exported -> "Songs backed up"
+                        is BackupResult.Restored ->
+                            if (result.songs == 1) "1 song restored"
+                            else "${result.songs} songs restored"
+                        // The repository says why in words worth repeating — which file it was not,
+                        // which version wrote it — so say that rather than "something went wrong".
+                        is BackupResult.Failed -> result.reason
+                    }
+                    Toast.makeText(view.context, message, Toast.LENGTH_LONG).show()
+                    songViewModel.consumeBackupResult()
+                }
+
+                if (confirmRestore) {
+                    AlertDialog(
+                        onDismissRequest = { confirmRestore = false },
+                        title = { Text("Restore songs?") },
+                        text = {
+                            Text(
+                                "This replaces every song in your library with the ones in the " +
+                                    "backup. This can't be undone.",
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                confirmRestore = false
+                                // Some file pickers label a zip octet-stream, and a backup the
+                                // picker greys out is a backup you cannot restore.
+                                restoreLauncher.launch(
+                                    arrayOf(
+                                        "application/zip",
+                                        "application/octet-stream",
+                                        "application/x-zip-compressed",
+                                    ),
+                                )
+                            }) { Text("Choose backup") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { confirmRestore = false }) { Text("Cancel") }
+                        },
+                    )
                 }
 
                 // Songs is a full screen too, and owns the microphone while it is up — which is why
@@ -199,6 +269,8 @@ class MainActivity : ComponentActivity() {
                         onThemeModeChange = viewModel::setThemeMode,
                         onNameStyleChange = viewModel::setNameStyle,
                         onShowCapoOnStartChange = viewModel::setShowCapoOnStart,
+                        onBackupSongs = { backupLauncher.launch(backupName) },
+                        onRestoreSongs = { confirmRestore = true },
                         onClose = { settingsOpen = false },
                     )
                     return@CrystalBallTheme

@@ -83,6 +83,19 @@ sealed interface SongState {
 }
 
 /**
+ * The outcome of the last backup or restore, for a one-shot toast.
+ *
+ * [RESTORED] carries the count because a restore is the one operation here that silently changes
+ * everything: "12 songs restored" is the difference between a reassurance and an announcement that
+ * something happened to your library.
+ */
+sealed interface BackupResult {
+    data object Exported : BackupResult
+    data class Restored(val songs: Int) : BackupResult
+    data class Failed(val reason: String) : BackupResult
+}
+
+/**
  * Writing a song down: capture a part, fix what was misheard, say how you play it, name it.
  *
  * Separate from [DetectViewModel] because the jobs are different — that one answers "what is this
@@ -121,6 +134,17 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
     /** Set when a PDF lands, so the screen can say so; cleared by [consumeExported]. */
     private val _exported = MutableStateFlow(false)
     val exported: StateFlow<Boolean> = _exported.asStateFlow()
+
+    /**
+     * How the last backup or restore went, for a toast; cleared by [consumeBackupResult].
+     *
+     * Its own channel rather than [_error], which means something else entirely: that the library
+     * on disk cannot be read, a state the screen stays in and disables saving from. A backup that
+     * failed because the user picked the wrong file is a passing remark, and routing it through
+     * [_error] would blank the song list and announce that saving is off.
+     */
+    private val _backupResult = MutableStateFlow<BackupResult?>(null)
+    val backupResult: StateFlow<BackupResult?> = _backupResult.asStateFlow()
 
     val hasMicPermission: Boolean
         get() = ContextCompat.checkSelfPermission(
@@ -522,6 +546,63 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
     fun consumeExported() {
         _exported.value = false
     }
+
+    /** Write every song to the user-chosen [uri] as a backup zip. */
+    fun backupSongs(uri: Uri) {
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val resolver = getApplication<Application>().contentResolver
+                    checkNotNull(resolver.openOutputStream(uri)) { "That file could not be written." }
+                        .use { repository.exportTo(it) }
+                }
+            }
+                .onSuccess { _backupResult.value = BackupResult.Exported }
+                .onFailure { _backupResult.value = BackupResult.Failed(it.backupReason()) }
+        }
+    }
+
+    /**
+     * Replace the whole library with the backup at [uri].
+     *
+     * Lands back in the library on success, whatever was open before: the song in the editor was one
+     * this library may no longer contain, and leaving it on screen would invite a save that puts it
+     * straight back into the library the user just replaced.
+     */
+    fun restoreSongs(uri: Uri) {
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val resolver = getApplication<Application>().contentResolver
+                    checkNotNull(resolver.openInputStream(uri)) { "That file could not be read." }
+                        .use { repository.importFrom(it) }
+                }
+            }
+                .onSuccess { count ->
+                    job?.cancel()
+                    job = null
+                    _song.value = emptySong(capo = 0)
+                    _state.value = SongState.Library
+                    // Reload before reporting, so the list is the restored one by the time the
+                    // toast claims it is.
+                    reload()
+                    _backupResult.value = BackupResult.Restored(count)
+                }
+                .onFailure { _backupResult.value = BackupResult.Failed(it.backupReason()) }
+        }
+    }
+
+    fun consumeBackupResult() {
+        _backupResult.value = null
+    }
+
+    /**
+     * Why a backup failed, in the words the repository used.
+     *
+     * [readable] is wrong here: its fallback blames reading the library, which is exactly what did
+     * not happen when a restore was handed a photo of a cat.
+     */
+    private fun Throwable.backupReason() = message ?: "That file could not be used."
 
     fun consumeError() {
         _error.value = null

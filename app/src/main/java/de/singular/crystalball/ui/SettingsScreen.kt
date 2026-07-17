@@ -15,6 +15,8 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -53,6 +55,8 @@ fun SettingsScreen(
     onThemeModeChange: (ThemeMode) -> Unit,
     onNameStyleChange: (NameStyle) -> Unit,
     onShowCapoOnStartChange: (Boolean) -> Unit,
+    onBackupSongs: () -> Unit,
+    onRestoreSongs: () -> Unit,
     onClose: () -> Unit,
 ) {
     BackHandler(onBack = onClose)
@@ -124,6 +128,24 @@ fun SettingsScreen(
                 onSelect = onThemeModeChange,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
+
+            SettingsSectionLabel("Songs")
+            SettingActionRow(
+                "Back up songs",
+                "Save every song to a file",
+                Icons.Default.Save,
+                onBackupSongs,
+            )
+            SettingActionRow(
+                "Restore songs",
+                "Replace every song from a backup file",
+                Icons.Default.Restore,
+                onRestoreSongs,
+            )
+            SettingsCaption(
+                "A backup holds your songs and nothing else — the settings on this page stay as " +
+                    "you set them here.",
+            )
         }
     }
 }
@@ -193,6 +215,42 @@ private fun SettingSwitchRow(
         Spacer(Modifier.width(16.dp))
         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = { onToggle(it) })
+    }
+}
+
+/**
+ * A settings row that does something rather than holding a value: icon, label, and a line saying
+ * what the press will do.
+ *
+ * [SettingSwitchRow] with the switch taken out and a subtitle put in — these two are the only rows
+ * here whose consequence is not simply the label being true or false, and "Replace every song" is a
+ * thing to know before pressing rather than after.
+ */
+@Composable
+private fun SettingActionRow(
+    label: String,
+    subtitle: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(ControlShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
