@@ -76,7 +76,8 @@ fun DetectScreen(
                 is DetectState.Silence -> SilencePane(onDetect, settings.capo, onSetCapo)
                 is DetectState.Listening -> ListeningPane(state, onCancel)
                 is DetectState.Result -> ResultPane(state, settings, onDetect, onSelect, onSelectVoicing)
-                is DetectState.Browse -> BrowsePane(state, settings, onSelect, onSelectVoicing, onDetect)
+                is DetectState.Browse ->
+                    BrowsePane(state, settings, onSelect, onSelectVoicing, onSetCapo, onDetect)
             }
         }
         var showKeepAwakeInfo by rememberSaveable { mutableStateOf(false) }
@@ -198,6 +199,7 @@ private fun BrowsePane(
     settings: Settings,
     onSelect: (Chord) -> Unit,
     onSelectVoicing: (Voicing) -> Unit,
+    onSetCapo: () -> Unit,
     onDetect: () -> Unit,
 ) {
     val view = ChordView.of(state.chord, settings, state.voicing)
@@ -234,13 +236,16 @@ private fun BrowsePane(
         style = MaterialTheme.typography.displaySmall,
         fontWeight = FontWeight.SemiBold,
     )
-    if (view.subtitle != null) {
+    // The capo says itself, on its own line, so the shape line does not repeat it.
+    if (view.shapeLine != null) {
         Text(
-            view.subtitle,
+            view.shapeLine,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+    CapoStatusLink(settings.capo, onSetCapo)
+
     Spacer(Modifier.height(8.dp))
     ChordDiagram(
         voicing = view.best,
@@ -254,6 +259,19 @@ private fun BrowsePane(
     Spacer(Modifier.height(28.dp))
     DetectButton(onDetect)
     Spacer(Modifier.height(16.dp))
+}
+
+/**
+ * The capo, stated under the chord name and tappable to change.
+ *
+ * Says the same as [CapoLink] and differs only in shape: this one sits in the name block, reading as
+ * the last line of "C, A shape, capo 3", so it is sized to the words rather than to the page.
+ */
+@Composable
+private fun CapoStatusLink(capo: Int, onSetCapo: () -> Unit) {
+    TextButton(onClick = onSetCapo, shape = ControlShape) {
+        Text(capoLabel(capo), style = MaterialTheme.typography.titleSmall)
+    }
 }
 
 /**

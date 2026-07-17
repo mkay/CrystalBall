@@ -123,11 +123,20 @@ private const val METER_FLOOR_DB = -60f
 private const val MIN_LEVEL = 0.001f
 
 /**
+ * What the capo control says, wherever it is drawn.
+ *
+ * States the fret rather than merely inviting a change: the idle screen and the song editor draw no
+ * diagram, so there is no accent-coloured nut to do the reminding, and a capo left set from
+ * yesterday would otherwise stay invisible. It stops at stating it — that a button can be pressed is
+ * the button's job to say, not the sentence's.
+ */
+fun capoLabel(capo: Int): String = if (capo == 0) "Set capo" else "Capo set to $capo"
+
+/**
  * The way to the capo, from wherever you are when you notice it is wrong.
  *
- * The label states the fret rather than just inviting a change: neither the idle screen nor the song
- * editor draws a diagram, so there is no accent-coloured nut to do the reminding, and a capo left
- * set from yesterday would otherwise stay invisible.
+ * Full width and standing alone, for the pages whose business is elsewhere. Where the capo belongs
+ * inside a block of text instead, the label goes on a plain button rather than this one.
  */
 @Composable
 fun CapoLink(capo: Int, onSetCapo: () -> Unit) {
@@ -139,10 +148,7 @@ fun CapoLink(capo: Int, onSetCapo: () -> Unit) {
             .widthIn(max = BUTTON_MAX_WIDTH)
             .height(48.dp),
     ) {
-        Text(
-            if (capo == 0) "Set capo" else "Capo set to $capo (change)",
-            style = MaterialTheme.typography.titleSmall,
-        )
+        Text(capoLabel(capo), style = MaterialTheme.typography.titleSmall)
     }
 }
 

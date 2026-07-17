@@ -93,6 +93,7 @@ data class ChordView(
     val shape: Chord,
     val title: String,
     val subtitle: String?,
+    val shapeLine: String?,
     val voicings: List<Voicing>,
     val chosen: Voicing? = null,
 ) {
@@ -123,6 +124,7 @@ data class ChordView(
                 shape = shape,
                 title = Capo.title(sounding, settings.capo, settings.nameStyle),
                 subtitle = Capo.subtitle(sounding, settings.capo, settings.nameStyle),
+                shapeLine = Capo.shapeLine(sounding, settings.capo, settings.nameStyle),
                 voicings = ChordLibrary.voicingsFor(shape, settings.capo),
                 chosen = chosen,
             )

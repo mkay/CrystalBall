@@ -30,7 +30,16 @@ class CapoTest {
         assertEquals("E", Capo.title(chord("E"), 0, NameStyle.SOUNDING_FIRST))
         assertNull(Capo.subtitle(chord("E"), 0, NameStyle.SOUNDING_FIRST))
         assertNull(Capo.subtitle(chord("E"), 0, NameStyle.SHAPE_FIRST))
+        assertNull(Capo.shapeLine(chord("E"), 0, NameStyle.SOUNDING_FIRST))
+        assertNull(Capo.shapeLine(chord("E"), 0, NameStyle.SHAPE_FIRST))
         assertEquals(chord("E"), Capo.shapeChord(chord("E"), 0))
+    }
+
+    @Test
+    fun `the shape line is the subtitle without the capo`() {
+        // For the chord browser, which states the capo on its own line and would else say it twice.
+        assertEquals("D shape", Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST))
+        assertEquals("sounds E", Capo.shapeLine(chord("E"), 2, NameStyle.SHAPE_FIRST))
     }
 
     @Test

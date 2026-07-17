@@ -68,12 +68,23 @@ object Capo {
         else -> shapeChord(sounding, capo).name
     }
 
-    /** The line under it, or null when there is no capo and the two names agree. */
-    fun subtitle(sounding: Chord, capo: Int, style: NameStyle): String? = when {
+    /**
+     * The other name — the shape you finger, or what it sounds — without saying where the capo is.
+     *
+     * Null when there is no capo and the two names agree, so there is no second name to give.
+     *
+     * For pages that state the capo themselves and would otherwise say it twice; [subtitle] is the
+     * same line with the capo appended, for pages that do not.
+     */
+    fun shapeLine(sounding: Chord, capo: Int, style: NameStyle): String? = when {
         capo == 0 -> null
-        style == NameStyle.SOUNDING_FIRST -> "${shapeChord(sounding, capo).name} shape · capo $capo"
-        else -> "sounds ${sounding.name} · capo $capo"
+        style == NameStyle.SOUNDING_FIRST -> "${shapeChord(sounding, capo).name} shape"
+        else -> "sounds ${sounding.name}"
     }
+
+    /** The line under it, or null when there is no capo and the two names agree. */
+    fun subtitle(sounding: Chord, capo: Int, style: NameStyle): String? =
+        shapeLine(sounding, capo, style)?.let { "$it · capo $capo" }
 
     /** How a chord is named where there is no room for a subtitle, e.g. the alternatives row. */
     fun shortName(sounding: Chord, capo: Int, style: NameStyle): String = when {
