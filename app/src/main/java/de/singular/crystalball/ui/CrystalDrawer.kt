@@ -59,17 +59,17 @@ fun CrystalDrawer(
                 modifier = itemPadding,
             )
             NavigationDrawerItem(
-                label = { Text("Songs") },
-                icon = { Icon(Icons.Default.QueueMusic, contentDescription = null) },
-                selected = false,
-                onClick = onSongs,
-                modifier = itemPadding,
-            )
-            NavigationDrawerItem(
                 label = { Text("Chord Library") },
                 icon = { Icon(Icons.Default.LibraryMusic, contentDescription = null) },
                 selected = false,
                 onClick = onShowChords,
+                modifier = itemPadding,
+            )
+            NavigationDrawerItem(
+                label = { Text("Songs") },
+                icon = { Icon(Icons.Default.QueueMusic, contentDescription = null) },
+                selected = false,
+                onClick = onSongs,
                 modifier = itemPadding,
             )
             NavigationDrawerItem(
