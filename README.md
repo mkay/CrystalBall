@@ -9,7 +9,7 @@ Early-stage release — expect rough edges. Feedback and bug reports welcome via
 
 ## Screenshots
 
-<img src="docs/screenshot.png" alt="Crystal Ball's home screen: the wordmark and tagline above the mark, ready to listen" width="320" />
+<img src="docs/screenshot.png" alt="Crystal Ball's home screen ready to listen, and a detected Amaj7 with its shape, other voicings and runner-up chords" width="640" />
 
 ## Features
 
