@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlin.coroutines.coroutineContext
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.sqrt
 
 /** What the microphone pass reports back to the UI. */
@@ -34,7 +35,9 @@ sealed interface ListenEvent {
  * is, and stop as soon as the ranking has settled — a clean open chord resolves in roughly a third
  * of a second, while a messy one keeps collecting evidence up to [MAX_CHORD_FRAMES]. Strumming
  * again restarts the accumulation, so a bad take needs no button press. If nothing is heard at all
- * within [LISTEN_TIMEOUT_MS], it gives up with [ListenEvent.Silence].
+ * within [LISTEN_TIMEOUT_MS], it gives up with [ListenEvent.Silence] — though a strum arriving just
+ * before that is given [STRUM_GRACE_MS] to finish becoming an answer, bounded by [MAX_GRACE_MS] so
+ * the pass still ends on its own in a room that keeps tripping the gate.
  *
  * The attack of a strum is deliberately skipped: the pick hitting the strings is a broadband click
  * with no stable pitch content, and folding it into the chroma only blurs the answer.
@@ -105,7 +108,12 @@ class ChordListener {
         var stableChord: Chord? = null
         var stableFrames = 0
 
-        val deadline = System.nanoTime() + LISTEN_TIMEOUT_MS * 1_000_000L
+        val start = System.nanoTime()
+        var deadline = start + LISTEN_TIMEOUT_MS * 1_000_000L
+        // However many strums arrive late, the pass ends here. Without a ceiling, anything that
+        // repeatedly trips the gate would renew the deadline forever and a run would never end on
+        // its own — the phantom-chord problem again, wearing a different hat.
+        val latestDeadline = start + (LISTEN_TIMEOUT_MS + MAX_GRACE_MS) * 1_000_000L
 
         while (System.nanoTime() < deadline) {
             coroutineContext.ensureActive()
@@ -132,6 +140,15 @@ class ChordListener {
                     framesSounding = 1
                     stableChord = null
                     stableFrames = 0
+                    // ...and evidence started over needs time to become an answer: the attack is
+                    // skipped and MIN_CHORD_FRAMES must be met before any chord may be reported,
+                    // some 420 ms in all. A strum landing inside that of the deadline would
+                    // otherwise be cut off mid-collection and reported as silence — which a capture
+                    // run reads as the guitar being put down, ending it on a chord you just played.
+                    deadline = min(
+                        latestDeadline,
+                        max(deadline, System.nanoTime() + STRUM_GRACE_MS * 1_000_000L),
+                    )
                 }
                 GateVerdict.SOUNDING -> framesSounding++
             }
@@ -195,6 +212,16 @@ class ChordListener {
 
         /** Give up if no strum is heard at all within this long. */
         const val LISTEN_TIMEOUT_MS = 8000L
+
+        /**
+         * Time a strum is given to become an answer when it lands near the deadline. Covers the
+         * ~420 ms before any chord may be reported, with room to settle properly rather than
+         * scraping in on the timeout path's minimum evidence.
+         */
+        const val STRUM_GRACE_MS = 700L
+
+        /** Most a pass may overrun [LISTEN_TIMEOUT_MS], however many strums arrive late. */
+        const val MAX_GRACE_MS = 1500L
 
         /** Windows to discard after a strum while the broadband pick transient decays (~140 ms). */
         const val ATTACK_SKIP_FRAMES = 3
