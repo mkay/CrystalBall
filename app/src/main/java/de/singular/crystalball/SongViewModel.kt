@@ -2,6 +2,7 @@ package de.singular.crystalball
 
 import android.app.Application
 import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import de.singular.crystalball.audio.Chord
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.UUID
 
 /**
@@ -132,6 +134,10 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
     /** Set when a PDF lands, so the screen can say so; cleared by [consumeExported]. */
     private val _exported = MutableStateFlow(false)
     val exported: StateFlow<Boolean> = _exported.asStateFlow()
+
+    /** A chord sheet waiting to be offered around; cleared by [consumeShareUri]. */
+    private val _shareUri = MutableStateFlow<Uri?>(null)
+    val shareUri: StateFlow<Uri?> = _shareUri.asStateFlow()
 
     /**
      * How the last backup or restore went, for a toast; cleared by [consumeBackupResult].
@@ -495,6 +501,41 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
         _exported.value = false
     }
 
+    /**
+     * Write the chord sheet somewhere lendable, and say where, so the screen can offer it around.
+     *
+     * The other export writes to a uri the user picked and is done; this one has to produce the
+     * file itself, because a share sheet asks for something that already exists. It goes in the
+     * cache under [SHARED_DIR], which the manifest's FileProvider is pointed at and nothing else
+     * is: the app's own songs.json sits outside it and stays unreachable.
+     *
+     * The directory is emptied first rather than accumulating. A share is a copy handed over —
+     * once the receiving app has it, ours is litter, and litter with song titles on it.
+     */
+    fun sharePdf(nameStyle: NameStyle, fileName: String) {
+        val song = _song.value
+        if (song.parts.isEmpty()) return
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val context = getApplication<Application>()
+                    val dir = File(context.cacheDir, SHARED_DIR)
+                    dir.listFiles()?.forEach { it.delete() }
+                    dir.mkdirs()
+                    val file = File(dir, fileName)
+                    file.outputStream().use { SongPdf.write(context, song, nameStyle, it) }
+                    FileProvider.getUriForFile(context, "${context.packageName}.files", file)
+                }
+            }
+                .onSuccess { _shareUri.value = it }
+                .onFailure { _error.value = it.readable() }
+        }
+    }
+
+    fun consumeShareUri() {
+        _shareUri.value = null
+    }
+
     /** Write every song to the user-chosen [uri] as a backup zip. */
     fun backupSongs(uri: Uri) {
         viewModelScope.launch {
@@ -556,4 +597,9 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun emptySong(capo: Int) =
         Song(id = UUID.randomUUID().toString(), title = "", capo = capo)
+
+    private companion object {
+        /** Matches the `cache-path` the FileProvider is configured with in `res/xml/file_paths.xml`. */
+        const val SHARED_DIR = "shared"
+    }
 }

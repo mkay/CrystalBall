@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    What the FileProvider is allowed to hand out: one directory in the cache, holding the chord
+    sheet most recently shared. Nothing else is exposed — songs.json and the backups live outside
+    it, and a share grant is read-only and per-Intent besides.
+-->
+<paths>
+    <cache-path name="shared" path="shared/" />
+</paths>

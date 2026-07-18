@@ -1,6 +1,7 @@
 package de.singular.crystalball
 
 import android.Manifest
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -236,6 +237,24 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
+                    // The system's own share sheet, once the sheet exists as a file to offer.
+                    // Writing it is the view-model's job and showing it around is the activity's,
+                    // so the uri arrives as state rather than the view-model reaching for an Intent.
+                    val shareUri by songViewModel.shareUri.collectAsStateWithLifecycle()
+                    LaunchedEffect(shareUri) {
+                        val uri = shareUri ?: return@LaunchedEffect
+                        val send = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/pdf"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            putExtra(Intent.EXTRA_TITLE, song.title)
+                            // The grant travels with the Intent: whoever the chooser lands on may
+                            // read this one file, and only while they hold it.
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(Intent.createChooser(send, null))
+                        songViewModel.consumeShareUri()
+                    }
+
                     SongScreen(
                         song = song,
                         state = songState,
@@ -258,6 +277,9 @@ class MainActivity : ComponentActivity() {
                         onOpenPart = songViewModel::openPart,
                         onViewSong = songViewModel::viewSong,
                         onExportPdf = { pdfLauncher.launch(pdfFileName(song.title)) },
+                        onSharePdf = {
+                            songViewModel.sharePdf(settings.nameStyle, pdfFileName(song.title))
+                        },
                         onEditComment = songViewModel::editComment,
                         onCommentDone = songViewModel::commentDone,
                         onCancelComment = songViewModel::cancelComment,

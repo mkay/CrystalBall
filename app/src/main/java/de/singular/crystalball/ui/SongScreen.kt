@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -112,6 +113,7 @@ fun SongScreen(
     onOpenPart: (String) -> Unit,
     onViewSong: () -> Unit,
     onExportPdf: () -> Unit,
+    onSharePdf: () -> Unit,
     onEditComment: () -> Unit,
     onCommentDone: (String) -> Unit,
     onCancelComment: () -> Unit,
@@ -204,10 +206,34 @@ fun SongScreen(
                             Icon(Icons.Default.Edit, contentDescription = "Rename song")
                         }
                     }
-                    // Export sits on the song view, which is the page it prints.
+                    // Export sits on the song view, which is the page it prints. Two ways out of
+                    // here, because they are different errands: sending the sheet to whoever you
+                    // are playing with, and keeping a copy where you file things.
                     if (state is SongState.SongView) {
-                        IconButton(onClick = onExportPdf) {
-                            Icon(Icons.Default.Share, contentDescription = "Export as PDF")
+                        var exportMenu by remember { mutableStateOf(false) }
+                        Box {
+                            IconButton(onClick = { exportMenu = true }) {
+                                Icon(Icons.Default.Share, contentDescription = "Export as PDF")
+                            }
+                            DropdownMenu(
+                                expanded = exportMenu,
+                                onDismissRequest = { exportMenu = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Share…") },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Share, contentDescription = null)
+                                    },
+                                    onClick = { exportMenu = false; onSharePdf() },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Save as file…") },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Download, contentDescription = null)
+                                    },
+                                    onClick = { exportMenu = false; onExportPdf() },
+                                )
+                            }
                         }
                     }
                 },
@@ -614,7 +640,7 @@ private fun SongViewPane(song: Song, settings: Settings) {
     // sheet music that explains the app it came from would be a strange thing to hand someone.
     Spacer(Modifier.height(12.dp))
     Text(
-        "The song as it prints. To change a chord, go back and open the part it is in.",
+        "The song as it prints.\nTo change a chord, go back and open the part it is in.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,

@@ -25,6 +25,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            Lends the chord sheet to whichever app the share sheet lands on. Sharing needs a uri
+            another process may read, and a file:// one is refused outright since Android 7 — this
+            hands out a content:// uri instead, scoped to one cache directory and read-only for as
+            long as the receiving app holds the grant.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>
