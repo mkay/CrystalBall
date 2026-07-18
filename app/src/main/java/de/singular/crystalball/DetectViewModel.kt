@@ -113,19 +113,29 @@ data class ChordView(
     val sounding: Chord,
     val shape: Chord,
     val title: String,
-    val subtitle: String?,
-    val shapeLine: String?,
+    val capo: Int,
+    val nameStyle: NameStyle,
     val voicings: List<Voicing>,
     val chosen: Voicing? = null,
 ) {
     /**
      * The shape shown large: the one the user promoted, else the library's first.
      *
-     * [chosen] is checked for membership rather than trusted, because it outlives the list it came
-     * from: moving the capo re-generates the shapes, and one picked at the old capo may be gone.
-     * Falling back to the leader beats drawing a grip this chord no longer has.
+     * [chosen] is looked up in the list rather than returned as given, because it outlives the list
+     * it came from: moving the capo re-generates the shapes, and one picked at the old capo may be
+     * gone. Falling back to the leader beats drawing a grip this chord no longer has.
+     *
+     * The library's instance is handed back, not the caller's. They are equal by definition — the
+     * frets are the identity — but only the library's carries [Voicing.form] and a label numbered
+     * from the current capo, both of which a voicing read back from a song has lost.
      */
-    val best: Voicing get() = chosen?.takeIf { it in voicings } ?: voicings.first()
+    val best: Voicing get() = voicings.firstOrNull { it == chosen } ?: voicings.first()
+
+    /** The second name, with the capo. Tracks [best], so promoting a variation renames the grip. */
+    val subtitle: String? get() = Capo.subtitle(sounding, capo, nameStyle, best.form)
+
+    /** The same line without the capo, for pages that state the capo themselves. */
+    val shapeLine: String? get() = Capo.shapeLine(sounding, capo, nameStyle, best.form)
 
     /**
      * The other ways to play the same chord, walking up the neck, capped at
@@ -144,8 +154,8 @@ data class ChordView(
                 sounding = sounding,
                 shape = shape,
                 title = Capo.title(sounding, settings.capo, settings.nameStyle),
-                subtitle = Capo.subtitle(sounding, settings.capo, settings.nameStyle),
-                shapeLine = Capo.shapeLine(sounding, settings.capo, settings.nameStyle),
+                capo = settings.capo,
+                nameStyle = settings.nameStyle,
                 voicings = ChordLibrary.voicingsFor(shape, settings.capo),
                 chosen = chosen,
             )

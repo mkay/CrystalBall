@@ -795,7 +795,7 @@ private fun CorrectChordSheet(
     onCorrect: (Chord) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val view = ChordView.of(chord.sounding, settings)
+    val view = ChordView.of(chord.sounding, settings, chord.voicing)
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -826,9 +826,9 @@ private fun CorrectChordSheet(
             // that tells you whether you picked the right one.
             Spacer(Modifier.height(20.dp))
             Text(view.title, style = MaterialTheme.typography.titleLarge)
-            if (view.subtitle != null) {
+            view.subtitle?.let { subtitle ->
                 Text(
-                    view.subtitle,
+                    subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -860,13 +860,13 @@ private fun EditPartChordPane(
     onSelectVoicing: (Voicing) -> Unit,
 ) {
     val chord = part.chords[index]
-    val view = ChordView.of(chord.sounding, settings)
+    val view = ChordView.of(chord.sounding, settings, chord.voicing)
 
     Spacer(Modifier.height(8.dp))
     Text(view.title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
-    if (view.subtitle != null) {
+    view.subtitle?.let { subtitle ->
         Text(
-            view.subtitle,
+            subtitle,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

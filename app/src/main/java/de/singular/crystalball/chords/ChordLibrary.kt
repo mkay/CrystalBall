@@ -164,7 +164,9 @@ object ChordLibrary {
                 val frets = IntArray(STRING_COUNT) { s ->
                     if (shape.offsets[s] == X) MUTED else shape.offsets[s] + position
                 }
-                found.add(Voicing(frets, label = positionLabel(frets, shape.name, capo)))
+                found.add(
+                    Voicing(frets, label = positionLabel(frets, shape.name, capo), form = shape.name)
+                )
             }
         }
         // Nearest the nut first — that is the shape a player reaches for.

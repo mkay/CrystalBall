@@ -294,9 +294,9 @@ private fun BrowsePane(
         fontWeight = FontWeight.SemiBold,
     )
     // The capo says itself, on its own line, so the shape line does not repeat it.
-    if (view.shapeLine != null) {
+    view.shapeLine?.let { shapeLine ->
         Text(
-            view.shapeLine,
+            shapeLine,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -394,9 +394,9 @@ private fun ResultPane(
         style = MaterialTheme.typography.displayMedium,
         fontWeight = FontWeight.SemiBold,
     )
-    if (view.subtitle != null) {
+    view.subtitle?.let { subtitle ->
         Text(
-            view.subtitle,
+            subtitle,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -685,14 +685,14 @@ private fun EditCapturedPane(
     onRemove: (Int) -> Unit,
 ) {
     val captured = state.captured.getOrNull(state.index) ?: return
-    val view = ChordView.of(captured.selected, settings)
-    val chosen = captured.voicing ?: view.best
+    val view = ChordView.of(captured.selected, settings, captured.voicing)
+    val chosen = view.best
 
     Spacer(Modifier.height(ICON_ROW_HEIGHT))
     Text(view.title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
-    if (view.subtitle != null) {
+    view.subtitle?.let { subtitle ->
         Text(
-            view.subtitle,
+            subtitle,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

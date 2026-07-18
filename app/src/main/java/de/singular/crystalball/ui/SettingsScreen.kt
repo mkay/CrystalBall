@@ -105,7 +105,7 @@ fun SettingsScreen(
                 NameStyleOption(
                     selected = settings.nameStyle == NameStyle.SHAPE_FIRST,
                     title = "Name the shape you play",
-                    example = "D, with \"sounds E · capo 2\" beneath",
+                    example = "D, with \"sounds as E · capo 2\" beneath",
                     onClick = { onNameStyleChange(NameStyle.SHAPE_FIRST) },
                 )
             }

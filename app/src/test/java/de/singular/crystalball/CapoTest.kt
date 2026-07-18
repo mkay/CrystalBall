@@ -5,6 +5,7 @@ import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.STANDARD_TUNING
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -16,13 +17,17 @@ class CapoTest {
     fun `the canonical case - capo 2 and a D shape sounds E`() {
         assertEquals(chord("D"), Capo.shapeChord(chord("E"), capo = 2))
         assertEquals("E", Capo.title(chord("E"), 2, NameStyle.SOUNDING_FIRST))
-        assertEquals("D shape · capo 2", Capo.subtitle(chord("E"), 2, NameStyle.SOUNDING_FIRST))
+        assertEquals("D · capo 2", Capo.subtitle(chord("E"), 2, NameStyle.SOUNDING_FIRST))
+        assertEquals(
+            "D, E form · capo 2",
+            Capo.subtitle(chord("E"), 2, NameStyle.SOUNDING_FIRST, form = "E form"),
+        )
     }
 
     @Test
     fun `shape-first names it the other way round`() {
         assertEquals("D", Capo.title(chord("E"), 2, NameStyle.SHAPE_FIRST))
-        assertEquals("sounds E · capo 2", Capo.subtitle(chord("E"), 2, NameStyle.SHAPE_FIRST))
+        assertEquals("sounds as E · capo 2", Capo.subtitle(chord("E"), 2, NameStyle.SHAPE_FIRST))
     }
 
     @Test
@@ -35,11 +40,39 @@ class CapoTest {
         assertEquals(chord("E"), Capo.shapeChord(chord("E"), 0))
     }
 
+    /**
+     * The reported bug: with a capo on, the name block stood still while the diagram under it
+     * changed, so a promoted Am-form barre was still headed by the form the library happened to
+     * rank first.
+     */
+    @Test
+    fun `promoting a variation renames the grip in the name block`() {
+        val settings = Settings(capo = 2, nameStyle = NameStyle.SOUNDING_FIRST)
+        val lead = ChordView.of(chord("Dm"), settings)
+        val other = lead.variations.first()
+        val promoted = ChordView.of(chord("Dm"), settings, other)
+
+        assertEquals(other, promoted.best)
+        assertEquals("Cm, ${other.form} · capo 2", promoted.subtitle)
+        assertNotEquals(lead.subtitle, promoted.subtitle)
+    }
+
+    /** A curated open grip is a transposition of no form, so the clause is dropped, not guessed. */
+    @Test
+    fun `a grip with no form leaves the form clause out`() {
+        val settings = Settings(capo = 2, nameStyle = NameStyle.SOUNDING_FIRST)
+        val view = ChordView.of(chord("E"), settings)
+        val open = view.voicings.first { it.form == null }
+
+        assertEquals("D · capo 2", ChordView.of(chord("E"), settings, open).subtitle)
+    }
+
     @Test
     fun `the shape line is the subtitle without the capo`() {
         // For the chord browser, which states the capo on its own line and would else say it twice.
-        assertEquals("D shape", Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST))
-        assertEquals("sounds E", Capo.shapeLine(chord("E"), 2, NameStyle.SHAPE_FIRST))
+        assertEquals("D", Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST))
+        assertEquals("D, Am form", Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST, "Am form"))
+        assertEquals("sounds as E", Capo.shapeLine(chord("E"), 2, NameStyle.SHAPE_FIRST))
     }
 
     @Test
