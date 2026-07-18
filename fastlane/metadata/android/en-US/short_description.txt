@@ -1,0 +1,1 @@
+Detects guitar chords and combines them into song sheets.

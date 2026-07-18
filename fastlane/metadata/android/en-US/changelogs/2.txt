@@ -1,0 +1,7 @@
+First release.
+
+• Detect a chord by ear — press, strum, and it names the chord and draws how to fret it.
+• Runner-up chords one tap away, and other voicings of the same chord up the neck.
+• Capo-aware shapes, with the choice of naming the chord you hear or the shape you play.
+• Song sheets — capture parts chord by chord, reorder and rename them, fix a chord by hand, and share the finished sheet.
+• Chord dictionary, themes, keep-screen-on, and backup/restore for songs.

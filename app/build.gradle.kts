@@ -13,13 +13,18 @@ android {
         applicationId = "de.singular.crystalball"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 2
+        versionName = "0.2"
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            // Keep the git sha out of the APK. F-Droid rebuilds the *tagged* commit and compares
+            // byte-for-byte with the published binary, so an embedded sha turns any slip between
+            // "what was built" and "what was tagged" into an unreproducible release. Without it,
+            // the two can't disagree.
+            vcsInfo { include = false }
         }
     }
 

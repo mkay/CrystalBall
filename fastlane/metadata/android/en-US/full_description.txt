@@ -1,0 +1,21 @@
+Crystal Ball listens to your guitar and tells you what chord you just played. Press Detect, strum, and it names the chord and draws how to fret it — with the chords it nearly picked instead one tap away, and other ways to play the same one further up the neck. Capture a whole part and it becomes a song sheet you can keep, correct and share.
+
+Early-stage release — expect rough edges. Feedback and bug reports welcome via Issues.
+
+Features:
+
+* Detect a chord by ear — press, strum, done. It listens until the answer settles rather than for a fixed time, so a clean open chord resolves in about a third of a second; strumming again restarts it, so a bad take needs no second press.
+* Ranked alternatives — the best fit is a guess, not ground truth, so the runner-ups sit under it and one tap swaps the page over to any of them.
+* Chord shapes, not just names — the most idiomatic grip drawn large, plus other voicings walking up the neck. Open shapes are the ones a player expects to see, by name.
+* Capo-aware — detection is unaffected (the microphone hears the real chord either way), but the shapes are redrawn behind the capo, fret numbers stay as printed on your neck, and anything the capo pushes off the end is dropped rather than offered. Chords can be named by what you hear or by the shape your hands make.
+* Song sheets — capture a part chord by chord, name it Intro or Chorus, reorder the parts, and read the whole song back as diagrams. Parts can be renamed, chords fixed by hand without playing them again, and the finished sheet shared to any app.
+* Chord dictionary — look any chord in the vocabulary up by hand, without playing a note.
+* Session comforts — System/Light/Dark themes, keep-screen-on, an optional capo prompt at launch, an in-app quick help sheet, and backup/restore for your songs. Preferences persist across launches.
+
+Vocabulary: maj, min, dom7, maj7, min7, sus2, sus4, across all 12 roots. Shapes assume standard tuning (EADGBE).
+
+Honest about accuracy: template matching on clean triads is good, and degrades on a boomy room, a badly tuned guitar, or a phone held across the room. It is a practice aid, not ground truth — hence the runner-up row, which is one tap from correcting it.
+
+Microphone access is required — listening to your guitar is the whole app. Audio is analysed on the fly and never recorded, stored or sent anywhere; the app has no network permission at all.
+
+No ads, no trackers, no network access.
