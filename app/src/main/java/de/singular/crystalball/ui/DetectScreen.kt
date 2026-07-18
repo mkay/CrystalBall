@@ -52,8 +52,6 @@ import de.singular.crystalball.Settings
 import de.singular.crystalball.R
 import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.audio.ChordCandidate
-import de.singular.crystalball.audio.Quality
-import de.singular.crystalball.audio.ROOT_NAMES
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.Voicing
 import de.singular.crystalball.songs.CapturedChord
@@ -287,27 +285,7 @@ private fun BrowsePane(
     // width — without this they would pass underneath them.
     Spacer(Modifier.height(ICON_ROW_HEIGHT))
 
-    ChipRow {
-        ROOT_NAMES.forEachIndexed { root, name ->
-            FilterChip(
-                selected = state.chord.root == root,
-                onClick = { onSelect(state.chord.copy(root = root)) },
-                shape = ControlShape,
-                label = { Text(name) },
-            )
-        }
-    }
-    Spacer(Modifier.height(6.dp))
-    ChipRow {
-        Quality.entries.forEach { quality ->
-            FilterChip(
-                selected = state.chord.quality == quality,
-                onClick = { onSelect(state.chord.copy(quality = quality)) },
-                shape = ControlShape,
-                label = { Text(quality.label) },
-            )
-        }
-    }
+    ChordChooser(state.chord, onSelect)
 
     Spacer(Modifier.height(20.dp))
     Text(

@@ -69,6 +69,33 @@ fun Song.upsertPart(part: Part): Song {
 fun Song.removePart(name: String): Song = copy(parts = parts.filterNot { it.name == name })
 
 /**
+ * Copy the part called [name], landing the copy directly beneath it.
+ *
+ * For the second verse that is the first verse with one chord changed: capturing it again means
+ * playing it again, and the whole part is already written down correctly bar a chord.
+ *
+ * The copy is numbered rather than named by you, because a part cannot be nameless even for the
+ * moment a dialog is open, and the number is right often enough ("Verse 2") to leave alone. Renaming
+ * a part is not something the editor offers, so this is also the only way to a second verse — which
+ * is an argument for the number being a decent guess, not for asking.
+ */
+fun Song.duplicatePart(name: String): Song {
+    val index = parts.indexOfFirst { it.name == name }
+    if (index < 0) return this
+    val duplicate = parts[index].copy(name = nextPartName(name, parts.mapTo(mutableSetOf()) { it.name }))
+    return copy(parts = parts.toMutableList().also { it.add(index + 1, duplicate) })
+}
+
+/** "Verse" becomes "Verse 2"; "Verse 2" becomes "Verse 3"; both step over names already [taken]. */
+private fun nextPartName(name: String, taken: Set<String>): String {
+    val numbered = Regex("""^(.*?)\s+(\d+)$""").matchEntire(name)
+    val base = numbered?.groupValues?.get(1) ?: name
+    var n = (numbered?.groupValues?.get(2)?.toIntOrNull() ?: 1) + 1
+    while ("$base $n" in taken) n++
+    return "$base $n"
+}
+
+/**
  * Move the part at [from] by [offset] places, as far as the list allows.
  *
  * Parts are captured in whatever order you happened to play them, which is rarely the order they

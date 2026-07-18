@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,6 +45,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.singular.crystalball.ChordView
 import de.singular.crystalball.R
+import de.singular.crystalball.audio.Chord
+import de.singular.crystalball.audio.Quality
+import de.singular.crystalball.audio.ROOT_NAMES
 import de.singular.crystalball.chords.Voicing
 import kotlin.math.log10
 
@@ -195,6 +200,42 @@ fun CapoLink(capo: Int, onSetCapo: () -> Unit) {
             .height(48.dp),
     ) {
         Text(capoLabel(capo), style = MaterialTheme.typography.titleSmall)
+    }
+}
+
+/**
+ * Name a chord: a root, and what is built on it.
+ *
+ * Shared by the chord dictionary and by correcting a chord in a saved part, which is the same act —
+ * saying which chord you mean, in the absence of anything having listened. Roots scroll and
+ * qualities scroll, so the two rows read as one question rather than a grid to solve.
+ *
+ * The chord named is always the *sounding* one, capo or no capo. That is what a song stores, and
+ * what "an A is an A" means to anyone you play with; the caller is expected to show the resulting
+ * shape nearby, so a player behind a capo can check the name by its diagram.
+ */
+@Composable
+fun ChordChooser(chord: Chord, onSelect: (Chord) -> Unit) {
+    ChipRow {
+        ROOT_NAMES.forEachIndexed { root, name ->
+            FilterChip(
+                selected = chord.root == root,
+                onClick = { onSelect(chord.copy(root = root)) },
+                shape = ControlShape,
+                label = { Text(name) },
+            )
+        }
+    }
+    Spacer(Modifier.height(6.dp))
+    ChipRow {
+        Quality.entries.forEach { quality ->
+            FilterChip(
+                selected = chord.quality == quality,
+                onClick = { onSelect(chord.copy(quality = quality)) },
+                shape = ControlShape,
+                label = { Text(quality.label) },
+            )
+        }
     }
 }
 

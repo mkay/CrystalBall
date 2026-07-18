@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.chords.Voicing
 import de.singular.crystalball.songs.CapturedChord
 import de.singular.crystalball.songs.defaultVoicing
@@ -12,6 +13,7 @@ import de.singular.crystalball.songs.Song
 import de.singular.crystalball.songs.SongChord
 import de.singular.crystalball.songs.SongRepository
 import de.singular.crystalball.ui.SongPdf
+import de.singular.crystalball.songs.duplicatePart
 import de.singular.crystalball.songs.movePart
 import de.singular.crystalball.songs.upsertPart
 import de.singular.crystalball.songs.removePart
@@ -388,6 +390,41 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
                 )
             },
         )
+        persist()
+    }
+
+    /**
+     * Say which chord one of a part's chords actually is.
+     *
+     * The repair for a misread that got written down. Detection is not repeated: the sound has
+     * stopped, and by the time you notice you know the chord better than any recogniser would —
+     * so this is a plain statement of fact rather than another opinion to weigh.
+     *
+     * The grip goes back to the library's default for the new chord, because a shape is a way of
+     * playing a *particular* chord: keeping the old one would document fingers that sound the chord
+     * you just said this was not. That is the same rule moving the capo follows.
+     */
+    fun correctPartChord(index: Int, sounding: Chord) {
+        val current = _state.value as? SongState.PartView ?: return
+        _song.value = _song.value.copy(
+            parts = _song.value.parts.map { part ->
+                if (part.name != current.partName) part
+                else part.copy(
+                    chords = part.chords.mapIndexed { i, chord ->
+                        if (i != index || chord.sounding == sounding) chord
+                        else SongChord(sounding, defaultVoicing(sounding, _song.value.capo))
+                    },
+                )
+            },
+        )
+        persist()
+    }
+
+    /** Copy a part, numbered and placed under the one it came from. */
+    fun duplicatePart(name: String) {
+        val next = _song.value.duplicatePart(name)
+        if (next == _song.value) return
+        _song.value = next
         persist()
     }
 

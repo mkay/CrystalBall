@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -37,6 +38,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -58,7 +60,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +72,7 @@ import de.singular.crystalball.Capo
 import de.singular.crystalball.ChordView
 import de.singular.crystalball.Settings
 import de.singular.crystalball.SongState
+import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.chords.Voicing
 import de.singular.crystalball.songs.Part
 import de.singular.crystalball.songs.Song
@@ -100,6 +106,7 @@ fun SongScreen(
     onAddPart: () -> Unit,
     onSetCapo: () -> Unit,
     onRemovePart: (String) -> Unit,
+    onDuplicatePart: (String) -> Unit,
     onMovePart: (Int, Int) -> Unit,
     onOpenPart: (String) -> Unit,
     onViewSong: () -> Unit,
@@ -108,6 +115,7 @@ fun SongScreen(
     onCommentDone: (String) -> Unit,
     onCancelComment: () -> Unit,
     onEditPartChord: (Int) -> Unit,
+    onCorrectPartChord: (Int, Chord) -> Unit,
     onSelectPartVoicing: (Voicing) -> Unit,
     onBackToPart: () -> Unit,
     onBackToEditor: () -> Unit,
@@ -241,14 +249,16 @@ fun SongScreen(
                     )
                 is SongState.Editor ->
                     SongEditorPane(
-                        song, songSettings, onAddPart, onSetCapo, onRemovePart, onMovePart,
-                        onOpenPart, onViewSong, onEditComment,
+                        song, songSettings, onAddPart, onSetCapo, onRemovePart, onDuplicatePart,
+                        onMovePart, onOpenPart, onViewSong, onEditComment,
                     )
                 is SongState.SongView -> SongViewPane(song, songSettings)
                 is SongState.Comment -> CommentPane(song, onCommentDone)
                 is SongState.PartView ->
                     song.parts.firstOrNull { it.name == state.partName }?.let { part ->
-                        PartViewPane(song, part, songSettings, onEditPartChord)
+                        PartViewPane(
+                            song, part, songSettings, onEditPartChord, onCorrectPartChord,
+                        )
                     }
                 is SongState.EditPartChord ->
                     song.parts.firstOrNull { it.name == state.partName }
@@ -366,9 +376,10 @@ private fun LibraryPane(
             )
         }
 
-        else -> library.forEach { song ->
+        else -> library.forEachIndexed { index, song ->
             SongRow(
                 song = song,
+                banded = index % 2 == 1,
                 selected = song.id in selection,
                 selecting = selection.isNotEmpty(),
                 onOpen = { onOpenSong(song) },
@@ -399,6 +410,7 @@ private fun LibraryPane(
 @Composable
 private fun SongRow(
     song: Song,
+    banded: Boolean,
     selected: Boolean,
     selecting: Boolean,
     onOpen: () -> Unit,
@@ -411,9 +423,15 @@ private fun SongRow(
 
     Surface(
         shape = ControlShape,
-        // Only the picked rows are tinted; the rest keep the plain background this list has always
-        // had, so a library at rest looks exactly as it did.
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+        // Every other row gets a faint band, so a long title running onto a second line still reads
+        // as one song. It is a surface token rather than a tinted one: it should be felt as texture
+        // and not seen as meaning, since only selection is allowed to say something with colour —
+        // which is why selection wins here outright rather than layering over the band.
+        color = when {
+            selected -> MaterialTheme.colorScheme.secondaryContainer
+            banded -> MaterialTheme.colorScheme.surfaceContainerHigh
+            else -> Color.Transparent
+        },
         modifier = Modifier
             .fillMaxWidth()
             .clip(ControlShape)
@@ -590,6 +608,17 @@ private fun SongViewPane(song: Song, settings: Settings) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
+    // Says the page is read-only, rather than letting you find out by pressing a chord and having
+    // nothing happen. Screen-only: the PDF is drawn by [SongPdf], which prints no such line —
+    // sheet music that explains the app it came from would be a strange thing to hand someone.
+    Spacer(Modifier.height(12.dp))
+    Text(
+        "The song as it prints. To change a chord, go back and open the part it is in.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
+
     Spacer(Modifier.height(20.dp))
     song.parts.forEach { part ->
         Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
@@ -626,17 +655,33 @@ private fun SongViewPane(song: Song, settings: Settings) {
  * One cell wherever a stored chord is drawn, so a part reads the same whether you are looking at it
  * alone or as part of the whole song.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ChordCell(
     chord: SongChord,
     settings: Settings,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) {
+    val haptic = LocalHapticFeedback.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clip(ControlShape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(
+                if (onClick == null) Modifier
+                else Modifier.combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick?.let {
+                        {
+                            // Same confirmation in the hand the library's long-press gives: the
+                            // gesture has nothing on screen to say it is there.
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            it()
+                        }
+                    },
+                ),
+            )
             .padding(4.dp),
     ) {
         Text(
@@ -661,10 +706,23 @@ private fun PartViewPane(
     part: Part,
     settings: Settings,
     onEditPartChord: (Int) -> Unit,
+    onCorrectPartChord: (Int, Chord) -> Unit,
 ) {
+    // Which chord is being put right, if any. Screen state: a sheet you are holding open, not
+    // anything the song knows about.
+    var correcting by remember { mutableStateOf<Int?>(null) }
+
     Spacer(Modifier.height(8.dp))
     Text(
-        "Tap a chord to change how you play it.",
+        // The gestures carry the weight: the two lines are one shape on the page, and what differs
+        // between them is the first word.
+        buildAnnotatedString {
+            val gesture = SpanStyle(fontWeight = FontWeight.Bold)
+            withStyle(gesture) { append("Tap") }
+            append(" a chord to change how you play it.\n")
+            withStyle(gesture) { append("Long-press") }
+            append(" to say it is a different chord.")
+        },
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -672,7 +730,89 @@ private fun PartViewPane(
     Spacer(Modifier.height(16.dp))
     DiagramFlow {
         part.chords.forEachIndexed { index, chord ->
-            ChordCell(chord, settings) { onEditPartChord(index) }
+            ChordCell(
+                chord = chord,
+                settings = settings,
+                onClick = { onEditPartChord(index) },
+                onLongClick = { correcting = index },
+            )
+        }
+    }
+
+    correcting?.takeIf { it in part.chords.indices }?.let { index ->
+        CorrectChordSheet(
+            chord = part.chords[index],
+            settings = settings,
+            onCorrect = { onCorrectPartChord(index, it) },
+            onDismiss = { correcting = null },
+        )
+    }
+}
+
+/**
+ * Put right a chord that was heard wrong.
+ *
+ * A sheet rather than a page, because it is a repair and not a step: it opens over the part, and
+ * what you came to check — whether the row now reads the way the song goes — is still behind it.
+ *
+ * The correction applies as you tap, with no confirmation, and the sheet stays open: naming a chord
+ * takes up to two taps (root, then quality), and the diagram redrawing under them is the only
+ * confirmation worth having. Nothing is lost by a wrong tap that a right one does not undo — the
+ * grip resets to the library's default either way.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CorrectChordSheet(
+    chord: SongChord,
+    settings: Settings,
+    onCorrect: (Chord) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val view = ChordView.of(chord.sounding, settings)
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                "Which chord is it?",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.align(Alignment.Start),
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "For a chord the app heard wrong. Naming it here beats playing it again — you know " +
+                    "what you played, and the microphone no longer does.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.Start),
+            )
+
+            Spacer(Modifier.height(16.dp))
+            ChordChooser(chord.sounding, onCorrect)
+
+            // The name is chosen in sounding terms, so behind a capo it is the shape underneath it
+            // that tells you whether you picked the right one.
+            Spacer(Modifier.height(20.dp))
+            Text(view.title, style = MaterialTheme.typography.titleLarge)
+            if (view.subtitle != null) {
+                Text(
+                    view.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            ChordDiagram(
+                voicing = chord.voicing,
+                width = SMALL_DIAGRAM_WIDTH,
+                caption = chord.voicing.label,
+                capo = settings.capo,
+            )
         }
     }
 }
@@ -723,6 +863,7 @@ private fun SongEditorPane(
     onAddPart: () -> Unit,
     onSetCapo: () -> Unit,
     onRemovePart: (String) -> Unit,
+    onDuplicatePart: (String) -> Unit,
     onMovePart: (Int, Int) -> Unit,
     onOpenPart: (String) -> Unit,
     onViewSong: () -> Unit,
@@ -773,12 +914,29 @@ private fun SongEditorPane(
                         contentDescription = "Move ${part.name} down",
                     )
                 }
-                IconButton(onClick = { onRemovePart(part.name) }) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Remove ${part.name}",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                // The same overflow the library's rows carry, for the same reason: a bare trash can
+                // is one slip from losing a part, and it leaves nowhere to put a second action.
+                var menu by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { menu = true }) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = "Options for ${part.name}",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Duplicate") },
+                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                            onClick = { menu = false; onDuplicatePart(part.name) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete") },
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                            onClick = { menu = false; onRemovePart(part.name) },
+                        )
+                    }
                 }
             }
         }
