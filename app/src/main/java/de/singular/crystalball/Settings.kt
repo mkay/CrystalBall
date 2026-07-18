@@ -24,10 +24,10 @@ data class Settings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     /**
      * Open the capo sheet on launch, for players who clamp a capo somewhere new most sessions.
-     * Off by default: the capo persists, so most users would only be dismissing a sheet that
-     * already says what they want.
+     * On by default: a capo left set from yesterday is the one piece of stale state that makes
+     * every diagram wrong, and the sheet costs a single tap — picking a fret closes it again.
      */
-    val showCapoOnStart: Boolean = false,
+    val showCapoOnStart: Boolean = true,
 )
 
 /**

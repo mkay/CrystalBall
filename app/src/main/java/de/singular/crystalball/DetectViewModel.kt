@@ -170,7 +170,7 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
                 .getOrDefault(NameStyle.SOUNDING_FIRST),
             keepScreenOn = prefs.getBoolean(KEY_KEEP_SCREEN_ON, false),
             themeMode = readThemeMode(prefs.getString(KEY_THEME_MODE, null)),
-            showCapoOnStart = prefs.getBoolean(KEY_SHOW_CAPO_ON_START, false),
+            showCapoOnStart = prefs.getBoolean(KEY_SHOW_CAPO_ON_START, true),
         )
     )
     val settings: StateFlow<Settings> = _settings.asStateFlow()

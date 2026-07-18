@@ -106,8 +106,8 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Opens itself at launch when the user asked for it — a capo moved since yesterday
-                // is then the first thing they set. Saveable, so a rotation does not bring the
+                // Opens itself at launch unless turned off — a capo moved since yesterday is then
+                // the first thing they set. Saveable, so a rotation does not bring the
                 // sheet back after it has been dismissed.
                 var capoOpen by rememberSaveable { mutableStateOf(settings.showCapoOnStart) }
                 var settingsOpen by rememberSaveable { mutableStateOf(false) }
@@ -278,6 +278,7 @@ class MainActivity : ComponentActivity() {
                                 songViewModel.setCapo(fret)
                                 viewModel.setCapo(fret)
                             },
+                            onShowOnStartChange = viewModel::setShowCapoOnStart,
                             onDismiss = { songCapoOpen = false },
                         )
                     }
@@ -365,6 +366,7 @@ class MainActivity : ComponentActivity() {
                             CapoSheet(
                                 settings = settings,
                                 onCapoChange = viewModel::setCapo,
+                                onShowOnStartChange = viewModel::setShowCapoOnStart,
                                 onDismiss = { capoOpen = false },
                             )
                         }
