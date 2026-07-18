@@ -69,6 +69,21 @@ fun Song.upsertPart(part: Part): Song {
 fun Song.removePart(name: String): Song = copy(parts = parts.filterNot { it.name == name })
 
 /**
+ * Rename the part called [from] to [to], in place.
+ *
+ * Refused rather than fudged when [to] is blank or already another part's name: names are how a
+ * part is addressed, so two parts called "Verse" is not a cosmetic problem — [upsertPart] would
+ * treat the next capture of either as a replacement of the first. The caller is expected to have
+ * said so already; this is the backstop, not the message.
+ */
+fun Song.renamePart(from: String, to: String): Song {
+    val name = to.trim()
+    if (name.isEmpty() || name == from) return this
+    if (parts.any { it.name == name }) return this
+    return copy(parts = parts.map { if (it.name == from) it.copy(name = name) else it })
+}
+
+/**
  * Copy the part called [name], landing the copy directly beneath it.
  *
  * For the second verse that is the first verse with one chord changed: capturing it again means

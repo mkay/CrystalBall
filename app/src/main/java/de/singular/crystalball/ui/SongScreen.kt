@@ -107,6 +107,7 @@ fun SongScreen(
     onSetCapo: () -> Unit,
     onRemovePart: (String) -> Unit,
     onDuplicatePart: (String) -> Unit,
+    onRenamePart: (String, String) -> Unit,
     onMovePart: (Int, Int) -> Unit,
     onOpenPart: (String) -> Unit,
     onViewSong: () -> Unit,
@@ -250,7 +251,7 @@ fun SongScreen(
                 is SongState.Editor ->
                     SongEditorPane(
                         song, songSettings, onAddPart, onSetCapo, onRemovePart, onDuplicatePart,
-                        onMovePart, onOpenPart, onViewSong, onEditComment,
+                        onMovePart, onRenamePart, onOpenPart, onViewSong, onEditComment,
                     )
                 is SongState.SongView -> SongViewPane(song, songSettings)
                 is SongState.Comment -> CommentPane(song, onCommentDone)
@@ -865,11 +866,18 @@ private fun SongEditorPane(
     onRemovePart: (String) -> Unit,
     onDuplicatePart: (String) -> Unit,
     onMovePart: (Int, Int) -> Unit,
+    onRenamePart: (String, String) -> Unit,
     onOpenPart: (String) -> Unit,
     onViewSong: () -> Unit,
     onEditComment: () -> Unit,
 ) {
+    // Which part is being renamed, by the name it still has. Screen state: a dialog you have open.
+    var renameTarget by remember { mutableStateOf<String?>(null) }
+
     Spacer(Modifier.height(8.dp))
+    // Only over a list there is: with no parts yet the line below is already about their absence,
+    // and heading it would be labelling an empty shelf.
+    if (song.parts.isNotEmpty()) SectionLabel("Song parts")
     if (song.parts.isEmpty()) {
         Text(
             "No parts yet. Capture one and name it.",
@@ -926,6 +934,11 @@ private fun SongEditorPane(
                         )
                     }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Rename") },
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            onClick = { menu = false; renameTarget = part.name },
+                        )
                         DropdownMenuItem(
                             text = { Text("Duplicate") },
                             leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
@@ -1007,6 +1020,60 @@ private fun SongEditorPane(
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
+    )
+
+    renameTarget?.takeIf { name -> song.parts.any { it.name == name } }?.let { name ->
+        RenamePartDialog(
+            name = name,
+            taken = song.parts.mapTo(mutableSetOf()) { it.name } - name,
+            onRename = { onRenamePart(name, it); renameTarget = null },
+            onDismiss = { renameTarget = null },
+        )
+    }
+}
+
+/**
+ * Rename a part, from the editor's list.
+ *
+ * A part's name is what the rest of the song addresses it by, so a name another part already has is
+ * refused here rather than quietly ignored downstream — with the reason on the field, because a
+ * disabled button that will not say why is the more annoying half of this.
+ */
+@Composable
+private fun RenamePartDialog(
+    name: String,
+    taken: Set<String>,
+    onRename: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var text by rememberSaveable(name) { mutableStateOf(name) }
+    val clash = text.trim() in taken
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rename part") },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text("Part name") },
+                singleLine = true,
+                shape = ControlShape,
+                keyboardOptions = NameKeyboard,
+                isError = clash,
+                supportingText = if (clash) {
+                    { Text("This song already has a part called “${text.trim()}”.") }
+                } else {
+                    null
+                },
+            )
+        },
+        confirmButton = {
+            TextButton(enabled = text.isNotBlank() && !clash, onClick = { onRename(text) }) {
+                Text("Rename")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }
 

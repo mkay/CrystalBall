@@ -253,6 +253,7 @@ class MainActivity : ComponentActivity() {
                         onSetCapo = { songCapoOpen = true },
                         onRemovePart = songViewModel::removePart,
                         onDuplicatePart = songViewModel::duplicatePart,
+                        onRenamePart = songViewModel::renamePart,
                         onMovePart = songViewModel::movePart,
                         onOpenPart = songViewModel::openPart,
                         onViewSong = songViewModel::viewSong,

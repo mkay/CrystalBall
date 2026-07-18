@@ -14,6 +14,7 @@ import de.singular.crystalball.songs.SongChord
 import de.singular.crystalball.songs.SongRepository
 import de.singular.crystalball.ui.SongPdf
 import de.singular.crystalball.songs.duplicatePart
+import de.singular.crystalball.songs.renamePart
 import de.singular.crystalball.songs.movePart
 import de.singular.crystalball.songs.upsertPart
 import de.singular.crystalball.songs.removePart
@@ -417,6 +418,14 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
                 )
             },
         )
+        persist()
+    }
+
+    /** Give a part a different name, if the song has room for it. */
+    fun renamePart(from: String, to: String) {
+        val next = _song.value.renamePart(from, to)
+        if (next == _song.value) return
+        _song.value = next
         persist()
     }
 

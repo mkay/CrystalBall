@@ -78,6 +78,37 @@ class SongTest {
     }
 
     @Test
+    fun `renaming keeps the part where it is`() {
+        val next = song
+            .upsertPart(part("Verse", "x32010"))
+            .upsertPart(part("Chorus", "320003"))
+            .renamePart("Verse", "Bridge")
+
+        assertEquals(listOf("Bridge", "Chorus"), next.parts.map { it.name })
+        assertEquals("x32010", next.parts.first().chords.single().voicing.spec)
+    }
+
+    @Test
+    fun `a rename onto another part's name is refused`() {
+        val before = song
+            .upsertPart(part("Verse", "x32010"))
+            .upsertPart(part("Chorus", "320003"))
+        assertEquals(before, before.renamePart("Verse", "Chorus"))
+    }
+
+    @Test
+    fun `a blank rename is refused`() {
+        val before = song.upsertPart(part("Verse", "x32010"))
+        assertEquals(before, before.renamePart("Verse", "   "))
+    }
+
+    @Test
+    fun `renaming trims`() {
+        val next = song.upsertPart(part("Verse", "x32010")).renamePart("Verse", "  Bridge  ")
+        assertEquals(listOf("Bridge"), next.parts.map { it.name })
+    }
+
+    @Test
     fun `duplicating an absent part is harmless`() {
         val next = song.upsertPart(part("Verse", "x32010")).duplicatePart("Bridge")
         assertEquals(listOf("Verse"), next.parts.map { it.name })
