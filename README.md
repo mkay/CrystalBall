@@ -3,7 +3,9 @@
   Crystal Ball
 </h1>
 
-An Android tool that listens to your guitar and tells you what chord you just played. Press **Detect Chord**, strum, and it names the chord and draws how to fret it — with the chords it nearly picked instead one tap away, and other ways to play the same one further up the neck. Set a capo and the shapes follow your hands.
+An Android tool that listens to your guitar and tells you what chord you just played. Press **Detect single chord**, strum, and it names the chord and draws how to fret it — with the chords it nearly picked instead one tap away, and other ways to play the same one further up the neck. Set a capo and the shapes follow your hands.
+
+Or press **Detect multiple chords** and play a part through: the chords stack up as you go, and save into a song sheet you can name, correct, and read back as diagrams.
 
 Early-stage release — expect rough edges. Feedback and bug reports welcome via Issues.
 
@@ -18,6 +20,9 @@ Early-stage release — expect rough edges. Feedback and bug reports welcome via
 - **Chord shapes, not just names** — the most idiomatic grip drawn large, plus other voicings walking up the neck. Open shapes are the ones a player expects to see, by name.
 - **Capo-aware** — detection is unaffected (the microphone hears the real chord either way), but the shapes are redrawn behind the capo, fret numbers stay as printed on your neck, and anything the capo pushes off the end is dropped rather than offered.
 - **Chord dictionary** — *Chord Library* looks any chord in the vocabulary up by hand, without playing a note.
+- **Songs, written down as you play them** — capture a part chord by chord, name it *Intro* or *Chorus*, and reorder the parts as the song takes shape. The finished sheet reads back as diagrams rather than chord letters, so it is playable from the music stand.
+- **A song sheet stays correctable** — a part can be renamed, a wrong chord fixed by hand without playing it again, and a voicing you prefer picked and kept. Changing the capo keeps the key and redraws the shapes.
+- **Take the sheet with you** — a song shares out to any app that accepts it, and the whole collection backs up to a file and restores from one.
 - **Session comforts** — System/Light/Dark themes, keep-screen-on with a quiet notice that it is on, an optional capo prompt at launch, and an in-app quick help sheet. Preferences persist across launches.
 
 ## How it works
@@ -75,7 +80,8 @@ The DSP and the shape tables are pure Kotlin, so the interesting parts are cover
 ```
 app/src/main/java/de/singular/crystalball/
   MainActivity.kt        Compose entry point, microphone permission, navigation
-  DetectViewModel.kt     screen state, drives the listener
+  DetectViewModel.kt     screen state, drives the listener, and captures a run of chords
+  SongViewModel.kt       the song library and the part being edited
   Settings.kt            preferences + capo arithmetic
   audio/
     Fft.kt               radix-2 FFT (from RubberRing)
@@ -88,19 +94,27 @@ app/src/main/java/de/singular/crystalball/
   chords/
     Voicing.kt           a fingering, and what it sounds
     ChordLibrary.kt      curated open grips + generated CAGED forms
+  songs/
+    CapturedChord.kt     one chord as captured, with the grip chosen for it
+    Song.kt              parts, their order, and the rules for naming them
+    SongJson.kt          the on-disk format, shared with backup/restore
+    SongRepository.kt    the library on disk
   ui/
     ChordDiagram.kt        the chord box (Canvas)
-    DetectScreen.kt        detect / listening / result / browse panes
+    DetectScreen.kt        detect / listening / result / browse / capture panes
+    SongScreen.kt          the library, the part editor, and the readable sheet
+    SongPdf.kt             the sheet as a shareable document
+    Common.kt              pieces both edit paths use, the voicing picker among them
     CrystalDrawer.kt       the side panel
     CapoSheet.kt           the capo
-    AppSettingsSheet.kt    theme, chord naming, switches
+    SettingsScreen.kt      theme, chord naming, switches, song backup
     QuickHelpSheet.kt      what it does, and what it won't
     Theme.kt               colours
 ```
 
 ## Roadmap
 
-- Saving a chord to a collection / song.
+- **Fail-safe capture arming.** Capturing a run of chords relies on you muting between them: a chord left ringing is read as the next one, so forgetting produces a *wrong* chord rather than a missing one, and the screen can only ask. The fix is to wait for the strum gate to report real silence before arming the next chord, which means moving the capture loop inside `ChordListener` so the recorder and its settled noise floor survive between chords.
 
 ## Support
 
