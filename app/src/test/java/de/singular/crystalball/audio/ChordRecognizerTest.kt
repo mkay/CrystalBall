@@ -70,6 +70,31 @@ class ChordRecognizerTest {
         return recognise(renderVoicing(voicing)).first().chord.name
     }
 
+    /** Broadband noise at room-tone level: the rain-on-the-roof case, with no guitar in it. */
+    private fun renderNoise(seconds: Float = 1.5f, seed: Int = 3): FloatArray {
+        val rng = Random(seed)
+        return FloatArray((sampleRate * seconds).toInt()) { (rng.nextFloat() - 0.5f) * 0.01f }
+    }
+
+    /**
+     * The bug this guards: scoring divides the chroma's shape out, so before the tonality floor
+     * existed, noise normalised up to a confident correlation and the recogniser named a chord.
+     * Left alone it also kept a capture run alive indefinitely, filling it with phantom chords.
+     */
+    @Test
+    fun `noise is not heard as a chord`() {
+        assertTrue("room tone was read as a chord", recognise(renderNoise()).isEmpty())
+    }
+
+    /** The other half: the floor must not cost us a real chord. */
+    @Test
+    fun `a quiet chord still clears the tonality floor`() {
+        // A tenth of normal amplitude — the acoustic across the room, not a comfortable strum.
+        val voicing = ChordLibrary.voicingsFor(ChordLibrary.allChords().first { it.name == "G" }).first()
+        val quiet = renderVoicing(voicing).also { for (n in it.indices) it[n] *= 0.1f }
+        assertEquals("G", recognise(quiet).first().chord.name)
+    }
+
     @Test
     fun `recognises the common open major chords`() {
         for (name in listOf("C", "A", "G", "E", "D")) {

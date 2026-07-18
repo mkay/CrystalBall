@@ -157,7 +157,10 @@ class ChordListener {
             }
         }
 
-        // Timed out. Report whatever evidence we have rather than throwing it away.
+        // Timed out. Report whatever evidence we have rather than throwing it away — unless there
+        // is no chord in it, which is what an empty ranking means: the recogniser refuses noise
+        // below its tonality floor. That is the difference between a run that ends when you put the
+        // guitar down and one that fills itself with phantom chords from the room.
         val candidates = recognizer.rank(CANDIDATE_COUNT)
         emit(
             if (recognizer.frameCount >= MIN_CHORD_FRAMES && candidates.isNotEmpty())
