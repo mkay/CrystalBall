@@ -4,6 +4,9 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+- An "About this app" page (Settings → About): the version, where the source lives, where to report a bug, and the licence. Long-pressing the version copies it, so a bug report can name the exact build.
+
 ## [0.3] - 2026-07-18
 
 The first published release. 0.1 and 0.2 were tagged but never shipped, so everything below is new to anyone installing from F-Droid.
