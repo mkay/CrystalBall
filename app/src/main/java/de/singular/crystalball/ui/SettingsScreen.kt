@@ -15,6 +15,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,6 +58,7 @@ fun SettingsScreen(
     onShowCapoOnStartChange: (Boolean) -> Unit,
     onBackupSongs: () -> Unit,
     onRestoreSongs: () -> Unit,
+    onAbout: () -> Unit,
     onClose: () -> Unit,
 ) {
     BackHandler(onBack = onClose)
@@ -145,6 +147,14 @@ fun SettingsScreen(
             SettingsCaption(
                 "A backup holds your songs and nothing else — the settings on this page stay as " +
                     "you set them here.",
+            )
+
+            SettingsSectionLabel("About")
+            SettingActionRow(
+                "About this app",
+                "Version, source code, and how to get in touch",
+                Icons.Default.Info,
+                onAbout,
             )
         }
     }
