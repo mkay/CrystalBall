@@ -9,6 +9,7 @@ All notable changes to this project are documented here. The format is based on 
 - A `COPYRIGHT` file carrying the copyright notice, the artwork's licence and the terms on the name, and an `SPDX-License-Identifier` header on every source file.
 
 ### Changed
+- Settings are split into **Chords** and **System** tabs, matching Title Track. The division is by when you come to the page — Chords holds the capo prompt and how a chord is named, System holds the screen, the theme, song backup and About.
 - Relicensed from AGPL-3.0 to **GPL-3.0-only**, matching the other apps here. The Affero clause covered network use this app does not have — it asks for no network permission at all — so the plain GPL says what was actually meant. Version 3 only, not "or any later version".
 - The wordmark and the icon are now **CC BY 4.0** — free to use and modify with credit, rather than held back. Artwork withheld from the licence earns F-Droid's NonFreeAssets flag, and CC BY avoids the GPL's obligation to ship the editable SVGs as the artwork's source. The name stays outside both grants: a fork needs its own.
 
