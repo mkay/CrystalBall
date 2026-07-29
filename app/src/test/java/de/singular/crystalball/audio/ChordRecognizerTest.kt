@@ -179,7 +179,7 @@ class ChordRecognizerTest {
     }
 
     @Test
-    fun `a barre chord high up the neck reads the same as its open form`() {
+    fun `a barre chord high up the neck reads the same as its open shape`() {
         val chord = chordNamed("F")
         val barre = ChordLibrary.voicingsFor(chord).first()
         assertEquals("F", recognise(renderVoicing(barre)).first().chord.name)

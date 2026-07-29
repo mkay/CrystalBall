@@ -18,18 +18,18 @@ const val MUTED = -1
  */
 data class Voicing(
     val frets: IntArray,
-    /** Short position label, e.g. "open · Am form" or "5th fret · E form". */
+    /** Short position label, e.g. "open · Am shape" or "5th fret · E shape". */
     val label: String,
     /**
-     * The movable form this grip is a transposition of, e.g. "Am form" — null for a curated open
+     * The movable shape this grip is a transposition of, e.g. "Am shape" — null for a curated open
      * grip, which is not a transposition of anything, and for a voicing parsed back from a song.
      *
-     * Kept apart from [label] rather than sliced out of it, so the name block can say the form
+     * Kept apart from [label] rather than sliced out of it, so the name block can say the shape
      * without depending on how the caption happens to be punctuated. Not part of [equals]: two
      * grips with the same frets are the same grip however they were arrived at, which is what lets
      * a curated shape dedupe against its generated twin.
      */
-    val form: String? = null,
+    val movableShape: String? = null,
 ) {
     init {
         require(frets.size == STRING_COUNT) { "a voicing needs $STRING_COUNT strings, got ${frets.size}" }

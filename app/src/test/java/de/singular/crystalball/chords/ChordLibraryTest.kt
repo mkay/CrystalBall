@@ -11,7 +11,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Correctness of the shape tables. The curated grips and movable forms are hand-authored, so these
+ * Correctness of the shape tables. The curated grips and movable shapes are hand-authored, so these
  * tests exist to prove each one actually sounds the chord it claims to — a transposed digit is
  * invisible on inspection but caught here.
  */
@@ -53,7 +53,7 @@ class ChordLibraryTest {
     @Test
     fun `every chord has enough voicings to be worth showing`() {
         // Three is the real floor, and it is not a gap to be filled: a m7 or sus chord genuinely
-        // has only the three barre forms below the 15th fret. Anything beyond them would be a
+        // has only the three barre shapes below the 15th fret. Anything beyond them would be a
         // fingering no guitarist reaches for, so the UI shows what exists rather than padding.
         for (chord in ChordLibrary.allChords()) {
             val count = ChordLibrary.voicingsFor(chord).size
@@ -63,9 +63,9 @@ class ChordLibraryTest {
 
     @Test
     fun `triads nearly fill the variations row`() {
-        // Majors and minors are the common case and carry the CAGED forms plus the three-string
+        // Majors and minors are the common case and carry the CAGED shapes plus the three-string
         // triads. Five is the floor rather than six: a few minors (Cm, F#m, Gm…) sit high enough
-        // that the octave-up repeat of a form runs off the end of the neck.
+        // that the octave-up repeat of a shape runs off the end of the neck.
         for (chord in ChordLibrary.allChords()) {
             if (chord.quality != Quality.MAJ && chord.quality != Quality.MIN) continue
             val count = ChordLibrary.voicingsFor(chord).size
@@ -84,7 +84,7 @@ class ChordLibraryTest {
     }
 
     @Test
-    fun `chords with no open shape still generate movable forms`() {
+    fun `chords with no open shape still generate movable shapes`() {
         // F# minor has no open grip at all; it must still be drawable.
         val voicings = ChordLibrary.voicingsFor(Chord(6, Quality.MIN))
         assertTrue(voicings.isNotEmpty())
@@ -168,8 +168,8 @@ class ChordLibraryTest {
         val plain = ChordLibrary.voicingsFor(chord, capo = 0).first { it.label.contains("fret") }
         val capoed = ChordLibrary.voicingsFor(chord, capo = 2).first { it.label.contains("fret") }
         assertEquals(plain.frets.toList(), capoed.frets.toList()) // same grip…
-        assertEquals("2nd fret · C form", plain.label)
-        assertEquals("4th fret · C form", capoed.label) // …named two frets higher
+        assertEquals("2nd fret · C shape", plain.label)
+        assertEquals("4th fret · C shape", capoed.label) // …named two frets higher
     }
 
     @Test

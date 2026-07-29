@@ -21,8 +21,8 @@ class CapoTest {
         assertEquals("E", Capo.title(chord("E"), 2, NameStyle.SOUNDING_FIRST))
         assertEquals("D · capo 2", Capo.subtitle(chord("E"), 2, NameStyle.SOUNDING_FIRST))
         assertEquals(
-            "D, E form · capo 2",
-            Capo.subtitle(chord("E"), 2, NameStyle.SOUNDING_FIRST, form = "E form"),
+            "D, E shape · capo 2",
+            Capo.subtitle(chord("E"), 2, NameStyle.SOUNDING_FIRST, movableShape = "E shape"),
         )
     }
 
@@ -44,7 +44,7 @@ class CapoTest {
 
     /**
      * The reported bug: with a capo on, the name block stood still while the diagram under it
-     * changed, so a promoted Am-form barre was still headed by the form the library happened to
+     * changed, so a promoted Am-shape barre was still headed by the shape the library happened to
      * rank first.
      */
     @Test
@@ -55,16 +55,16 @@ class CapoTest {
         val promoted = ChordView.of(chord("Dm"), settings, other)
 
         assertEquals(other, promoted.best)
-        assertEquals("Cm, ${other.form} · capo 2", promoted.subtitle)
+        assertEquals("Cm, ${other.movableShape} · capo 2", promoted.subtitle)
         assertNotEquals(lead.subtitle, promoted.subtitle)
     }
 
-    /** A curated open grip is a transposition of no form, so the clause is dropped, not guessed. */
+    /** A curated open grip is a transposition of no movable shape, so the clause is dropped, not guessed. */
     @Test
-    fun `a grip with no form leaves the form clause out`() {
+    fun `a grip with no movable shape leaves the clause out`() {
         val settings = Settings(capo = 2, nameStyle = NameStyle.SOUNDING_FIRST)
         val view = ChordView.of(chord("E"), settings)
-        val open = view.voicings.first { it.form == null }
+        val open = view.voicings.first { it.movableShape == null }
 
         assertEquals("D · capo 2", ChordView.of(chord("E"), settings, open).subtitle)
     }
@@ -73,7 +73,7 @@ class CapoTest {
     fun `the shape line is the subtitle without the capo`() {
         // For the chord browser, which states the capo on its own line and would else say it twice.
         assertEquals("D", Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST))
-        assertEquals("D, Am form", Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST, "Am form"))
+        assertEquals("D, Am shape", Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST, "Am shape"))
         assertEquals("sounds as E", Capo.shapeLine(chord("E"), 2, NameStyle.SHAPE_FIRST))
     }
 

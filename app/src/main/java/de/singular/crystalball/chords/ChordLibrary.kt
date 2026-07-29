@@ -12,7 +12,7 @@ import de.singular.crystalball.audio.ROOT_NAMES
  * Two sources, deliberately. The **curated** table holds the open-position shapes a player actually
  * expects to see — the ones with names, that no scoring function would reliably pick out of the set
  * of technically-valid fingerings. Everything else is **generated** by transposing movable (CAGED)
- * forms up the neck, which covers all 84 chords, including the ones with no open shape at all.
+ * shapes up the neck, which covers all 84 chords, including the ones with no open shape at all.
  *
  * Curated shapes always rank first; generated ones fill in behind, nearest the nut first, so the
  * "other variations" row walks up the neck.
@@ -22,71 +22,71 @@ object ChordLibrary {
     /**
      * A muted string in a [MovableShape]'s offsets.
      *
-     * Deliberately *not* [MUTED]: offsets are relative and legitimately negative (the C and G forms
+     * Deliberately *not* [MUTED]: offsets are relative and legitimately negative (the C and G shapes
      * reach back behind their root), so -1 has to mean "one fret below the root" and cannot double
      * as the mute sentinel. A value no real offset can take keeps the two apart.
      */
     private const val X = Int.MIN_VALUE
 
     /**
-     * A movable form: fret offsets relative to the root, with the root on [rootString].
+     * A movable shape: fret offsets relative to the root, with the root on [rootString].
      *
-     * Offsets are added to the fret at which [rootString] gives the chord's root, so the whole form
+     * Offsets are added to the fret at which [rootString] gives the chord's root, so the whole shape
      * slides up the neck. [X] strings stay muted. These are exactly the open shapes below, read
-     * relative to their root — the E form is E/Em/E7 barred, the A form A/Am/A7, and so on.
+     * relative to their root — the E shape is E/Em/E7 barred, the A shape A/Am/A7, and so on.
      *
-     * Offsets may be **negative**: in the C and G forms the root is not the lowest fretted note, so
-     * the rest of the grip sits behind it. Such a form is simply unreachable when the root lands too
+     * Offsets may be **negative**: in the C and G shapes the root is not the lowest fretted note, so
+     * the rest of the grip sits behind it. Such a shape is simply unreachable when the root lands too
      * near the nut for it to fit, and [generate] drops it there.
      */
     private class MovableShape(val rootString: Int, val offsets: IntArray, val name: String)
 
-    /** Movable forms per quality. Order is the fallback ranking: E form, then A, then D, then C, G. */
+    /** Movable shapes per quality. Order is the fallback ranking: E shape, then A, then D, then C, G. */
     private val MOVABLE: Map<Quality, List<MovableShape>> = mapOf(
         Quality.MAJ to listOf(
-            MovableShape(0, intArrayOf(0, 2, 2, 1, 0, 0), "E form"),
-            MovableShape(1, intArrayOf(X, 0, 2, 2, 2, 0), "A form"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 2), "D form"),
-            MovableShape(1, intArrayOf(X, 0, -1, -3, -2, -3), "C form"),
-            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, 0), "G form"),
+            MovableShape(0, intArrayOf(0, 2, 2, 1, 0, 0), "E shape"),
+            MovableShape(1, intArrayOf(X, 0, 2, 2, 2, 0), "A shape"),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 2), "D shape"),
+            MovableShape(1, intArrayOf(X, 0, -1, -3, -2, -3), "C shape"),
+            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, 0), "G shape"),
             MovableShape(3, intArrayOf(X, X, X, 0, 0, -2), "top triad"),
             MovableShape(2, intArrayOf(X, X, 0, -1, -2, X), "middle triad"),
         ),
         Quality.MIN to listOf(
-            MovableShape(0, intArrayOf(0, 2, 2, 0, 0, 0), "Em form"),
-            MovableShape(1, intArrayOf(X, 0, 2, 2, 1, 0), "Am form"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 1), "Dm form"),
+            MovableShape(0, intArrayOf(0, 2, 2, 0, 0, 0), "Em shape"),
+            MovableShape(1, intArrayOf(X, 0, 2, 2, 1, 0), "Am shape"),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 1), "Dm shape"),
             MovableShape(3, intArrayOf(X, X, X, 0, -1, -2), "top triad"),
             MovableShape(2, intArrayOf(X, X, 0, -2, -2, X), "middle triad"),
         ),
         Quality.DOM7 to listOf(
-            MovableShape(0, intArrayOf(0, 2, 0, 1, 0, 0), "E7 form"),
-            MovableShape(1, intArrayOf(X, 0, 2, 0, 2, 0), "A7 form"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 1, 2), "D7 form"),
-            MovableShape(1, intArrayOf(X, 0, -1, 0, -2, -3), "C7 form"),
-            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, -2), "G7 form"),
+            MovableShape(0, intArrayOf(0, 2, 0, 1, 0, 0), "E7 shape"),
+            MovableShape(1, intArrayOf(X, 0, 2, 0, 2, 0), "A7 shape"),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 1, 2), "D7 shape"),
+            MovableShape(1, intArrayOf(X, 0, -1, 0, -2, -3), "C7 shape"),
+            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, -2), "G7 shape"),
         ),
         Quality.MAJ7 to listOf(
-            MovableShape(0, intArrayOf(0, 2, 1, 1, 0, 0), "Emaj7 form"),
-            MovableShape(1, intArrayOf(X, 0, 2, 1, 2, 0), "Amaj7 form"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 2, 2), "Dmaj7 form"),
-            MovableShape(1, intArrayOf(X, 0, -1, -3, -3, -3), "Cmaj7 form"),
-            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, -1), "Gmaj7 form"),
+            MovableShape(0, intArrayOf(0, 2, 1, 1, 0, 0), "Emaj7 shape"),
+            MovableShape(1, intArrayOf(X, 0, 2, 1, 2, 0), "Amaj7 shape"),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 2, 2), "Dmaj7 shape"),
+            MovableShape(1, intArrayOf(X, 0, -1, -3, -3, -3), "Cmaj7 shape"),
+            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, -1), "Gmaj7 shape"),
         ),
         Quality.MIN7 to listOf(
-            MovableShape(0, intArrayOf(0, 2, 0, 0, 0, 0), "Em7 form"),
-            MovableShape(1, intArrayOf(X, 0, 2, 0, 1, 0), "Am7 form"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 1, 1), "Dm7 form"),
+            MovableShape(0, intArrayOf(0, 2, 0, 0, 0, 0), "Em7 shape"),
+            MovableShape(1, intArrayOf(X, 0, 2, 0, 1, 0), "Am7 shape"),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 1, 1), "Dm7 shape"),
         ),
         Quality.SUS2 to listOf(
-            MovableShape(1, intArrayOf(X, 0, 2, 2, 0, 0), "Asus2 form"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 0), "Dsus2 form"),
-            MovableShape(0, intArrayOf(0, 2, 4, 4, X, X), "Esus2 form"),
+            MovableShape(1, intArrayOf(X, 0, 2, 2, 0, 0), "Asus2 shape"),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 0), "Dsus2 shape"),
+            MovableShape(0, intArrayOf(0, 2, 4, 4, X, X), "Esus2 shape"),
         ),
         Quality.SUS4 to listOf(
-            MovableShape(0, intArrayOf(0, 2, 2, 2, 0, 0), "Esus4 form"),
-            MovableShape(1, intArrayOf(X, 0, 2, 2, 3, 0), "Asus4 form"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 3), "Dsus4 form"),
+            MovableShape(0, intArrayOf(0, 2, 2, 2, 0, 0), "Esus4 shape"),
+            MovableShape(1, intArrayOf(X, 0, 2, 2, 3, 0), "Asus4 shape"),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 3), "Dsus4 shape"),
         ),
     )
 
@@ -131,7 +131,7 @@ object ChordLibrary {
     private const val MAX_FRET = 15
 
     /**
-     * Shapes for [chord], best first: curated open grips, then movable forms walking up the neck.
+     * Shapes for [chord], best first: curated open grips, then movable shapes walking up the neck.
      *
      * [capo] shifts the whole hand up the neck, because every fret in a shape is counted from the
      * capo — so a shape reaching the 13th fret is really at the 15th with a capo at 2, and one that
@@ -149,7 +149,7 @@ object ChordLibrary {
         return out.filter { it.highestFret + capo <= MAX_FRET }
     }
 
-    /** Transpose every movable form for the quality to the chord's root, at each reachable octave. */
+    /** Transpose every movable shape for the quality to the chord's root, at each reachable octave. */
     private fun generate(chord: Chord, capo: Int): List<Voicing> {
         val shapes = MOVABLE[chord.quality].orEmpty()
         val found = ArrayList<Voicing>()
@@ -167,7 +167,7 @@ object ChordLibrary {
                     if (shape.offsets[s] == X) MUTED else shape.offsets[s] + position
                 }
                 found.add(
-                    Voicing(frets, label = positionLabel(frets, shape.name, capo), form = shape.name)
+                    Voicing(frets, label = positionLabel(frets, shape.name, capo), movableShape = shape.name)
                 )
             }
         }

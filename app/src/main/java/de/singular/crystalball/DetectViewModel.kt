@@ -96,7 +96,7 @@ sealed interface DetectState {
          * How many further shapes the result screen offers — about two wrapped rows on a phone.
          *
          * No chord in the library has more than nine shapes, so this no longer truncates anything
-         * today; it stays as a bound in case the library grows a quality with far more forms, since
+         * today; it stays as a bound in case the library grows a quality with far more shapes, since
          * a screen of near-identical grips up at the 12th fret is noise, not choice.
          */
         const val VARIATION_COUNT = 10
@@ -128,16 +128,16 @@ data class ChordView(
      * gone. Falling back to the leader beats drawing a grip this chord no longer has.
      *
      * The library's instance is handed back, not the caller's. They are equal by definition — the
-     * frets are the identity — but only the library's carries [Voicing.form] and a label numbered
+     * frets are the identity — but only the library's carries [Voicing.movableShape] and a label numbered
      * from the current capo, both of which a voicing read back from a song has lost.
      */
     val best: Voicing get() = voicings.firstOrNull { it == chosen } ?: voicings.first()
 
     /** The second name, with the capo. Tracks [best], so promoting a variation renames the grip. */
-    val subtitle: String? get() = Capo.subtitle(sounding, capo, nameStyle, best.form)
+    val subtitle: String? get() = Capo.subtitle(sounding, capo, nameStyle, best.movableShape)
 
     /** The same line without the capo, for pages that state the capo themselves. */
-    val shapeLine: String? get() = Capo.shapeLine(sounding, capo, nameStyle, best.form)
+    val shapeLine: String? get() = Capo.shapeLine(sounding, capo, nameStyle, best.movableShape)
 
     /**
      * The other ways to play the same chord, walking up the neck, capped at

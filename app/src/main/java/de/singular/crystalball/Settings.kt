@@ -6,7 +6,7 @@ import de.singular.crystalball.audio.Chord
 
 /** Which name leads when a capo makes the chord you finger differ from the chord you hear. */
 enum class NameStyle {
-    /** "E", with "D, E form · capo 2" beneath — what the band hears, leading. */
+    /** "E", with "D, E shape · capo 2" beneath — what the band hears, leading. */
     SOUNDING_FIRST,
 
     /** "D", with "sounds as E · capo 2" beneath — what your hands are doing, leading. */
@@ -75,26 +75,35 @@ object Capo {
      *
      * Null when there is no capo and the two names agree, so there is no second name to give.
      *
-     * [form] is the movable form of the grip currently shown large, and is what makes this line
-     * track the promoted variation instead of standing still. It matters because the chord name
-     * alone reads as a grip and is not one: the minor forms are named Em/Am/Dm, so a capo'd Dm was
-     * headed "Cm shape" above variations captioned "Am form" — naming a grip that appears nowhere
-     * in the list. Null for a curated open grip, which is a transposition of no form; the clause is
-     * then dropped rather than guessed at.
+     * [movableShape] is the movable shape of the grip currently shown large, and is what makes this
+     * line track the promoted variation instead of standing still. It matters because the chord
+     * name alone reads as a grip and is not one: the minor shapes are named Em/Am/Dm, so a capo'd
+     * Dm was headed "Cm" above variations captioned "Am shape" — naming a grip that appears
+     * nowhere in the list. Null for a curated open grip, which is a transposition of no movable
+     * shape; the clause is then dropped rather than guessed at.
      *
      * For pages that state the capo themselves and would otherwise say it twice; [subtitle] is the
      * same line with the capo appended, for pages that do not.
      */
-    fun shapeLine(sounding: Chord, capo: Int, style: NameStyle, form: String? = null): String? = when {
+    fun shapeLine(
+        sounding: Chord,
+        capo: Int,
+        style: NameStyle,
+        movableShape: String? = null,
+    ): String? = when {
         capo == 0 -> null
         style == NameStyle.SOUNDING_FIRST ->
-            listOfNotNull(shapeChord(sounding, capo).name, form).joinToString(", ")
+            listOfNotNull(shapeChord(sounding, capo).name, movableShape).joinToString(", ")
         else -> "sounds as ${sounding.name}"
     }
 
     /** The line under it, or null when there is no capo and the two names agree. */
-    fun subtitle(sounding: Chord, capo: Int, style: NameStyle, form: String? = null): String? =
-        shapeLine(sounding, capo, style, form)?.let { "$it · capo $capo" }
+    fun subtitle(
+        sounding: Chord,
+        capo: Int,
+        style: NameStyle,
+        movableShape: String? = null,
+    ): String? = shapeLine(sounding, capo, style, movableShape)?.let { "$it · capo $capo" }
 
     /** How a chord is named where there is no room for a subtitle, e.g. the alternatives row. */
     fun shortName(sounding: Chord, capo: Int, style: NameStyle): String = when {

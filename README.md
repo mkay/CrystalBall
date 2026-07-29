@@ -39,7 +39,7 @@ Honest about accuracy: template matching on clean triads is good, and degrades o
 
 **Vocabulary:** `maj`, `min`, `dom7`, `maj7`, `min7`, `sus2`, `sus4`, across all 12 roots. Denser extensions (6ths, 9ths, altered dominants) are deliberately out of scope: their templates overlap the above too heavily to survive single-microphone matching, and adding them mostly degrades the chords people actually play.
 
-**Shapes:** standard tuning (EADGBE). A curated table of open-position grips, plus movable CAGED forms transposed up the neck to cover all 84 chords — including those with no open shape. Every shape, curated or generated, is verified by unit test to sound its chord's notes and nothing else, so a mistyped fret cannot ship.
+**Shapes:** standard tuning (EADGBE). A curated table of open-position grips, plus movable CAGED shapes transposed up the neck to cover all 84 chords — including those with no open shape. Every shape, curated or generated, is verified by unit test to sound its chord's notes and nothing else, so a mistyped fret cannot ship.
 
 ## Tech stack
 
@@ -93,7 +93,7 @@ app/src/main/java/de/singular/crystalball/
     ChordListener.kt     AudioRecord capture + auto-stop
   chords/
     Voicing.kt           a fingering, and what it sounds
-    ChordLibrary.kt      curated open grips + generated CAGED forms
+    ChordLibrary.kt      curated open grips + generated CAGED shapes
   songs/
     CapturedChord.kt     one chord as captured, with the grip chosen for it
     Song.kt              parts, their order, and the rules for naming them
