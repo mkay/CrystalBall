@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 package de.singular.crystalball.chords
 
 /** Standard tuning EADGBE, low to high, as pitch classes (0 = C). Index 0 is the low E string. */

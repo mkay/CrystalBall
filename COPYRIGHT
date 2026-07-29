@@ -1,0 +1,52 @@
+Crystal Ball — an Android chord detector for guitar
+Copyright (C) 2026 Kreuder <mail@singular.de>
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License, version 3, as published by the
+Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+
+Version 3 only, not "or any later version". Every source file carries
+`SPDX-License-Identifier: GPL-3.0-only` saying so.
+
+
+ARTWORK
+
+The wordmark and the icon are original artwork, and are licensed separately from
+the code, under the Creative Commons Attribution 4.0 International licence
+(CC BY 4.0) — see <https://creativecommons.org/licenses/by/4.0/>:
+
+  app/src/main/res/drawable/ic_ball.xml
+  app/src/main/res/drawable/claim.xml
+  app/src/main/res/drawable/ic_launcher_foreground.xml
+  app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+  app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+  docs/icon.png
+  fastlane/metadata/android/en-US/images/icon.png
+  fastlane/metadata/android/en-US/images/featureGraphic.png
+
+  SPDX-License-Identifier: CC-BY-4.0
+  Copyright (C) 2026 Kreuder <mail@singular.de>
+
+Use them, including commercially and in a modified form, provided you credit the
+author. A free licence rather than a reservation, deliberately: F-Droid's
+inclusion policy weighs an app's assets as well as its source, and artwork held
+back earns the NonFreeAssets flag. CC BY rather than the GPL because the GPL
+would oblige the editable SVGs to ship as the artwork's source, and they are not
+in this repository — what is committed is generated from them.
+
+
+THE NAME
+
+"Crystal Ball" is not licensed by either grant above. Give a fork its own name:
+the code is yours to take, and so is the artwork if you credit it, but two apps
+answering to one name serves nobody looking for either.
+
+Nothing here is a registered trademark, and this is not claiming to be one. It
+is a statement of what the licences do and do not cover.

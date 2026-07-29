@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 package de.singular.crystalball.audio
 
 /** 0 = C, 1 = C#, … 11 = B. */

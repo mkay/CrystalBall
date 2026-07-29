@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 package de.singular.crystalball.chords
 
 import de.singular.crystalball.audio.Chord
