@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -22,7 +23,9 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import de.singular.crystalball.songs.Song
 
 /**
  * The side panel: where you are going, and how the app behaves.
@@ -42,6 +45,8 @@ fun CrystalDrawer(
     onShowChords: () -> Unit,
     onSettings: () -> Unit,
     onQuickHelp: () -> Unit,
+    recents: List<Song> = emptyList(),
+    onOpenRecent: (Song) -> Unit = {},
 ) {
     // Take 4/5 of the screen width, leaving a strip of dimmed scrim on the right to tap-to-close.
     ModalDrawerSheet(Modifier.fillMaxWidth(0.8f)) {
@@ -82,6 +87,25 @@ fun CrystalDrawer(
                 modifier = itemPadding,
             )
 
+            // Songs you were just at, straight from the panel — Rubber Ring's recents list, for the
+            // same reason: the library screen is two taps away and sorted, but the song you want
+            // back is nearly always one of the last few, and naming them saves the trip.
+            //
+            // Below the destinations rather than above them: this is a shortcut into Songs, and a
+            // shortcut that pushes the fixed navigation down the panel has stopped being one.
+            if (recents.isNotEmpty()) {
+                DrawerSectionLabel("Recent songs")
+                recents.forEach { song ->
+                    NavigationDrawerItem(
+                        label = { Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        icon = { Icon(Icons.Default.MusicNote, contentDescription = null) },
+                        selected = false,
+                        onClick = { onOpenRecent(song) },
+                        modifier = itemPadding,
+                    )
+                }
+            }
+
             // Push help to the bottom — the conventional spot for help/about.
             Spacer(Modifier.weight(1f))
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
@@ -96,4 +120,15 @@ fun CrystalDrawer(
             )
         }
     }
+}
+
+/** The quiet heading over a group of panel items, matching the settings screen's section labels. */
+@Composable
+private fun DrawerSectionLabel(text: String) {
+    Text(
+        text.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 28.dp, top = 16.dp, bottom = 4.dp),
+    )
 }

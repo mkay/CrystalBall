@@ -54,6 +54,7 @@ object SongJson {
         put("capo", song.capo)
         put("comment", song.comment)
         put("updatedAt", song.updatedAt)
+        put("lastOpenedAt", song.lastOpenedAt)
         put("parts", JSONArray().apply { song.parts.forEach { put(encodePart(it)) } })
     }
 
@@ -86,6 +87,9 @@ object SongJson {
                 .mapNotNull { parts.optJSONObject(it)?.let(::decodePart) }
                 .distinctBy { it.name },
             updatedAt = o.optLong("updatedAt"),
+            // Absent in songs written before recents existed; 0 reads as "never opened",
+            // which is exactly what those songs are.
+            lastOpenedAt = o.optLong("lastOpenedAt"),
         )
     }
 

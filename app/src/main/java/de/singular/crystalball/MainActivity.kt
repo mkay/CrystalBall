@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity() {
                 // Collected out here, not just inside the songs screen: the detect screen's
                 // "Save to an existing song" reads it too.
                 val library by songViewModel.library.collectAsStateWithLifecycle()
+                val recents by songViewModel.recentSongs.collectAsStateWithLifecycle()
 
                 // Detection is the only thing the app does, so the permission is requested on the
                 // first press rather than at launch — by then it is obvious what it is for. Granting
@@ -368,6 +369,10 @@ class MainActivity : ComponentActivity() {
                             onShowChords = { closeThen { viewModel.showChords() } },
                             onSettings = { closeThen { settingsOpen = true } },
                             onQuickHelp = { closeThen { helpOpen = true } },
+                            recents = recents,
+                            onOpenRecent = { song ->
+                                closeThen { songViewModel.openSong(song); songsOpen = true }
+                            },
                         )
                     },
                 ) {

@@ -63,6 +63,35 @@ class SongRepositoryTest {
     }
 
     @Test
+    fun `marking a song opened stamps it without counting as an edit`() = runBlocking {
+        val (repo, _) = repo()
+        val saved = repo.save(song("a"))
+        val before = System.currentTimeMillis()
+        val opened = repo.markOpened("a")
+        assertTrue(opened!!.lastOpenedAt >= before)
+        // The point of the second timestamp: reading a song must not look like changing it.
+        assertEquals(saved.updatedAt, opened.updatedAt)
+        assertEquals(opened.lastOpenedAt, repo.list().single().lastOpenedAt)
+    }
+
+    @Test
+    fun `marking a song that is not there is not an error`() = runBlocking {
+        val (repo, _) = repo()
+        repo.save(song("a"))
+        assertEquals(null, repo.markOpened("gone"))
+        assertEquals(listOf("a"), repo.list().map { it.id })
+    }
+
+    @Test
+    fun `an old library reads back as never opened rather than failing`() = runBlocking {
+        val (repo, file) = repo()
+        repo.save(song("a"))
+        // A file written before lastOpenedAt existed: the field is simply absent.
+        file.writeText(file.readText().replace(Regex(""","lastOpenedAt":\d+"""), ""))
+        assertEquals(0L, repo.list().single().lastOpenedAt)
+    }
+
+    @Test
     fun `saving the same id replaces in place rather than appending`() = runBlocking {
         val (repo, _) = repo()
         repo.save(song("a"))

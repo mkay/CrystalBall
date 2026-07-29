@@ -24,6 +24,7 @@ class SongJsonTest {
             Part("Chorus", listOf(chord(0, Quality.MAJ, "x32010"))),
         ),
         updatedAt = 1_700_000_000_000,
+        lastOpenedAt = 1_700_000_500_000,
     )
 
     @Test

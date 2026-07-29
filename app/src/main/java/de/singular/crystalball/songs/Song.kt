@@ -51,7 +51,41 @@ data class Song(
      */
     val comment: String = "",
     val updatedAt: Long = 0L,
+    /**
+     * Epoch millis the song was last opened (0 = never), kept apart from [updatedAt] because
+     * reading a song and correcting one are different events.
+     *
+     * A sheet earns its place on the music stand by being *played from*, which leaves no edit
+     * behind — sort recents by [updatedAt] alone and the song you open every evening sinks below
+     * one you fixed a chord in months ago. Stamped by `SongRepository.markOpened`, never by a save.
+     */
+    val lastOpenedAt: Long = 0L,
 )
+
+/** How many songs the side panel's "Recent" list shows. */
+const val RECENTS_LIMIT = 5
+
+/**
+ * When the song was last *touched*, by either hand — the later of reading it and changing it.
+ *
+ * Both count, because both mean the song is the one you are working on. A song being corrected
+ * between takes and a song being read from the stand are equally current, and a list that honoured
+ * only one of them would be wrong half the time.
+ */
+val Song.touchedAt: Long get() = maxOf(updatedAt, lastOpenedAt)
+
+/**
+ * The songs worth offering as recent, most recently touched first.
+ *
+ * Songs never opened *and* never saved are dropped rather than filling the list with whatever the
+ * library happens to hold — a restored backup arrives with timestamps from another device, and a
+ * "Recent" list you have never touched on this one is furniture. Pure, so the ordering is a unit
+ * test rather than something to check by tapping.
+ */
+fun List<Song>.recent(limit: Int = RECENTS_LIMIT): List<Song> =
+    filter { it.touchedAt > 0 }
+        .sortedByDescending { it.touchedAt }
+        .take(limit)
 
 /**
  * Add [part], or replace the part of the same name.

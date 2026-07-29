@@ -21,9 +21,13 @@ import de.singular.crystalball.songs.renamePart
 import de.singular.crystalball.songs.movePart
 import de.singular.crystalball.songs.upsertPart
 import de.singular.crystalball.songs.removePart
+import de.singular.crystalball.songs.recent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -122,6 +126,11 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _library = MutableStateFlow<List<Song>>(emptyList())
     val library: StateFlow<List<Song>> = _library.asStateFlow()
+
+    /** The handful of songs to offer in the side panel, most recently touched first. */
+    val recentSongs: StateFlow<List<Song>> = _library
+        .map { it.recent() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /**
      * Why the library could not be read or written, for the screen to say out loud.
@@ -224,10 +233,31 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
         _saveResult.value = null
     }
 
-    /** Open a saved song to view or refine it. */
+    /**
+     * Open a saved song to view or refine it, and record that it was opened.
+     *
+     * The screen changes first and the stamp is written behind it: opening a song is not allowed to
+     * wait on a file, and nothing on the page depends on the timestamp landing.
+     *
+     * Only the timestamp is copied back onto the open song, rather than the whole stored record.
+     * The two are the same song at this instant, but the write is asynchronous and the editor is
+     * live — replacing it wholesale would quietly undo anything changed while the stamp was in
+     * flight. Carrying just the field also keeps the next save from writing a stale zero back over
+     * it, which is what would happen if the in-memory copy never learned it had been opened.
+     */
     fun openSong(song: Song) {
         _song.value = song
         _state.value = SongState.Editor
+        viewModelScope.launch {
+            runCatching { repository.markOpened(song.id) }
+                .onSuccess { stamped ->
+                    if (stamped != null && _song.value.id == stamped.id) {
+                        _song.value = _song.value.copy(lastOpenedAt = stamped.lastOpenedAt)
+                    }
+                }
+                .onFailure { _error.value = it.readable() }
+            reload()
+        }
     }
 
     /** Delete [ids] — one song from its own menu, or a whole selection at once. */

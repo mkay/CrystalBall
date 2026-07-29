@@ -56,6 +56,27 @@ class SongRepository(private val file: File) {
         }
     }
 
+    /**
+     * Stamp the song with [id] as opened just now and return it, or null if it is not there.
+     *
+     * Pointedly not [save]: that stamps [Song.updatedAt], and opening a song is not editing it. The
+     * two timestamps exist precisely so reading and correcting stay distinguishable, which they
+     * would not be if arriving on the page counted as a change.
+     *
+     * A missing song is null rather than an error — it can only mean the library moved under a list
+     * the caller was holding, and the open will fail on its own terms without help from here.
+     */
+    suspend fun markOpened(id: String): Song? = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val songs = read()
+            val index = songs.indexOfFirst { it.id == id }
+            if (index < 0) return@withLock null
+            val stamped = songs[index].copy(lastOpenedAt = System.currentTimeMillis())
+            write(songs.toMutableList().also { it[index] = stamped })
+            stamped
+        }
+    }
+
     /** Drop the song with [id], if it is there. */
     suspend fun remove(id: String) = removeAll(setOf(id))
 

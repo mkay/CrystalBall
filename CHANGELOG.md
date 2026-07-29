@@ -8,6 +8,8 @@ All notable changes to this project are documented here. The format is based on 
 - An "About this app" page (Settings → About): the version, where the source lives, where to report a bug, and the licence. Long-pressing the version copies it, so a bug report can name the exact build.
 - A `COPYRIGHT` file carrying the copyright notice, the artwork's licence and the terms on the name, and an `SPDX-License-Identifier` header on every source file.
 
+- A **Recent songs** list in the side panel: the last five songs you opened or changed, straight to the song rather than by way of the library. Recency counts both — a sheet you read from the stand every evening stays at the top even if you never edit it.
+
 ### Changed
 - Settings are split into **Chords** and **System** tabs, matching Title Track. The division is by when you come to the page — Chords holds the capo prompt and how a chord is named, System holds the screen, the theme, song backup and About.
 - Relicensed from AGPL-3.0 to **GPL-3.0-only**, matching the other apps here. The Affero clause covered network use this app does not have — it asks for no network permission at all — so the plain GPL says what was actually meant. Version 3 only, not "or any later version".
