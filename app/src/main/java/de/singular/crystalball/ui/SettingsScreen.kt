@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +18,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,21 +50,33 @@ import de.singular.crystalball.Settings
 import de.singular.crystalball.ThemeMode
 
 /**
- * The two halves of the settings.
+ * The two halves of the settings, and the page that is not a setting at all.
  *
  * The split is by *when you come here*, not by what the settings technically are, matching Title
  * Track. **Chords** is everything that changes what the next strum tells you — how a chord is named
  * once a capo is on, and whether the capo is asked about at all. **System** is the app's own set-up:
- * the screen, the theme, where your songs go, what version this is. One is visited when something
- * on the chord page reads wrong; the other is visited twice.
+ * the screen, the theme, where your songs go. One is visited when something on the chord page reads
+ * wrong; the other is visited twice.
  *
  * Song backup sits under System rather than Chords, which is the one placement worth arguing:
  * capturing a song is very much part of the playing loop, but backing the library up is not — it is
  * the thing you do before a reinstall, with the guitar back on its stand.
+ *
+ * **About** is the odd one, and is here because the tab row is the only always-visible strip on this
+ * screen. It was a row at the foot of System opening a screen of its own, which is where a footer
+ * item belongs right up until the settings acquire tabs — then it is a destination buried inside one
+ * of two halves, with nothing about "System" that says the app's version and its bug tracker are in
+ * there. A tab is one tap from either half and says its own name whichever half is showing.
+ *
+ * The honest cost is that two of these tabs set things and the third does not, so the row is no
+ * longer three of a kind. The alternative was pinning the About row under the tabs, which puts a
+ * destination *above* the settings and inverts where a footer sits. Between a slightly mixed tab row
+ * and a slightly upside-down page, the tab row is the one that stays legible as it grows.
  */
 enum class SettingsTab(val title: String) {
     CHORDS("Chords"),
     SYSTEM("System"),
+    ABOUT("About"),
 }
 
 /**
@@ -85,7 +97,6 @@ fun SettingsScreen(
     onShowCapoOnStartChange: (Boolean) -> Unit,
     onBackupSongs: () -> Unit,
     onRestoreSongs: () -> Unit,
-    onAbout: () -> Unit,
     onClose: () -> Unit,
 ) {
     BackHandler(onBack = onClose)
@@ -119,31 +130,45 @@ fun SettingsScreen(
                     )
                 }
             }
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(bottom = 16.dp),
-            ) {
-                when (tab) {
-                    SettingsTab.CHORDS -> ChordSettings(
+            // Each tab scrolls on its own, rather than the settings being poured into one shared
+            // scroller. Two reasons: About brings its own layout and its own scroll — it is a page,
+            // not a column of rows — and a shared scroll state carries its offset across a tab
+            // switch, landing you halfway down the one you just arrived at.
+            when (tab) {
+                SettingsTab.CHORDS -> SettingsPage {
+                    ChordSettings(
                         settings = settings,
                         onNameStyleChange = onNameStyleChange,
                         onShowCapoOnStartChange = onShowCapoOnStartChange,
                     )
+                }
 
-                    SettingsTab.SYSTEM -> SystemSettings(
+                SettingsTab.SYSTEM -> SettingsPage {
+                    SystemSettings(
                         settings = settings,
                         onKeepScreenOnChange = onKeepScreenOnChange,
                         onThemeModeChange = onThemeModeChange,
                         onBackupSongs = onBackupSongs,
                         onRestoreSongs = onRestoreSongs,
-                        onAbout = onAbout,
                     )
                 }
+
+                SettingsTab.ABOUT -> AboutScreen()
             }
         }
     }
+}
+
+/** The ground the two settings halves stand on: the whole tab, scrolling, clear of the bottom. */
+@Composable
+private fun SettingsPage(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 16.dp),
+        content = content,
+    )
 }
 
 @Composable
@@ -191,7 +216,6 @@ private fun SystemSettings(
     onThemeModeChange: (ThemeMode) -> Unit,
     onBackupSongs: () -> Unit,
     onRestoreSongs: () -> Unit,
-    onAbout: () -> Unit,
 ) {
     SettingsSectionLabel("Screen")
     SettingSwitchRow(
@@ -228,17 +252,6 @@ private fun SystemSettings(
     SettingsCaption(
         "A backup holds your songs and nothing else — the settings on this page stay as " +
             "you set them here.",
-    )
-
-    // Last, and on this tab rather than in the side panel: the panel's slots belong to what you
-    // reach for with a guitar in your hands. This is the page visited once out of curiosity and
-    // once when filing a bug.
-    SettingsSectionLabel("About")
-    SettingActionRow(
-        "About this app",
-        "Version, source code, and how to get in touch",
-        Icons.Default.Info,
-        onAbout,
     )
 }
 

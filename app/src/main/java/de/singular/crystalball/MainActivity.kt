@@ -37,7 +37,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import de.singular.crystalball.ui.AboutScreen
 import de.singular.crystalball.ui.CapoSheet
 import de.singular.crystalball.ui.CrystalBallTheme
 import de.singular.crystalball.ui.CrystalDrawer
@@ -116,7 +115,6 @@ class MainActivity : ComponentActivity() {
                 // sheet back after it has been dismissed.
                 var capoOpen by rememberSaveable { mutableStateOf(settings.showCapoOnStart) }
                 var settingsOpen by rememberSaveable { mutableStateOf(false) }
-                var aboutOpen by rememberSaveable { mutableStateOf(false) }
                 var songsOpen by rememberSaveable { mutableStateOf(false) }
                 var songCapoOpen by rememberSaveable { mutableStateOf(false) }
                 var helpOpen by rememberSaveable { mutableStateOf(false) }
@@ -316,14 +314,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Settings is a full screen shown over everything else, with a back arrow and its
-                // own back handler.
-                // About sits on top of Settings, which stays open underneath — so backing out of
-                // About lands back on Settings rather than dumping you at the listening screen.
-                if (aboutOpen) {
-                    AboutScreen(onClose = { aboutOpen = false })
-                    return@CrystalBallTheme
-                }
-
+                // own back handler. About used to stack on top of it as a screen of its own; it is a
+                // tab inside Settings now, so there is nowhere left to navigate to — see
+                // [SettingsTab].
                 if (settingsOpen) {
                     SettingsScreen(
                         settings = settings,
@@ -333,7 +326,6 @@ class MainActivity : ComponentActivity() {
                         onShowCapoOnStartChange = viewModel::setShowCapoOnStart,
                         onBackupSongs = { backupLauncher.launch(backupName) },
                         onRestoreSongs = { confirmRestore = true },
-                        onAbout = { aboutOpen = true },
                         onClose = { settingsOpen = false },
                     )
                     return@CrystalBallTheme

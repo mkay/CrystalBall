@@ -11,7 +11,7 @@ All notable changes to this project are documented here. The format is based on 
 - A **Recent songs** list in the side panel: the last five songs you opened or changed, straight to the song rather than by way of the library. Recency counts both — a sheet you read from the stand every evening stays at the top even if you never edit it.
 
 ### Changed
-- Settings are split into **Chords** and **System** tabs, matching Title Track. The division is by when you come to the page — Chords holds the capo prompt and how a chord is named, System holds the screen, the theme, song backup and About.
+- Settings are split into **Chords**, **System** and **About** tabs, matching Title Track. The division is by when you come to the page — Chords holds the capo prompt and how a chord is named, System holds the screen, the theme and song backup. About is a tab rather than a row at the foot of System, so it is one tap away whichever half is showing.
 - Relicensed from AGPL-3.0 to **GPL-3.0-only**, matching the other apps here. The Affero clause covered network use this app does not have — it asks for no network permission at all — so the plain GPL says what was actually meant. Version 3 only, not "or any later version".
 - The wordmark and the icon are now **CC BY 4.0** — free to use and modify with credit, rather than held back. Artwork withheld from the licence earns F-Droid's NonFreeAssets flag, and CC BY avoids the GPL's obligation to ship the editable SVGs as the artwork's source. The name stays outside both grants: a fork needs its own.
 
