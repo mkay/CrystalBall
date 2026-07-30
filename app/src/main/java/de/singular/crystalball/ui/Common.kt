@@ -2,6 +2,10 @@
 
 package de.singular.crystalball.ui
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.browser.customtabs.CustomTabColorSchemeParams
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -40,7 +44,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -359,5 +365,33 @@ fun VoicingPicker(
                     .padding(6.dp),
             )
         }
+    }
+}
+
+/**
+ * Hands [url] to the user's browser as a Custom Tab: it renders over our task with the app's own
+ * surface colour in its toolbar, so it reads as part of the app, but the fetch happens in the
+ * browser's process under the browser's UID. That is why none of this needs INTERNET — the
+ * permission is a per-UID kernel check on whoever opens the socket, and that is never us.
+ *
+ * Used instead of `LocalUriHandler`, which is the same ACTION_VIEW underneath but rethrows a
+ * missing browser as an IllegalArgumentException nobody catches — a crash on exactly the stripped
+ * down devices this app is installed on. A device with no browser at all is rare but possible (and
+ * the Custom Tab degrades to a plain ACTION_VIEW there), so here the failure is caught and said out
+ * loud instead.
+ */
+fun openCustomTab(context: android.content.Context, url: String, toolbarColor: Color) {
+    val intent = CustomTabsIntent.Builder()
+        .setShowTitle(true)
+        .setDefaultColorSchemeParams(
+            CustomTabColorSchemeParams.Builder()
+                .setToolbarColor(toolbarColor.toArgb())
+                .build(),
+        )
+        .build()
+    try {
+        intent.launchUrl(context, Uri.parse(url))
+    } catch (_: android.content.ActivityNotFoundException) {
+        Toast.makeText(context, "No browser found", Toast.LENGTH_SHORT).show()
     }
 }

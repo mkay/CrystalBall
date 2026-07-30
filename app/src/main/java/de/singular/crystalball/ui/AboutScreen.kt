@@ -26,14 +26,15 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import de.singular.crystalball.BuildConfig
 
-private const val REPO_URL = "https://github.com/mkay/CrystalBall"
+// Not private: [SupportDialog] points at the same two places, and one pair of constants is the
+// only way the panel's dialog and this page can't drift apart.
+internal const val REPO_URL = "https://github.com/mkay/CrystalBall"
 private const val ISSUES_URL = "$REPO_URL/issues"
-private const val KOFI_URL = "https://ko-fi.com/s1ngular"
+internal const val KOFI_URL = "https://ko-fi.com/s1ngular"
 
 /**
  * About: what the app is, where it lives, and how to report a bug or chip in. A tab inside
@@ -49,10 +50,10 @@ private const val KOFI_URL = "https://ko-fi.com/s1ngular"
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AboutScreen(modifier: Modifier = Modifier) {
-    val uriHandler = LocalUriHandler.current
     val clipboard = LocalClipboardManager.current
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+    val toolbarColor = MaterialTheme.colorScheme.surface
     // versionCode rides along in the copied string: it's what pins a bug report to an exact build
     // when a version was re-released, where the name alone can lie. Read from BuildConfig so it
     // cannot drift from the gradle constants.
@@ -102,15 +103,15 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         }
         AboutSection("Website") {
             AboutBody("The app lives here:")
-            AboutLink(REPO_URL) { uriHandler.openUri(REPO_URL) }
+            AboutLink(REPO_URL) { openCustomTab(context, REPO_URL, toolbarColor) }
         }
         AboutSection("Bugs") {
             AboutBody("Found a hiccup? Let me know:")
-            AboutLink(ISSUES_URL) { uriHandler.openUri(ISSUES_URL) }
+            AboutLink(ISSUES_URL) { openCustomTab(context, ISSUES_URL, toolbarColor) }
         }
         AboutSection("Support") {
             AboutBody("If you can, support its development:")
-            AboutLink(KOFI_URL) { uriHandler.openUri(KOFI_URL) }
+            AboutLink(KOFI_URL) { openCustomTab(context, KOFI_URL, toolbarColor) }
         }
         // GPL §5 requires a derivative to preserve legal notices, so a licence stated *in the
         // app* rather than only in the repo is worth more than it looks: a clone that stripped
@@ -122,7 +123,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     "icon are CC BY 4.0; the name is not licensed, so a fork needs its own. " +
                     "Built with AndroidX and Jetpack Compose, licensed under Apache 2.0.",
             )
-            AboutLink(REPO_URL) { uriHandler.openUri(REPO_URL) }
+            AboutLink(REPO_URL) { openCustomTab(context, REPO_URL, toolbarColor) }
         }
     }
 }

@@ -44,6 +44,7 @@ import de.singular.crystalball.ui.QuickHelpSheet
 import de.singular.crystalball.ui.DetectScreen
 import de.singular.crystalball.ui.SettingsScreen
 import de.singular.crystalball.ui.SongScreen
+import de.singular.crystalball.ui.SupportDialog
 import de.singular.crystalball.ui.isDark
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -118,6 +119,7 @@ class MainActivity : ComponentActivity() {
                 var songsOpen by rememberSaveable { mutableStateOf(false) }
                 var songCapoOpen by rememberSaveable { mutableStateOf(false) }
                 var helpOpen by rememberSaveable { mutableStateOf(false) }
+                var supportOpen by rememberSaveable { mutableStateOf(false) }
 
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
@@ -360,6 +362,7 @@ class MainActivity : ComponentActivity() {
                             onSongs = { closeThen { songViewModel.open(); songsOpen = true } },
                             onShowChords = { closeThen { viewModel.showChords() } },
                             onSettings = { closeThen { settingsOpen = true } },
+                            onSupport = { closeThen { supportOpen = true } },
                             onQuickHelp = { closeThen { helpOpen = true } },
                             recents = recents,
                             onOpenRecent = { song ->
@@ -406,6 +409,9 @@ class MainActivity : ComponentActivity() {
                         }
                         if (helpOpen) {
                             QuickHelpSheet(onDismiss = { helpOpen = false })
+                        }
+                        if (supportOpen) {
+                            SupportDialog(onDismiss = { supportOpen = false })
                         }
                     }
                 }

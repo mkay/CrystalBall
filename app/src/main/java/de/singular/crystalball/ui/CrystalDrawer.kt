@@ -23,8 +23,11 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import de.singular.crystalball.R
 import de.singular.crystalball.songs.Song
 
 /**
@@ -37,6 +40,10 @@ import de.singular.crystalball.songs.Song
  *
  * The panel navigates, it does not act: [onDetect] lands on the detect page with the microphone
  * still closed, leaving the press that opens it to the user.
+ *
+ * The one thing here that is neither is [onSupport], which sits with the destinations rather than
+ * down by Quick help: the About tab already lists the same links, but nobody goes looking in
+ * Settings for a way to say thanks, so the ask has to be somewhere it can be stumbled upon.
  */
 @Composable
 fun CrystalDrawer(
@@ -44,6 +51,7 @@ fun CrystalDrawer(
     onSongs: () -> Unit,
     onShowChords: () -> Unit,
     onSettings: () -> Unit,
+    onSupport: () -> Unit,
     onQuickHelp: () -> Unit,
     recents: List<Song> = emptyList(),
     onOpenRecent: (Song) -> Unit = {},
@@ -84,6 +92,18 @@ fun CrystalDrawer(
                 icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                 selected = false,
                 onClick = onSettings,
+                modifier = itemPadding,
+            )
+            NavigationDrawerItem(
+                label = { Text("Support Crystal Ball") },
+                icon = {
+                    Icon(
+                        ImageVector.vectorResource(R.drawable.ic_heart_smile),
+                        contentDescription = null,
+                    )
+                },
+                selected = false,
+                onClick = onSupport,
                 modifier = itemPadding,
             )
 
