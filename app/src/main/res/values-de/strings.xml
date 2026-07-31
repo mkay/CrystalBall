@@ -100,7 +100,7 @@
 
     <string name="capo_title">Kapo</string>
     <string name="capo_show_on_start">Beim Start zeigen</string>
-    <string name="capo_explainer">Die Erkennung bleibt davon unberührt — das Mikrofon hört so oder so den echten Akkord. Es ändert die gezeigten Griffe, damit sie zu deinen Händen passen.</string>
+    <string name="capo_explainer">Die Erkennung bleibt davon unberührt — das Mikrofon hört so oder so den echten Akkord. Es ändert die gezeigten Griffe, passend zu dem, was du hinter dem Kapo greifst.</string>
     <string name="capo_none">Keins</string>
     <string name="capo_set">Kapo setzen</string>
     <string name="capo_set_to">Kapo am %1$d. Bund</string>
@@ -220,7 +220,7 @@
     <string name="help_wrong_chord_title">Wenn der falsche Akkord kommt</string>
     <string name="help_wrong_chord_body">Der beste Treffer ist eine Vermutung, kein Evangelium. Tippe in der Reihe „Oder meintest du“ auf einen Akkord, um stattdessen diesen zu sehen.</string>
     <string name="help_capo_title">Mit Kapo</string>
-    <string name="help_capo_body">Tippe unter der Erkennen-Taste auf „Kapo setzen“. Das ändert die Erkennung nicht — das Mikrofon hört so oder so den echten Akkord — aber es ändert die gezeigten Griffe, damit sie zu deinen Händen passen, und die Bundzahlen sind die auf deinem Hals.</string>
+    <string name="help_capo_body">Tippe unter der Erkennen-Taste auf „Kapo setzen“. Das ändert die Erkennung nicht — das Mikrofon hört so oder so den echten Akkord — aber es ändert die gezeigten Griffe, passend zu dem, was du hinter dem Kapo greifst. Die Bundzahlen sind die auf deinem Hals.</string>
     <string name="help_vocabulary_title">Was die App kennt</string>
     <string name="help_vocabulary_body">Dur, Moll, 7, maj7, m7, sus2 und sus4, in Standardstimmung. Reichere Akkorde (Sexten, Nonen, alterierte Dominanten) sind nicht vorgesehen und kommen als der nächstgelegene bekannte Akkord zurück.</string>
 
