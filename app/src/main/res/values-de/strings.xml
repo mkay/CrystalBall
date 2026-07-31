@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  German. Note names stay international here — whether a B is a B or an H is a preference of the
+  player, not of the language, and lives in Settings → Akkorde. See NoteNaming.
+-->
+<resources>
+
+    <string name="app_tagline">erkennt Gitarrenakkorde\nund fügt sie zu Songblättern zusammen</string>
+
+    <string name="action_cancel">Abbrechen</string>
+    <string name="action_close">Schließen</string>
+    <string name="action_ok">OK</string>
+    <string name="action_back">Zurück</string>
+    <string name="action_save">Speichern</string>
+    <string name="action_done">Fertig</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_rename">Umbenennen</string>
+    <string name="action_duplicate">Duplizieren</string>
+    <string name="action_discard">Verwerfen</string>
+    <string name="action_share">Teilen…</string>
+    <string name="action_save_as">Speichern unter…</string>
+    <string name="action_save_as_file">Als Datei speichern…</string>
+
+    <string name="cd_open_menu">Menü</string>
+    <string name="cd_screen_kept_on">Bildschirm bleibt an</string>
+    <string name="cd_cancel_selection">Auswahl aufheben</string>
+    <string name="cd_delete_selected">Ausgewählte löschen</string>
+    <string name="cd_selected">Ausgewählt</string>
+    <string name="cd_not_selected">Nicht ausgewählt</string>
+    <string name="cd_export_pdf">Als PDF exportieren</string>
+    <string name="cd_options_for">Optionen für %1$s</string>
+    <string name="cd_move_part_up">%1$s nach oben</string>
+    <string name="cd_move_part_down">%1$s nach unten</string>
+
+    <string name="drawer_detect">Akkord erkennen</string>
+    <string name="drawer_chord_library">Akkordbibliothek</string>
+    <string name="drawer_songs">Songs</string>
+    <string name="drawer_support">Crystal Ball unterstützen</string>
+    <string name="drawer_recent_songs">Zuletzt geöffnet</string>
+
+    <string name="action_detect">Akkord erkennen</string>
+    <string name="action_detect_again">Nochmal erkennen</string>
+    <string name="action_detect_single">Einzelnen Akkord erkennen</string>
+    <string name="action_detect_multiple">Mehrere Akkorde erkennen</string>
+    <string name="detect_prompt">Spiel einen Akkord, ich sage dir welcher.</string>
+    <string name="strum_a_chord">Schlag einen Akkord an</string>
+    <string name="listening">Höre zu…</string>
+    <string name="silence_title">Ich habe nichts gehört.</string>
+    <string name="silence_body">Halte das Handy nah an die Gitarre und schlag an.</string>
+    <string name="or_did_you_mean">Oder meintest du</string>
+    <string name="other_ways_to_play">Andere Griffe für %1$s</string>
+
+    <string name="capture_first_chord">Schlag den ersten Akkord an</string>
+    <string name="capture_next_chord">Akkord %1$d — anschlagen und ausklingen lassen</string>
+    <string name="capture_mute_hint">Dämpfe die Saiten, sobald er steht. Ein nachklingender Akkord färbt den nächsten ein und verwischt ihn.</string>
+    <string name="capture_stops_itself">Oder hör einfach auf zu spielen — es endet von selbst.</string>
+    <string name="capture_nothing_title">Nichts aufgenommen.</string>
+    <string name="capture_nothing_body">Halte das Handy nah an die Gitarre und versuch es nochmal.</string>
+    <plurals name="captured_chords">
+        <item quantity="one">%1$d Akkord</item>
+        <item quantity="other">%1$d Akkorde</item>
+    </plurals>
+    <string name="capture_review_hint">Tippe einen Akkord an, um ihn zu korrigieren oder den Griff zu wählen.</string>
+    <string name="action_remove_chord">Diesen Akkord entfernen</string>
+
+    <string name="save_capture_title">Diese Akkorde speichern</string>
+    <string name="save_name_this_part">Diesen Teil benennen</string>
+    <string name="save_own_name">Oder ein eigener Name</string>
+    <string name="save_part_exists">\"%1$s\" gibt es in diesem Song schon — Speichern ersetzt ihn.</string>
+    <string name="save_it_to">Speichern in</string>
+    <string name="save_new_song">Einen neuen Song</string>
+    <string name="save_existing_song">Einen vorhandenen Song</string>
+    <string name="save_song_title">Songtitel</string>
+    <string name="save_capture_done">„%1$s“ in %2$s gespeichert</string>
+
+    <string name="capo_move_here_none">ohne Kapo</string>
+    <string name="capo_move_here">mit Kapo im %1$d. Bund</string>
+    <string name="capo_move_there_none">hat kein Kapo</string>
+    <string name="capo_move_there">hat eins im %1$d. Bund</string>
+    <string name="capo_move_note">Du hast das %1$s gespielt, dieser Song %2$s. Die Akkorde klingen gleich — nur die Griffe ändern sich.</string>
+
+    <string name="part_intro">Intro</string>
+    <string name="part_verse">Strophe</string>
+    <string name="part_chorus">Refrain</string>
+    <string name="part_bridge">Bridge</string>
+    <string name="part_solo">Solo</string>
+    <string name="part_outro">Outro</string>
+
+    <string name="voicing_caption">%1$s · %2$s</string>
+    <string name="voicing_open">offen</string>
+    <!-- Ordinals need no branches in German: the number and a full stop, whatever it is. -->
+    <string name="voicing_fret">{0, ordinal, other{#. Bund}}</string>
+    <string name="shape_grip">%1$s-Form</string>
+    <string name="shape_top_triad">oberer Dreiklang</string>
+    <string name="shape_middle_triad">mittlerer Dreiklang</string>
+
+    <string name="shape_line_fingered">%1$s, %2$s</string>
+    <string name="shape_line_sounds">klingt wie %1$s</string>
+    <string name="shape_line_with_capo">%1$s · Kapo %2$d</string>
+
+    <string name="capo_title">Kapo</string>
+    <string name="capo_show_on_start">Beim Start zeigen</string>
+    <string name="capo_explainer">Die Erkennung bleibt davon unberührt — das Mikrofon hört so oder so den echten Akkord. Es ändert die gezeigten Griffe, damit sie zu deinen Händen passen.</string>
+    <string name="capo_none">Keins</string>
+    <string name="capo_set">Kapo setzen</string>
+    <string name="capo_set_to">Kapo im %1$d. Bund</string>
+    <string name="capo_none_set">Kein Kapo</string>
+    <string name="capo_at">Kapo %1$d</string>
+
+    <string name="untitled_song">Song</string>
+    <string name="song_parts">Songteile</string>
+    <string name="song_no_parts">Noch keine Teile. Nimm einen auf und benenne ihn.</string>
+    <string name="song_summary">%1$s · %2$s</string>
+    <string name="library_empty_title">Noch keine Songs.</string>
+    <string name="library_empty_body">Schreib einen auf: Tippe im Erkennen-Bildschirm auf „Mehrere Akkorde erkennen“, spiel seine Teile und speichere sie hier.</string>
+    <string name="action_capture_part">Teil aufnehmen</string>
+    <string name="action_view_song">Song ansehen</string>
+    <string name="song_view_readonly">Der Song, wie er gedruckt wird.\nUm einen Akkord zu ändern, geh zurück und öffne den Teil, in dem er steht.</string>
+    <string name="song_capo_note_empty">Der Song wird mit diesem Kapo gespielt.</string>
+    <string name="song_capo_note">Ein anderes Kapo lässt die Tonart, wie sie ist — es ändert nur die Griffbilder. Ein selbst gewählter Griff fällt dabei auf den Standard zurück.</string>
+    <string name="song_saved_note_empty">Der Song kommt in deine Bibliothek, sobald er einen Teil hat.</string>
+    <string name="song_saved_note">Wird nebenbei gespeichert.</string>
+
+    <string name="rename_song_title">Song umbenennen</string>
+    <string name="action_rename_song">Song umbenennen</string>
+    <string name="rename_part_title">Teil umbenennen</string>
+    <string name="part_name_label">Name des Teils</string>
+    <string name="part_name_taken">Dieser Song hat schon einen Teil namens „%1$s“.</string>
+
+    <string name="part_hint_tap">Akkord *antippen*, um den Griff zu ändern.</string>
+    <string name="part_hint_long_press">*Lang drücken*, um einen anderen Akkord anzugeben.</string>
+
+    <string name="chord_number">Akkord %1$d</string>
+    <string name="correct_chord_title">Welcher Akkord ist es?</string>
+    <string name="correct_chord_body">Für einen Akkord, den die App falsch gehört hat. Ihn hier zu benennen ist besser, als ihn nochmal zu spielen — du weißt, was du gespielt hast, das Mikrofon nicht mehr.</string>
+
+    <string name="comment_title">Kommentar</string>
+    <string name="comment_prompt">Alles, was die Akkorde nicht sagen</string>
+    <string name="comment_hint">Eine Stimmung, ein Schlagmuster, welche Strophe leiser wird — was immer du wissen wollen würdest.</string>
+    <string name="action_add_comment">Kommentar hinzufügen</string>
+    <string name="action_save_comment">Kommentar speichern</string>
+
+    <plurals name="selection_count">
+        <item quantity="one">%1$d ausgewählt</item>
+        <item quantity="other">%1$d ausgewählt</item>
+    </plurals>
+    <string name="delete_song_title">%1$s löschen?</string>
+    <plurals name="delete_songs_title">
+        <item quantity="one">%1$d Song löschen?</item>
+        <item quantity="other">%1$d Songs löschen?</item>
+    </plurals>
+    <string name="delete_song_body">Seine Teile und die gewählten Griffe gehen mit. Das lässt sich nicht rückgängig machen.</string>
+    <string name="delete_songs_body">Ihre Teile und die gewählten Griffe gehen mit. Das lässt sich nicht rückgängig machen.</string>
+
+    <string name="pdf_saved">PDF gespeichert</string>
+
+    <string name="backup_exported">Songs gesichert</string>
+    <plurals name="backup_restored">
+        <item quantity="one">%1$d Song wiederhergestellt</item>
+        <item quantity="other">%1$d Songs wiederhergestellt</item>
+    </plurals>
+    <string name="restore_confirm_title">Songs wiederherstellen?</string>
+    <string name="restore_confirm_body">Das ersetzt jeden Song in deiner Bibliothek durch die aus der Sicherung. Das lässt sich nicht rückgängig machen.</string>
+    <string name="restore_choose">Sicherung wählen</string>
+
+    <string name="library_unreadable_title">Deine Songs konnten nicht gelesen werden.</string>
+    <string name="library_unreadable_body">%1$s\n\nEs wurde nichts geändert und nichts ist verloren. Speichern bleibt aus, bis das behoben ist.</string>
+    <string name="error_library_unreadable">Die Songbibliothek konnte nicht gelesen werden.</string>
+    <string name="error_song_gone">Diesen Song gibt es nicht mehr in deiner Bibliothek.</string>
+    <string name="error_backup_newer">Diese Sicherung stammt aus einer neueren Version von Crystal Ball.</string>
+    <string name="error_not_a_backup">Diese Datei ist keine Crystal-Ball-Sicherung.</string>
+    <string name="error_backup_empty">In dieser Sicherung sind keine Songs.</string>
+    <string name="error_file_unusable">Diese Datei konnte nicht verwendet werden.</string>
+    <string name="error_no_browser">Kein Browser gefunden</string>
+
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_tab_chords">Akkorde</string>
+    <string name="settings_tab_system">System</string>
+    <string name="settings_tab_about">Über</string>
+
+    <string name="settings_section_capo">Kapo</string>
+    <string name="setting_show_capo_on_start">Kapo beim Start zeigen</string>
+    <string name="setting_show_capo_on_start_caption">Öffnet das Kapo-Blatt bei jedem Start, damit ein seit gestern verschobenes Kapo das Erste ist, was du setzt.</string>
+
+    <string name="settings_section_chord_names">Akkordnamen</string>
+    <string name="setting_name_style_caption">Mit Kapo heißen der Akkord, den du hörst, und der Griff, den du greifst, verschieden.</string>
+    <string name="setting_name_sounding">Den gehörten Akkord benennen</string>
+    <string name="setting_name_sounding_example">E, darunter \"D-Form · Kapo 2\"</string>
+    <string name="setting_name_shape">Den gegriffenen Akkord benennen</string>
+    <string name="setting_name_shape_example">D, darunter \"klingt wie E · Kapo 2\"</string>
+
+    <string name="settings_section_screen">Bildschirm</string>
+    <string name="setting_keep_screen_on">Bildschirm anlassen</string>
+    <string name="setting_keep_screen_on_caption">Das Display dimmt und sperrt nicht, solange die App offen ist. Praktisch mit Gitarre in der Hand, kostet aber Akku.</string>
+    <string name="keep_awake_title">Bildschirm bleibt an</string>
+    <string name="keep_awake_body">„Bildschirm anlassen“ ist aktiv, das Display dimmt und sperrt also nicht, solange die App offen ist. Praktisch beim Üben, kostet aber Akku.</string>
+
+    <string name="settings_section_appearance">Darstellung</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
+
+    <string name="settings_section_language">Sprache</string>
+    <string name="setting_language">Sprache</string>
+    <string name="language_system">Systemsprache</string>
+
+    <string name="settings_section_songs">Songs</string>
+    <string name="setting_backup">Songs sichern</string>
+    <string name="setting_backup_subtitle">Alle Songs in eine Datei schreiben</string>
+    <string name="setting_restore">Songs wiederherstellen</string>
+    <string name="setting_restore_subtitle">Alle Songs aus einer Sicherung ersetzen</string>
+    <string name="setting_backup_caption">Eine Sicherung enthält nur deine Songs — die Einstellungen auf dieser Seite bleiben, wie du sie hier gesetzt hast.</string>
+
+    <string name="help_title">Kurzhilfe</string>
+    <string name="help_detecting_title">Einen Akkord erkennen</string>
+    <string name="help_detecting_body">Auf „Akkord erkennen“ tippen und anschlagen. Die App hört zu, bis die Antwort steht — meist deutlich unter einer Sekunde — und ein erneutes Anschlagen startet sie neu, ein misslungener Versuch braucht also keinen zweiten Tipp. Halte das Handy nah an die Gitarre; eine leise, unverstärkte Gitarre quer durch den Raum ist harte Arbeit.</string>
+    <string name="help_wrong_chord_title">Wenn der falsche Akkord kommt</string>
+    <string name="help_wrong_chord_body">Der beste Treffer ist eine Vermutung, kein Evangelium. Tippe in der Reihe „Oder meintest du“ auf einen Akkord, um stattdessen diesen zu sehen.</string>
+    <string name="help_capo_title">Mit Kapo</string>
+    <string name="help_capo_body">Tippe unter der Erkennen-Taste auf „Kapo setzen“. Das ändert die Erkennung nicht — das Mikrofon hört so oder so den echten Akkord — aber es ändert die gezeigten Griffe, damit sie zu deinen Händen passen, und die Bundzahlen sind die auf deinem Hals.</string>
+    <string name="help_vocabulary_title">Was die App kennt</string>
+    <string name="help_vocabulary_body">Dur, Moll, 7, maj7, m7, sus2 und sus4, in Standardstimmung. Reichere Akkorde (Sexten, Nonen, alterierte Dominanten) sind nicht vorgesehen und kommen als der nächstgelegene bekannte Akkord zurück.</string>
+
+    <string name="support_title">Halte diese App am Leben</string>
+    <string name="support_no_tracking">Diese App trackt nicht. Gar nicht.\nDer Haken daran: Ich habe keine Ahnung, ob und wie oft sie benutzt oder geladen wird.\nKönnten null sein, könnte eine geheime Anhängerschaft sein. Ich weiß es wirklich nicht.</string>
+    <string name="support_question">Verschwende ich meine Zeit damit? Sag du es mir.</string>
+    <string name="support_three_ways">Es gibt drei (vielleicht mehr) Wege, mich bei Laune zu halten:</string>
+    <string name="support_easy_title">Der einfache Weg</string>
+    <string name="support_easy_action">Ein Like dalassen</string>
+    <string name="support_easy_note">Öffnet eine Seite auf meiner Website mit einem Like-Knopf. Gezählt wird erst, wenn du ihn drückst — nur der Druck und eine anonymisierte IP.</string>
+    <string name="support_nerdy_title">Der nerdige Weg</string>
+    <string name="support_nerdy_action">Auf GitHub einen Stern geben</string>
+    <string name="support_nerdy_note">Ein Stern ist eine Zahl, die ich tatsächlich sehen kann, und er hilft anderen, die App zu finden.</string>
+    <string name="support_generous_title">Der großzügige Weg</string>
+    <string name="support_generous_action">Auf Ko-fi unterstützen</string>
+    <string name="support_generous_note">Völlig freiwillig. Die App ist und bleibt so oder so kostenlos.</string>
+
+    <string name="about_version">v%1$s</string>
+    <string name="about_version_copied">Version kopiert</string>
+    <string name="about_section_about">Über</string>
+    <string name="about_blurb">Ich habe Crystal Ball in erster Linie für mich selbst gebaut — vielleicht ist sie dir ja genauso nützlich wie mir.</string>
+    <string name="about_section_website">Website</string>
+    <string name="about_website_body">Die App wohnt hier:</string>
+    <string name="about_section_bugs">Fehler</string>
+    <string name="about_bugs_body">Etwas hakt? Sag mir Bescheid:</string>
+    <string name="about_section_support">Unterstützen</string>
+    <string name="about_support_body">Wenn du kannst, unterstütze die Entwicklung:</string>
+    <string name="about_section_license">Lizenz</string>
+
+</resources>

@@ -6,12 +6,12 @@ import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
@@ -34,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -51,7 +52,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -153,18 +154,21 @@ class MainActivity : ComponentActivity() {
                     "crystalball-backup-$day.zip"
                 }
 
+                val context = view.context
                 LaunchedEffect(backupResult) {
                     val message = when (val result = backupResult) {
                         null -> return@LaunchedEffect
-                        is BackupResult.Exported -> "Songs backed up"
-                        is BackupResult.Restored ->
-                            if (result.songs == 1) "1 song restored"
-                            else "${result.songs} songs restored"
-                        // The repository says why in words worth repeating — which file it was not,
-                        // which version wrote it — so say that rather than "something went wrong".
-                        is BackupResult.Failed -> result.reason
+                        is BackupResult.Exported -> context.getString(R.string.backup_exported)
+                        is BackupResult.Restored -> context.resources.getQuantityString(
+                            R.plurals.backup_restored,
+                            result.songs,
+                            result.songs,
+                        )
+                        // The repository says which file it was not, or which version wrote it —
+                        // worth repeating, rather than "something went wrong".
+                        is BackupResult.Failed -> context.getString(result.reason)
                     }
-                    Toast.makeText(view.context, message, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                     songViewModel.consumeBackupResult()
                 }
 
@@ -177,8 +181,12 @@ class MainActivity : ComponentActivity() {
                         null -> return@LaunchedEffect
                         is SaveResult.Saved -> {
                             Toast.makeText(
-                                view.context,
-                                "Saved “${result.partName}” to ${result.songTitle}",
+                                context,
+                                context.getString(
+                                    R.string.save_capture_done,
+                                    result.partName,
+                                    result.songTitle,
+                                ),
                                 Toast.LENGTH_LONG,
                             ).show()
                             captureTarget = null
@@ -186,7 +194,11 @@ class MainActivity : ComponentActivity() {
                             songsOpen = true
                         }
                         is SaveResult.Failed ->
-                            Toast.makeText(view.context, result.reason, Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                context.getString(result.reason),
+                                Toast.LENGTH_LONG,
+                            ).show()
                     }
                     songViewModel.consumeSaveResult()
                 }
@@ -194,13 +206,8 @@ class MainActivity : ComponentActivity() {
                 if (confirmRestore) {
                     AlertDialog(
                         onDismissRequest = { confirmRestore = false },
-                        title = { Text("Restore songs?") },
-                        text = {
-                            Text(
-                                "This replaces every song in your library with the ones in the " +
-                                    "backup. This can't be undone.",
-                            )
-                        },
+                        title = { Text(stringResource(R.string.restore_confirm_title)) },
+                        text = { Text(stringResource(R.string.restore_confirm_body)) },
                         confirmButton = {
                             TextButton(onClick = {
                                 confirmRestore = false
@@ -213,10 +220,12 @@ class MainActivity : ComponentActivity() {
                                         "application/x-zip-compressed",
                                     ),
                                 )
-                            }) { Text("Choose backup") }
+                            }) { Text(stringResource(R.string.restore_choose)) }
                         },
                         dismissButton = {
-                            TextButton(onClick = { confirmRestore = false }) { Text("Cancel") }
+                            TextButton(onClick = { confirmRestore = false }) {
+                                Text(stringResource(R.string.action_cancel))
+                            }
                         },
                     )
                 }
@@ -237,7 +246,11 @@ class MainActivity : ComponentActivity() {
 
                     LaunchedEffect(exported) {
                         if (exported) {
-                            Toast.makeText(view.context, "PDF saved", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.pdf_saved),
+                                Toast.LENGTH_SHORT,
+                            ).show()
                             songViewModel.consumeExported()
                         }
                     }

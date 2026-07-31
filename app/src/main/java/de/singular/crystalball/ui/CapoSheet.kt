@@ -24,10 +24,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import de.singular.crystalball.Capo
+import de.singular.crystalball.R
 import de.singular.crystalball.Settings
 
 /**
@@ -77,7 +79,7 @@ fun CapoSheet(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Capo", style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.capo_title), style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.weight(1f))
                 Row(
                     Modifier
@@ -92,7 +94,7 @@ fun CapoSheet(
                 ) {
                     Checkbox(checked = settings.showCapoOnStart, onCheckedChange = null)
                     Text(
-                        "Show on start",
+                        stringResource(R.string.capo_show_on_start),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -101,8 +103,7 @@ fun CapoSheet(
 
             Spacer(Modifier.height(16.dp))
             Text(
-                "Detection is unaffected — the microphone hears the real chord either way. " +
-                    "This changes the shapes you're shown, so they match your hands.",
+                stringResource(R.string.capo_explainer),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -118,7 +119,12 @@ fun CapoSheet(
                         selected = settings.capo == fret,
                         onClick = { choose(fret) },
                         shape = ControlShape,
-                        label = { Text(if (fret == 0) "None" else "$fret") },
+                        label = {
+                            Text(
+                                if (fret == 0) stringResource(R.string.capo_none)
+                                else fret.toString(),
+                            )
+                        },
                     )
                 }
             }

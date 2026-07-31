@@ -2,14 +2,27 @@
 
 package de.singular.crystalball.songs
 
+import de.singular.crystalball.R
 import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.chords.Voicing
 
 /**
  * The part names offered as chips, so naming one is a tap rather than typing with a guitar on your
  * lap. Not a closed set — a part can be called anything — just the ones worth not spelling out.
+ *
+ * String resources rather than names, because these are suggestions and not values: what a song
+ * stores is whichever word the user picked, in the language they picked it in. A song written in
+ * English keeps its "Chorus" when the app is switched to German — renaming someone's parts under
+ * them would be a rewrite of their document, not a translation of the app.
  */
-val PART_NAMES = listOf("Intro", "Verse", "Chorus", "Bridge", "Solo", "Outro")
+val PART_NAMES = listOf(
+    R.string.part_intro,
+    R.string.part_verse,
+    R.string.part_chorus,
+    R.string.part_bridge,
+    R.string.part_solo,
+    R.string.part_outro,
+)
 
 /**
  * One chord in a part: the chord it sounds, and the grip chosen to play it.

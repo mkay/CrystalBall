@@ -4,6 +4,7 @@ package de.singular.crystalball.ui
 
 import android.os.Build
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -26,9 +27,11 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import de.singular.crystalball.BuildConfig
+import de.singular.crystalball.R
 
 // Not private: [SupportDialog] points at the same two places, and one pair of constants is the
 // only way the panel's dialog and this page can't drift apart.
@@ -58,6 +61,9 @@ fun AboutScreen(modifier: Modifier = Modifier) {
     // when a version was re-released, where the name alone can lie. Read from BuildConfig so it
     // cannot drift from the gradle constants.
     val version = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+    // Read up here rather than inside the long-press: a composable cannot be called from a callback.
+    val copyLabel = stringResource(R.string.about_version_copied_text, version)
+    val versionCopied = stringResource(R.string.about_version_copied)
 
     Column(
         modifier
@@ -70,11 +76,11 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(16.dp))
         Logo()
         Spacer(Modifier.height(12.dp))
-        Text("Crystal Ball", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
         // Long-press to copy, mirroring the song library's press-and-hold idiom. Android 13 and
         // up pops its own clipboard confirmation, so only older versions get a toast.
         Text(
-            "v$version",
+            stringResource(R.string.about_version, version),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
@@ -83,10 +89,10 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     onClick = {},
                     onLongClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        clipboard.setText(AnnotatedString("Crystal Ball $version"))
+                        clipboard.setText(AnnotatedString(copyLabel))
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                             Toast
-                                .makeText(context, "Version copied", Toast.LENGTH_SHORT)
+                                .makeText(context, versionCopied, Toast.LENGTH_SHORT)
                                 .show()
                         }
                     },
@@ -95,44 +101,37 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         )
 
         Spacer(Modifier.height(28.dp))
-        AboutSection("About") {
-            AboutBody(
-                "I built Crystal Ball primarily for myself — maybe you'll find it just as " +
-                    "useful as I do.",
-            )
+        AboutSection(R.string.about_section_about) {
+            AboutBody(R.string.about_blurb)
         }
-        AboutSection("Website") {
-            AboutBody("The app lives here:")
+        AboutSection(R.string.about_section_website) {
+            AboutBody(R.string.about_website_body)
             AboutLink(REPO_URL) { openCustomTab(context, REPO_URL, toolbarColor) }
         }
-        AboutSection("Bugs") {
-            AboutBody("Found a hiccup? Let me know:")
+        AboutSection(R.string.about_section_bugs) {
+            AboutBody(R.string.about_bugs_body)
             AboutLink(ISSUES_URL) { openCustomTab(context, ISSUES_URL, toolbarColor) }
         }
-        AboutSection("Support") {
-            AboutBody("If you can, support its development:")
+        AboutSection(R.string.about_section_support) {
+            AboutBody(R.string.about_support_body)
             AboutLink(KOFI_URL) { openCustomTab(context, KOFI_URL, toolbarColor) }
         }
         // GPL §5 requires a derivative to preserve legal notices, so a licence stated *in the
         // app* rather than only in the repo is worth more than it looks: a clone that stripped
         // this screen has done so deliberately, and the before-and-after is a screenshot.
-        AboutSection("License") {
-            AboutBody("Copyright © 2026 Kreuder")
-            AboutBody(
-                "Crystal Ball is free software under the GPL-3.0-only. The wordmark and the " +
-                    "icon are CC BY 4.0; the name is not licensed, so a fork needs its own. " +
-                    "Built with AndroidX and Jetpack Compose, licensed under Apache 2.0.",
-            )
+        AboutSection(R.string.about_section_license) {
+            AboutBody(R.string.about_copyright)
+            AboutBody(R.string.about_license)
             AboutLink(REPO_URL) { openCustomTab(context, REPO_URL, toolbarColor) }
         }
     }
 }
 
 @Composable
-private fun AboutSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+private fun AboutSection(@StringRes title: Int, content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
         Text(
-            title,
+            stringResource(title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -142,8 +141,8 @@ private fun AboutSection(title: String, content: @Composable ColumnScope.() -> U
 }
 
 @Composable
-private fun AboutBody(text: String) {
-    Text(text, style = MaterialTheme.typography.bodyMedium)
+private fun AboutBody(@StringRes text: Int) {
+    Text(stringResource(text), style = MaterialTheme.typography.bodyMedium)
 }
 
 /** A tappable URL. Kept full-length rather than hidden behind link text so it stays readable. */

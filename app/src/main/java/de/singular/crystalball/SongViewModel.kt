@@ -5,10 +5,17 @@ package de.singular.crystalball
 import android.app.Application
 import android.net.Uri
 import androidx.core.content.FileProvider
+import android.content.Context
+import android.content.res.Configuration
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.chords.Voicing
+import de.singular.crystalball.songs.BackupException
+import de.singular.crystalball.songs.BackupProblem
 import de.singular.crystalball.songs.CapturedChord
 import de.singular.crystalball.songs.defaultVoicing
 import de.singular.crystalball.songs.Part
@@ -89,7 +96,12 @@ sealed interface SaveTarget {
  */
 sealed interface SaveResult {
     data class Saved(val songTitle: String, val partName: String) : SaveResult
-    data class Failed(val reason: String) : SaveResult
+
+    /**
+     * [reason] is a string resource, not a sentence: the toast is written when it is shown, in the
+     * language in effect then, rather than in whichever one was current when the save went wrong.
+     */
+    data class Failed(@StringRes val reason: Int) : SaveResult
 }
 
 /**
@@ -102,7 +114,7 @@ sealed interface SaveResult {
 sealed interface BackupResult {
     data object Exported : BackupResult
     data class Restored(val songs: Int) : BackupResult
-    data class Failed(val reason: String) : BackupResult
+    data class Failed(@StringRes val reason: Int) : BackupResult
 }
 
 /**
@@ -139,8 +151,8 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
      * an empty library, precisely so a save cannot overwrite songs we merely failed to parse — and
      * that refusal is worth nothing if it surfaces as an empty list or a crash.
      */
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    private val _error = MutableStateFlow<Int?>(null)
+    val error: StateFlow<Int?> = _error.asStateFlow()
 
     /** Set when a PDF lands, so the screen can say so; cleared by [consumeExported]. */
     private val _exported = MutableStateFlow(false)
@@ -211,7 +223,7 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
                         .getOrNull()?.firstOrNull { it.id == target.id }
                     found ?: run {
                         if (_saveResult.value == null) {
-                            _saveResult.value = SaveResult.Failed("That song is no longer in your library.")
+                            _saveResult.value = SaveResult.Failed(R.string.error_song_gone)
                         }
                         return@launch
                     }
@@ -305,8 +317,14 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
             .onFailure { _error.value = it.readable() }
     }
 
-    private fun Throwable.readable() =
-        message ?: "The song library could not be read."
+    /**
+     * Which sentence to show for a failure, as a resource for the screen to resolve.
+     *
+     * The exception's own message is not shown: it is whatever the platform threw, in English, and
+     * often about a file descriptor rather than about songs. It stays in the log, where it helps.
+     */
+    @StringRes
+    private fun Throwable.readable(): Int = R.string.error_library_unreadable
 
     /**
      * Rename the song open in the editor.
@@ -521,7 +539,7 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     val resolver = getApplication<Application>().contentResolver
                     checkNotNull(resolver.openOutputStream(uri)) { "could not write to that file" }
-                        .use { SongPdf.write(getApplication(), song, nameStyle, it) }
+                        .use { SongPdf.write(localeContext(), song, nameStyle, it) }
                 }
             }
                 .onSuccess { _exported.value = true }
@@ -555,7 +573,7 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
                     dir.listFiles()?.forEach { it.delete() }
                     dir.mkdirs()
                     val file = File(dir, fileName)
-                    file.outputStream().use { SongPdf.write(context, song, nameStyle, it) }
+                    file.outputStream().use { SongPdf.write(localeContext(), song, nameStyle, it) }
                     FileProvider.getUriForFile(context, "${context.packageName}.files", file)
                 }
             }
@@ -618,13 +636,37 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Why a backup failed, in the words the repository used.
      *
-     * [readable] is wrong here: its fallback blames reading the library, which is exactly what did
-     * not happen when a restore was handed a photo of a cat.
+     * [readable] is wrong here: it blames reading the library, which is exactly what did not
+     * happen when a restore was handed a photo of a cat. What the repository refused, and why, it
+     * says in [BackupException.problem].
      */
-    private fun Throwable.backupReason() = message ?: "That file could not be used."
+    @StringRes
+    private fun Throwable.backupReason(): Int = when ((this as? BackupException)?.problem) {
+        BackupProblem.NEWER_VERSION -> R.string.error_backup_newer
+        BackupProblem.NOT_A_BACKUP -> R.string.error_not_a_backup
+        BackupProblem.NO_SONGS -> R.string.error_backup_empty
+        null -> R.string.error_file_unusable
+    }
 
     fun consumeError() {
         _error.value = null
+    }
+
+    /**
+     * A context whose resources speak the language the app is showing, for the sheet to print in.
+     *
+     * The application context is not that on Android 12 and below: there the chosen language lives
+     * in AppCompat rather than in the framework, and only activities are re-created around it — an
+     * application context keeps answering in the device's language. The sheet would then come out
+     * in one language while the screen that ordered it is in another.
+     */
+    private fun localeContext(): Context {
+        val locales = AppCompatDelegate.getApplicationLocales()
+        val base = getApplication<Application>()
+        if (locales.isEmpty) return base
+        val config = Configuration(base.resources.configuration)
+        ConfigurationCompat.setLocales(config, locales)
+        return base.createConfigurationContext(config)
     }
 
     private fun emptySong(capo: Int) =

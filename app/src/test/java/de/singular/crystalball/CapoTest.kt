@@ -6,7 +6,7 @@ import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.STANDARD_TUNING
-import de.singular.crystalball.chords.englishName
+import de.singular.crystalball.chords.ShapeKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -20,24 +20,28 @@ class CapoTest {
     fun `the canonical case - capo 2 and a D shape sounds E`() {
         assertEquals(chord("D"), Capo.shapeChord(chord("E"), capo = 2))
         assertEquals("E", Capo.title(chord("E"), 2, NameStyle.SOUNDING_FIRST))
-        assertEquals("D · capo 2", Capo.subtitle(chord("E"), 2, NameStyle.SOUNDING_FIRST))
         assertEquals(
-            "D, E shape · capo 2",
-            Capo.subtitle(chord("E"), 2, NameStyle.SOUNDING_FIRST, movableShape = "E shape"),
+            ShapeLine.Fingered(chord("D"), null),
+            Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST),
+        )
+        assertEquals(
+            ShapeLine.Fingered(chord("D"), ShapeKind.Grip("E")),
+            Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST, ShapeKind.Grip("E")),
         )
     }
 
     @Test
     fun `shape-first names it the other way round`() {
         assertEquals("D", Capo.title(chord("E"), 2, NameStyle.SHAPE_FIRST))
-        assertEquals("sounds as E · capo 2", Capo.subtitle(chord("E"), 2, NameStyle.SHAPE_FIRST))
+        assertEquals(
+            ShapeLine.Sounds(chord("E")),
+            Capo.shapeLine(chord("E"), 2, NameStyle.SHAPE_FIRST),
+        )
     }
 
     @Test
     fun `no capo means no second name to show`() {
         assertEquals("E", Capo.title(chord("E"), 0, NameStyle.SOUNDING_FIRST))
-        assertNull(Capo.subtitle(chord("E"), 0, NameStyle.SOUNDING_FIRST))
-        assertNull(Capo.subtitle(chord("E"), 0, NameStyle.SHAPE_FIRST))
         assertNull(Capo.shapeLine(chord("E"), 0, NameStyle.SOUNDING_FIRST))
         assertNull(Capo.shapeLine(chord("E"), 0, NameStyle.SHAPE_FIRST))
         assertEquals(chord("E"), Capo.shapeChord(chord("E"), 0))
@@ -56,8 +60,8 @@ class CapoTest {
         val promoted = ChordView.of(chord("Dm"), settings, other)
 
         assertEquals(other, promoted.best)
-        assertEquals("Cm, ${other.shape?.englishName} · capo 2", promoted.subtitle)
-        assertNotEquals(lead.subtitle, promoted.subtitle)
+        assertEquals(ShapeLine.Fingered(chord("Cm"), other.shape), promoted.shapeLine)
+        assertNotEquals(lead.shapeLine, promoted.shapeLine)
     }
 
     /** A curated open grip is a transposition of no movable shape, so the clause is dropped, not guessed. */
@@ -67,15 +71,10 @@ class CapoTest {
         val view = ChordView.of(chord("E"), settings)
         val open = view.voicings.first { it.shape == null }
 
-        assertEquals("D · capo 2", ChordView.of(chord("E"), settings, open).subtitle)
-    }
-
-    @Test
-    fun `the shape line is the subtitle without the capo`() {
-        // For the chord browser, which states the capo on its own line and would else say it twice.
-        assertEquals("D", Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST))
-        assertEquals("D, Am shape", Capo.shapeLine(chord("E"), 2, NameStyle.SOUNDING_FIRST, "Am shape"))
-        assertEquals("sounds as E", Capo.shapeLine(chord("E"), 2, NameStyle.SHAPE_FIRST))
+        assertEquals(
+            ShapeLine.Fingered(chord("D"), null),
+            ChordView.of(chord("E"), settings, open).shapeLine,
+        )
     }
 
     @Test

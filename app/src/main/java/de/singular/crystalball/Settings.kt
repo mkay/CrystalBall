@@ -3,6 +3,7 @@
 package de.singular.crystalball
 
 import de.singular.crystalball.audio.Chord
+import de.singular.crystalball.chords.ShapeKind
 
 /** Which name leads when a capo makes the chord you finger differ from the chord you hear. */
 enum class NameStyle {
@@ -15,6 +16,21 @@ enum class NameStyle {
 
 /** How the app picks its light/dark colours: follow the OS, or force one. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+/**
+ * The second name under a chord, as facts rather than as a sentence.
+ *
+ * Which of the two it is depends on [NameStyle]; what either one reads like depends on the language
+ * the app is in, so the words are chosen on screen and only the chord and the shape are decided
+ * here.
+ */
+sealed interface ShapeLine {
+    /** The chord you finger, and the movable shape of the grip shown — "D, A shape". */
+    data class Fingered(val chord: Chord, val shape: ShapeKind?) : ShapeLine
+
+    /** What the shape you are fingering comes out as — "sounds as E". */
+    data class Sounds(val chord: Chord) : ShapeLine
+}
 
 /** User preferences, persisted across launches. */
 data class Settings(
@@ -75,35 +91,28 @@ object Capo {
      *
      * Null when there is no capo and the two names agree, so there is no second name to give.
      *
-     * [movableShape] is the movable shape of the grip currently shown large, and is what makes this
-     * line track the promoted variation instead of standing still. It matters because the chord
-     * name alone reads as a grip and is not one: the minor shapes are named Em/Am/Dm, so a capo'd
-     * Dm was headed "Cm" above variations captioned "Am shape" — naming a grip that appears
-     * nowhere in the list. Null for a curated open grip, which is a transposition of no movable
-     * shape; the clause is then dropped rather than guessed at.
+     * [shape] is the movable shape of the grip currently shown large, and is what makes this line
+     * track the promoted variation instead of standing still. It matters because the chord name
+     * alone reads as a grip and is not one: the minor shapes are named Em/Am/Dm, so a capo'd Dm was
+     * headed "Cm" above variations captioned "Am shape" — naming a grip that appears nowhere in the
+     * list. Null for a curated open grip, which is a transposition of no movable shape; the clause
+     * is then dropped rather than guessed at.
      *
-     * For pages that state the capo themselves and would otherwise say it twice; [subtitle] is the
-     * same line with the capo appended, for pages that do not.
+     * Returns the parts rather than the sentence. "sounds as E" is prose and the word order is not
+     * ours to fix — this layer knows the facts, and the screen puts them into words. See
+     * `chordShapeLine` in the UI, which is also where the capo is appended for the pages that do
+     * not state it themselves.
      */
     fun shapeLine(
         sounding: Chord,
         capo: Int,
         style: NameStyle,
-        movableShape: String? = null,
-    ): String? = when {
+        shape: ShapeKind? = null,
+    ): ShapeLine? = when {
         capo == 0 -> null
-        style == NameStyle.SOUNDING_FIRST ->
-            listOfNotNull(shapeChord(sounding, capo).name, movableShape).joinToString(", ")
-        else -> "sounds as ${sounding.name}"
+        style == NameStyle.SOUNDING_FIRST -> ShapeLine.Fingered(shapeChord(sounding, capo), shape)
+        else -> ShapeLine.Sounds(sounding)
     }
-
-    /** The line under it, or null when there is no capo and the two names agree. */
-    fun subtitle(
-        sounding: Chord,
-        capo: Int,
-        style: NameStyle,
-        movableShape: String? = null,
-    ): String? = shapeLine(sounding, capo, style, movableShape)?.let { "$it · capo $capo" }
 
     /** How a chord is named where there is no room for a subtitle, e.g. the alternatives row. */
     fun shortName(sounding: Chord, capo: Int, style: NameStyle): String = when {

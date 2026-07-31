@@ -3,6 +3,8 @@
 package de.singular.crystalball.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,8 +20,10 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -31,10 +35,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,12 +48,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import de.singular.crystalball.NameStyle
 import de.singular.crystalball.R
 import de.singular.crystalball.Settings
 import de.singular.crystalball.ThemeMode
+import androidx.core.os.LocaleListCompat
+import java.util.Locale
 
 /**
  * The two halves of the settings, and the page that is not a setting at all.
@@ -73,10 +83,10 @@ import de.singular.crystalball.ThemeMode
  * destination *above* the settings and inverts where a footer sits. Between a slightly mixed tab row
  * and a slightly upside-down page, the tab row is the one that stays legible as it grows.
  */
-enum class SettingsTab(val title: String) {
-    CHORDS("Chords"),
-    SYSTEM("System"),
-    ABOUT("About"),
+enum class SettingsTab(@StringRes val title: Int) {
+    CHORDS(R.string.settings_tab_chords),
+    SYSTEM(R.string.settings_tab_system),
+    ABOUT(R.string.settings_tab_about),
 }
 
 /**
@@ -105,10 +115,13 @@ fun SettingsScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
             )
         },
     ) { innerPadding ->
@@ -126,7 +139,7 @@ fun SettingsScreen(
                     Tab(
                         selected = tab == entry,
                         onClick = { tab = entry },
-                        text = { Text(entry.title) },
+                        text = { Text(stringResource(entry.title)) },
                     )
                 }
             }
@@ -177,33 +190,28 @@ private fun ChordSettings(
     onNameStyleChange: (NameStyle) -> Unit,
     onShowCapoOnStartChange: (Boolean) -> Unit,
 ) {
-    SettingsSectionLabel("Capo")
+    SettingsSectionLabel(R.string.settings_section_capo)
     SettingSwitchRow(
-        "Show capo on start",
+        R.string.setting_show_capo_on_start,
         ImageVector.vectorResource(R.drawable.ic_capo),
         settings.showCapoOnStart,
         onShowCapoOnStartChange,
     )
-    SettingsCaption(
-        "Opens the capo sheet each time the app opens, so a capo you moved since " +
-            "yesterday is the first thing you set.",
-    )
+    SettingsCaption(R.string.setting_show_capo_on_start_caption)
 
-    SettingsSectionLabel("Chord names")
-    SettingsCaption(
-        "With a capo, the chord you hear and the shape you finger have different names.",
-    )
+    SettingsSectionLabel(R.string.settings_section_chord_names)
+    SettingsCaption(R.string.setting_name_style_caption)
     Column(Modifier.selectableGroup()) {
         NameStyleOption(
             selected = settings.nameStyle == NameStyle.SOUNDING_FIRST,
-            title = "Name the chord you hear",
-            example = "E, with \"D shape · capo 2\" beneath",
+            title = R.string.setting_name_sounding,
+            example = R.string.setting_name_sounding_example,
             onClick = { onNameStyleChange(NameStyle.SOUNDING_FIRST) },
         )
         NameStyleOption(
             selected = settings.nameStyle == NameStyle.SHAPE_FIRST,
-            title = "Name the shape you play",
-            example = "D, with \"sounds as E · capo 2\" beneath",
+            title = R.string.setting_name_shape,
+            example = R.string.setting_name_shape_example,
             onClick = { onNameStyleChange(NameStyle.SHAPE_FIRST) },
         )
     }
@@ -217,48 +225,45 @@ private fun SystemSettings(
     onBackupSongs: () -> Unit,
     onRestoreSongs: () -> Unit,
 ) {
-    SettingsSectionLabel("Screen")
+    SettingsSectionLabel(R.string.settings_section_screen)
     SettingSwitchRow(
-        "Keep screen on",
+        R.string.setting_keep_screen_on,
         ImageVector.vectorResource(R.drawable.ic_brightness_alert),
         settings.keepScreenOn,
         onKeepScreenOnChange,
     )
-    SettingsCaption(
-        "The display won't dim or lock while the app is open. Handy with a guitar in your " +
-            "hands, but it uses more battery.",
-    )
+    SettingsCaption(R.string.setting_keep_screen_on_caption)
 
-    SettingsSectionLabel("Appearance")
+    SettingsSectionLabel(R.string.settings_section_appearance)
     ThemeModeChips(
         mode = settings.themeMode,
         onSelect = onThemeModeChange,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
     )
 
-    SettingsSectionLabel("Songs")
+    SettingsSectionLabel(R.string.settings_section_language)
+    LanguageSetting()
+
+    SettingsSectionLabel(R.string.settings_section_songs)
     SettingActionRow(
-        "Back up songs",
-        "Save every song to a file",
+        R.string.setting_backup,
+        stringResource(R.string.setting_backup_subtitle),
         Icons.Default.Save,
         onBackupSongs,
     )
     SettingActionRow(
-        "Restore songs",
-        "Replace every song from a backup file",
+        R.string.setting_restore,
+        stringResource(R.string.setting_restore_subtitle),
         Icons.Default.Restore,
         onRestoreSongs,
     )
-    SettingsCaption(
-        "A backup holds your songs and nothing else — the settings on this page stay as " +
-            "you set them here.",
-    )
+    SettingsCaption(R.string.setting_backup_caption)
 }
 
 @Composable
-private fun SettingsSectionLabel(text: String) {
+private fun SettingsSectionLabel(@StringRes text: Int) {
     Text(
-        text.uppercase(),
+        stringResource(text).uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 28.dp, top = 16.dp, bottom = 4.dp),
@@ -267,9 +272,9 @@ private fun SettingsSectionLabel(text: String) {
 
 /** The line under a setting that says what it costs you, where the label alone is not enough. */
 @Composable
-private fun SettingsCaption(text: String) {
+private fun SettingsCaption(@StringRes text: Int) {
     Text(
-        text,
+        stringResource(text),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 28.dp, end = 16.dp, bottom = 4.dp),
@@ -285,15 +290,15 @@ private fun ThemeModeChips(
 ) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         val label = mapOf(
-            ThemeMode.SYSTEM to "System",
-            ThemeMode.LIGHT to "Light",
-            ThemeMode.DARK to "Dark",
+            ThemeMode.SYSTEM to R.string.theme_system,
+            ThemeMode.LIGHT to R.string.theme_light,
+            ThemeMode.DARK to R.string.theme_dark,
         )
         ThemeMode.entries.forEach { m ->
             FilterChip(
                 selected = mode == m,
                 onClick = { onSelect(m) },
-                label = { Text(label.getValue(m)) },
+                label = { Text(stringResource(label.getValue(m))) },
                 shape = ControlShape,
             )
         }
@@ -303,7 +308,7 @@ private fun ThemeModeChips(
 /** A settings row: icon + label with a trailing switch; tapping anywhere on the row toggles it. */
 @Composable
 private fun SettingSwitchRow(
-    label: String,
+    @StringRes label: Int,
     icon: ImageVector,
     checked: Boolean,
     onToggle: (Boolean) -> Unit,
@@ -318,7 +323,11 @@ private fun SettingSwitchRow(
     ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.width(16.dp))
-        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Text(
+            stringResource(label),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
         Switch(checked = checked, onCheckedChange = { onToggle(it) })
     }
 }
@@ -333,7 +342,9 @@ private fun SettingSwitchRow(
  */
 @Composable
 private fun SettingActionRow(
-    label: String,
+    @StringRes label: Int,
+    // A string rather than a resource: the language row's subtitle is the chosen language's own
+    // name for itself, which is not in our string table at all.
     subtitle: String,
     icon: ImageVector,
     onClick: () -> Unit,
@@ -349,7 +360,7 @@ private fun SettingActionRow(
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
             Text(
                 subtitle,
                 style = MaterialTheme.typography.bodySmall,
@@ -362,8 +373,8 @@ private fun SettingActionRow(
 @Composable
 private fun NameStyleOption(
     selected: Boolean,
-    title: String,
-    example: String,
+    @StringRes title: Int,
+    @StringRes example: Int,
     onClick: () -> Unit,
 ) {
     Row(
@@ -374,12 +385,114 @@ private fun NameStyleOption(
     ) {
         RadioButton(selected = selected, onClick = onClick)
         Column(Modifier.padding(start = 4.dp)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(title), style = MaterialTheme.typography.bodyLarge)
             Text(
-                example,
+                stringResource(example),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * One offered language: its BCP-47 [tag], or null for "follow the device".
+ *
+ * [label] is deliberately the language's name *in that language* — Deutsch, not German. Someone who
+ * has landed in a language they can't read needs to find their way out, and the only word on the
+ * screen they are sure to recognise is their own language's name for itself.
+ */
+private data class LanguageChoice(val tag: String?, val label: String)
+
+/**
+ * The languages on offer: the device default, then everything listed in `supported_locales`,
+ * sorted by how each names itself.
+ */
+@Composable
+private fun rememberLanguageChoices(): List<LanguageChoice> {
+    val systemLabel = stringResource(R.string.language_system)
+    val tags = stringArrayResource(R.array.supported_locales)
+    return remember(systemLabel, tags) {
+        val offered = tags.map { tag ->
+            val locale = Locale.forLanguageTag(tag)
+            // Ask the locale to name itself, then fix the case: several languages write their own
+            // name lowercase mid-sentence (français, español) but expect a capital when it stands
+            // alone as a label.
+            val own = locale.getDisplayName(locale).replaceFirstChar { it.titlecase(locale) }
+            LanguageChoice(tag, own)
+        }.sortedBy { it.label }
+        listOf(LanguageChoice(null, systemLabel)) + offered
+    }
+}
+
+/** The current app language as a BCP-47 tag, or null when it is following the device. */
+private fun currentLanguageTag(): String? =
+    AppCompatDelegate.getApplicationLocales().toLanguageTags().takeIf { it.isNotEmpty() }
+        ?.substringBefore(',')
+
+/**
+ * The language row and its picker.
+ *
+ * Applying a choice goes through [AppCompatDelegate], not a preference of our own: on Android 13+
+ * that writes through to the system's per-app language, so this picker and the one in Android's
+ * own Settings agree with each other instead of quietly disagreeing. Selecting recreates the
+ * activity, which is what re-reads the resources — so there is nothing to do afterwards.
+ */
+@Composable
+private fun LanguageSetting() {
+    val choices = rememberLanguageChoices()
+    // Read once per composition rather than held in state: the activity is recreated on change,
+    // so this is re-read with the new value on the way back up.
+    val currentTag = currentLanguageTag()
+    val current = choices.firstOrNull { it.tag == currentTag } ?: choices.first()
+    var picking by remember { mutableStateOf(false) }
+
+    SettingActionRow(
+        label = R.string.setting_language,
+        subtitle = current.label,
+        icon = Icons.Default.Language,
+        onClick = { picking = true },
+    )
+
+    if (picking) {
+        AlertDialog(
+            onDismissRequest = { picking = false },
+            title = { Text(stringResource(R.string.setting_language)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    choices.forEach { choice ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(ControlShape)
+                                .clickable {
+                                    picking = false
+                                    AppCompatDelegate.setApplicationLocales(
+                                        if (choice.tag == null) {
+                                            LocaleListCompat.getEmptyLocaleList()
+                                        } else {
+                                            LocaleListCompat.forLanguageTags(choice.tag)
+                                        },
+                                    )
+                                }
+                                .padding(horizontal = 8.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = choice.tag == current.tag,
+                                onClick = null, // the whole row is the target
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(choice.label, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { picking = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
     }
 }

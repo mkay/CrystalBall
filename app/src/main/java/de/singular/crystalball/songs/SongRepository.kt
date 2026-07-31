@@ -17,6 +17,24 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 /**
+ * What was wrong with a file handed to [SongRepository.importFrom].
+ *
+ * Named rather than described, because the description belongs on screen and the screen is not
+ * always in English. The repository knows *what* happened; which words to say about it is settled
+ * where it is shown.
+ */
+enum class BackupProblem { NEWER_VERSION, NOT_A_BACKUP, NO_SONGS }
+
+/**
+ * A backup this app cannot use, and why.
+ *
+ * The [message] is for the log and stays in English: it says which entry was missing or which
+ * format number was found, which is the part worth reading in a stack trace and no use at all to
+ * whoever is holding the phone. They get [problem], turned into a sentence in their language.
+ */
+class BackupException(val problem: BackupProblem, message: String) : IOException(message)
+
+/**
  * The song library: one JSON file under `filesDir`.
  *
  * A plain file, like Rubber Ring's library index and for the same reason — the data is one short
@@ -138,7 +156,10 @@ class SongRepository(private val file: File) {
                             val format = JSONObject(zip.readBytes().decodeToString())
                                 .optInt("format", 1)
                             if (format > BACKUP_FORMAT) {
-                                throw IOException("This backup is from a newer version of Crystal Ball.")
+                                throw BackupException(
+                                    BackupProblem.NEWER_VERSION,
+                                    "backup format $format is newer than $BACKUP_FORMAT",
+                                )
                             }
                             sawManifest = true
                         }
@@ -150,8 +171,11 @@ class SongRepository(private val file: File) {
                 }
             }
 
-            if (!sawManifest) throw IOException("This file isn't a Crystal Ball backup.")
-            val json = songsJson ?: throw IOException("This backup has no songs in it.")
+            if (!sawManifest) {
+                throw BackupException(BackupProblem.NOT_A_BACKUP, "no $MANIFEST_ENTRY in the zip")
+            }
+            val json = songsJson
+                ?: throw BackupException(BackupProblem.NO_SONGS, "no $SONGS_ENTRY in the zip")
             // Decode before writing: SongJson refuses a file it cannot read, and that refusal has to
             // land before the library is replaced rather than after.
             val songs = SongJson.decode(json)

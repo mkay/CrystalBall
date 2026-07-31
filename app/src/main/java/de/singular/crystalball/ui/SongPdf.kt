@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
 import de.singular.crystalball.Capo
 import de.singular.crystalball.NameStyle
+import de.singular.crystalball.R
 import de.singular.crystalball.songs.Song
 import de.singular.crystalball.songs.SongChord
 import java.io.OutputStream
@@ -59,9 +60,13 @@ object SongPdf {
         val writer = PageWriter(doc, density, measurer)
         try {
             writer.startPage()
-            writer.text(song.title.ifBlank { "Song" }, TITLE)
+            writer.text(song.title.ifBlank { context.getString(R.string.untitled_song) }, TITLE)
             writer.gap(2f)
-            writer.text(if (song.capo == 0) "No capo" else "Capo ${song.capo}", SUBTITLE)
+            writer.text(
+                if (song.capo == 0) context.getString(R.string.capo_none_set)
+                else context.getString(R.string.capo_at, song.capo),
+                SUBTITLE,
+            )
             writer.gap(18f)
 
             song.parts.forEach { part ->
@@ -69,13 +74,13 @@ object SongPdf {
                 writer.reserve(PART_NAME_HEIGHT + CELL_HEIGHT)
                 writer.text(part.name, HEADING)
                 writer.gap(6f)
-                writer.chords(part.chords, song.capo, nameStyle)
+                writer.chords(context, part.chords, song.capo, nameStyle)
                 writer.gap(14f)
             }
 
             if (song.comment.isNotBlank()) {
                 writer.reserve(PART_NAME_HEIGHT + 20f)
-                writer.text("Comment", HEADING)
+                writer.text(context.getString(R.string.comment_title), HEADING)
                 writer.gap(4f)
                 writer.text(song.comment, BODY)
             }
@@ -131,14 +136,21 @@ object SongPdf {
         }
 
         /** A part's chords, wrapping across as many rows as it takes. */
-        fun chords(chords: List<SongChord>, capo: Int, nameStyle: NameStyle) {
+        fun chords(context: Context, chords: List<SongChord>, capo: Int, nameStyle: NameStyle) {
             val perRow = ((contentWidth + CELL_GAP) / (DIAGRAM_WIDTH + CELL_GAP)).toInt().coerceAtLeast(1)
             var index = 0
             while (index < chords.size) {
                 val row = chords.subList(index, min(index + perRow, chords.size))
                 reserve(CELL_HEIGHT)
                 row.forEachIndexed { column, chord ->
-                    cell(MARGIN + column * (DIAGRAM_WIDTH + CELL_GAP), y, chord, capo, nameStyle)
+                    cell(
+                        context,
+                        MARGIN + column * (DIAGRAM_WIDTH + CELL_GAP),
+                        y,
+                        chord,
+                        capo,
+                        nameStyle,
+                    )
                 }
                 y += CELL_HEIGHT
                 index += row.size
@@ -146,7 +158,14 @@ object SongPdf {
         }
 
         /** One chord: its name, its shape, and where on the neck to play it. */
-        private fun cell(x: Float, top: Float, chord: SongChord, capo: Int, nameStyle: NameStyle) {
+        private fun cell(
+            context: Context,
+            x: Float,
+            top: Float,
+            chord: SongChord,
+            capo: Int,
+            nameStyle: NameStyle,
+        ) {
             val name = measure(
                 Capo.shortName(chord.sounding, capo, nameStyle),
                 CHORD_NAME,
@@ -176,7 +195,7 @@ object SongPdf {
                 )
             }
 
-            val caption = measure(chord.voicing.label, CAPTION, DIAGRAM_WIDTH)
+            val caption = measure(voicingCaption(context, chord.voicing), CAPTION, DIAGRAM_WIDTH)
             draw(x, boxTop + boxHeight + 3f, DIAGRAM_WIDTH, caption.size.height.toFloat()) {
                 drawText(caption, topLeft = Offset.Zero)
             }

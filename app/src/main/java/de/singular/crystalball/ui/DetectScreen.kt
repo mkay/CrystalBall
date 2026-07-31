@@ -42,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -125,7 +127,7 @@ fun DetectScreen(
             IconButton(onClick = onOpenMenu) {
                 Icon(
                     Icons.Default.Menu,
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(R.string.cd_open_menu),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -133,7 +135,7 @@ fun DetectScreen(
             // — twice over would be one Crystal Ball too many.
             if (state !is DetectState.Idle) {
                 Text(
-                    "Crystal Ball",
+                    stringResource(R.string.app_name),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -149,7 +151,7 @@ fun DetectScreen(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_brightness_alert),
-                    contentDescription = "Screen kept on",
+                    contentDescription = stringResource(R.string.cd_screen_kept_on),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -164,20 +166,17 @@ fun DetectScreen(
                         contentDescription = null,
                     )
                 },
-                title = { Text("Screen stays on") },
-                text = {
-                    Text(
-                        "“Keep screen on” is enabled, so the display won't dim or lock while the " +
-                            "app is open. Handy for practice, but it uses more battery.",
-                    )
-                },
+                title = { Text(stringResource(R.string.keep_awake_title)) },
+                text = { Text(stringResource(R.string.keep_awake_body)) },
                 confirmButton = {
                     TextButton(onClick = { showKeepAwakeInfo = false; onOpenAppSettings() }) {
-                        Text("Settings")
+                        Text(stringResource(R.string.settings_title))
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showKeepAwakeInfo = false }) { Text("OK") }
+                    TextButton(onClick = { showKeepAwakeInfo = false }) {
+                        Text(stringResource(R.string.action_ok))
+                    }
                 },
             )
         }
@@ -197,7 +196,7 @@ private fun IdlePane(
     Logo()
     Spacer(Modifier.height(16.dp))
     Text(
-        "Play a chord and I'll name it.",
+        stringResource(R.string.detect_prompt),
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -219,13 +218,13 @@ private fun SilencePane(
     Logo()
     Spacer(Modifier.height(16.dp))
     Text(
-        "I didn't hear anything.",
+        stringResource(R.string.silence_title),
         style = MaterialTheme.typography.titleMedium,
         textAlign = TextAlign.Center,
     )
     Spacer(Modifier.height(4.dp))
     Text(
-        "Hold the phone near the guitar and strum.",
+        stringResource(R.string.silence_body),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -245,7 +244,7 @@ private fun SilencePane(
  */
 @Composable
 private fun DetectButtons(onDetect: () -> Unit, onCapture: () -> Unit) {
-    DetectButton(onDetect, label = "Detect single chord")
+    DetectButton(onDetect, label = stringResource(R.string.action_detect_single))
     Spacer(Modifier.height(12.dp))
     OutlinedButton(
         onClick = onCapture,
@@ -262,7 +261,10 @@ private fun DetectButtons(onDetect: () -> Unit, onCapture: () -> Unit) {
             modifier = Modifier.size(24.dp).offset(x = (-8).dp),
         )
         Spacer(Modifier.width(4.dp))
-        Text("Detect multiple chords", style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(R.string.action_detect_multiple),
+            style = MaterialTheme.typography.titleMedium,
+        )
     }
 }
 
@@ -298,7 +300,7 @@ private fun BrowsePane(
     // The capo says itself, on its own line, so the shape line does not repeat it.
     view.shapeLine?.let { shapeLine ->
         Text(
-            shapeLine,
+            chordShapeLine(shapeLine),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -309,7 +311,7 @@ private fun BrowsePane(
     ChordDiagram(
         voicing = view.best,
         width = BEST_DIAGRAM_WIDTH,
-        caption = view.best.label,
+        caption = voicingCaption(view.best),
         capo = settings.capo,
     )
 
@@ -338,7 +340,10 @@ private fun CapoStatusLink(capo: Int, onSetCapo: () -> Unit) {
  * without looking, so it spans the width and stands well clear of the 48dp minimum touch target.
  */
 @Composable
-private fun DetectButton(onDetect: () -> Unit, label: String = "Detect Chord") {
+private fun DetectButton(
+    onDetect: () -> Unit,
+    label: String = stringResource(R.string.action_detect),
+) {
     Button(
         onClick = onDetect,
         shape = ControlShape,
@@ -359,7 +364,7 @@ private fun ListeningPane(state: DetectState.Listening, onCancel: () -> Unit) {
     SpinningLogo()
     Spacer(Modifier.height(16.dp))
     Text(
-        if (state.heardStrum) "Listening…" else "Strum a chord",
+        stringResource(if (state.heardStrum) R.string.listening else R.string.strum_a_chord),
         style = MaterialTheme.typography.titleMedium,
         textAlign = TextAlign.Center,
     )
@@ -374,7 +379,7 @@ private fun ListeningPane(state: DetectState.Listening, onCancel: () -> Unit) {
             .widthIn(max = BUTTON_MAX_WIDTH)
             .height(BUTTON_HEIGHT),
     ) {
-        Text("Cancel", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.action_cancel), style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -396,9 +401,9 @@ private fun ResultPane(
         style = MaterialTheme.typography.displayMedium,
         fontWeight = FontWeight.SemiBold,
     )
-    view.subtitle?.let { subtitle ->
+    view.shapeLine?.let { shapeLine ->
         Text(
-            subtitle,
+            chordSubtitle(shapeLine, settings.capo),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -407,7 +412,7 @@ private fun ResultPane(
     ChordDiagram(
         voicing = view.best,
         width = BEST_DIAGRAM_WIDTH,
-        caption = view.best.label,
+        caption = voicingCaption(view.best),
         capo = settings.capo,
     )
 
@@ -415,7 +420,7 @@ private fun ResultPane(
     Spacer(Modifier.height(24.dp))
 
     if (state.alternatives.isNotEmpty()) {
-        SectionLabel("Or did you mean")
+        SectionLabel(stringResource(R.string.or_did_you_mean))
         DiagramRow {
             state.alternatives.forEach { candidate ->
                 AlternativeDiagram(
@@ -428,7 +433,7 @@ private fun ResultPane(
         Spacer(Modifier.height(24.dp))
     }
 
-    DetectButton(onDetect, label = "Detect Again")
+    DetectButton(onDetect, label = stringResource(R.string.action_detect_again))
     Spacer(Modifier.height(16.dp))
 }
 
@@ -449,13 +454,13 @@ private fun VariationsSection(
     if (view.variations.isEmpty()) return
 
     Spacer(Modifier.height(28.dp))
-    SectionLabel("Other ways to play ${view.title}")
+    SectionLabel(stringResource(R.string.other_ways_to_play, view.title))
     DiagramFlow {
         view.variations.forEach { voicing ->
             ChordDiagram(
                 voicing = voicing,
                 width = SMALL_DIAGRAM_WIDTH,
-                caption = voicing.label,
+                caption = voicingCaption(voicing),
                 capo = settings.capo,
                 modifier = Modifier
                     .clip(ControlShape)
@@ -509,14 +514,17 @@ private fun CapturingPane(
     SpinningLogo()
     Spacer(Modifier.height(16.dp))
     Text(
-        if (state.captured.isEmpty() && !state.heardStrum) "Strum the first chord"
-        else "Chord ${state.captured.size + 1} — strum and let it ring",
+        if (state.captured.isEmpty() && !state.heardStrum) {
+            stringResource(R.string.capture_first_chord)
+        } else {
+            stringResource(R.string.capture_next_chord, state.captured.size + 1)
+        },
         style = MaterialTheme.typography.titleMedium,
         textAlign = TextAlign.Center,
     )
     Spacer(Modifier.height(4.dp))
     Text(
-        "Mute the strings once it lands. A chord still ringing bleeds into the next one and blurs it.",
+        stringResource(R.string.capture_mute_hint),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -532,11 +540,11 @@ private fun CapturingPane(
         enabled = state.captured.isNotEmpty(),
         modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
     ) {
-        Text("Done", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.action_done), style = MaterialTheme.typography.titleMedium)
     }
     Spacer(Modifier.height(8.dp))
     Text(
-        "Or just stop playing — it ends on its own.",
+        stringResource(R.string.capture_stops_itself),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -564,10 +572,13 @@ private fun CaptureReviewPane(
 
     Spacer(Modifier.height(ICON_ROW_HEIGHT))
     if (state.captured.isEmpty()) {
-        Text("Nothing captured.", style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(R.string.capture_nothing_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
         Spacer(Modifier.height(8.dp))
         Text(
-            "Hold the phone near the guitar and try again.",
+            stringResource(R.string.capture_nothing_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -578,19 +589,23 @@ private fun CaptureReviewPane(
             shape = ControlShape,
             modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
         ) {
-            Text("Back", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.action_back), style = MaterialTheme.typography.titleMedium)
         }
         return
     }
 
     Text(
-        "${state.captured.size} chords",
+        pluralStringResource(
+            R.plurals.captured_chords,
+            state.captured.size,
+            state.captured.size,
+        ),
         style = MaterialTheme.typography.displaySmall,
         fontWeight = FontWeight.SemiBold,
     )
     Spacer(Modifier.height(4.dp))
     Text(
-        "Tap a chord to fix it, or to say how you play it.",
+        stringResource(R.string.capture_review_hint),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -604,7 +619,7 @@ private fun CaptureReviewPane(
         shape = ControlShape,
         modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
     ) {
-        Text("Save as…", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.action_save_as), style = MaterialTheme.typography.titleMedium)
     }
     Spacer(Modifier.height(4.dp))
     TextButton(
@@ -612,7 +627,7 @@ private fun CaptureReviewPane(
         shape = ControlShape,
         modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(48.dp),
     ) {
-        Text("Discard", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(R.string.action_discard), style = MaterialTheme.typography.titleSmall)
     }
 
     if (saveOpen) {
@@ -643,7 +658,7 @@ private fun CapturedDiagrams(
 ) {
     if (captured.isEmpty()) {
         Text(
-            "—",
+            stringResource(R.string.capture_none_yet),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -692,9 +707,9 @@ private fun EditCapturedPane(
 
     Spacer(Modifier.height(ICON_ROW_HEIGHT))
     Text(view.title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
-    view.subtitle?.let { subtitle ->
+    view.shapeLine?.let { shapeLine ->
         Text(
-            subtitle,
+            chordSubtitle(shapeLine, settings.capo),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -703,7 +718,7 @@ private fun EditCapturedPane(
     ChordDiagram(
         voicing = chosen,
         width = BEST_DIAGRAM_WIDTH,
-        caption = chosen.label,
+        caption = voicingCaption(chosen),
         capo = settings.capo,
     )
 
@@ -712,7 +727,7 @@ private fun EditCapturedPane(
 
     if (captured.alternatives.isNotEmpty()) {
         Spacer(Modifier.height(24.dp))
-        SectionLabel("Or did you mean")
+        SectionLabel(stringResource(R.string.or_did_you_mean))
         DiagramRow {
             captured.alternatives.forEach { candidate ->
                 AlternativeDiagram(
@@ -730,7 +745,10 @@ private fun EditCapturedPane(
         shape = ControlShape,
         modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(48.dp),
     ) {
-        Text("Remove this chord", style = MaterialTheme.typography.titleSmall)
+        Text(
+            stringResource(R.string.action_remove_chord),
+            style = MaterialTheme.typography.titleSmall,
+        )
     }
 }
 
@@ -768,22 +786,25 @@ private fun SaveAsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Save these chords") },
+        title = { Text(stringResource(R.string.save_capture_title)) },
         text = {
             Column(
                 Modifier
                     .heightIn(max = 420.dp)
                     .verticalScroll(rememberScrollState()),
             ) {
-                SectionLabel("Name this part")
+                SectionLabel(stringResource(R.string.save_name_this_part))
                 ChipFlow {
                     PART_NAMES.forEach { partLabel ->
+                        // Resolved here rather than stored as a name: the chips suggest a name in
+                        // the reader's language, and what is saved is the word they picked.
+                        val suggestion = stringResource(partLabel)
                         FilterChip(
-                            selected = name == partLabel,
-                            enabled = partLabel !in used,
-                            onClick = { partName = partLabel },
+                            selected = name == suggestion,
+                            enabled = suggestion !in used,
+                            onClick = { partName = suggestion },
                             shape = ControlShape,
-                            label = { Text(partLabel) },
+                            label = { Text(stringResource(partLabel)) },
                         )
                     }
                 }
@@ -791,7 +812,7 @@ private fun SaveAsDialog(
                 OutlinedTextField(
                     value = partName,
                     onValueChange = { partName = it },
-                    label = { Text("Or a name of your own") },
+                    label = { Text(stringResource(R.string.save_own_name)) },
                     singleLine = true,
                     shape = ControlShape,
                     keyboardOptions = NameKeyboard,
@@ -800,20 +821,22 @@ private fun SaveAsDialog(
                 if (name in used) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "\"$name\" already exists in that song — saving replaces it.",
+                        stringResource(R.string.save_part_exists, name),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
                 Spacer(Modifier.height(20.dp))
-                SectionLabel("Save it to")
-                RadioRow("A new song", selected = !toExisting) { toExisting = false }
+                SectionLabel(stringResource(R.string.save_it_to))
+                RadioRow(stringResource(R.string.save_new_song), selected = !toExisting) {
+                    toExisting = false
+                }
                 if (!toExisting) {
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
-                        label = { Text("Song title") },
+                        label = { Text(stringResource(R.string.save_song_title)) },
                         singleLine = true,
                         shape = ControlShape,
                         keyboardOptions = NameKeyboard,
@@ -821,7 +844,9 @@ private fun SaveAsDialog(
                     )
                 }
                 if (library.isNotEmpty()) {
-                    RadioRow("An existing song", selected = toExisting) { toExisting = true }
+                    RadioRow(stringResource(R.string.save_existing_song), selected = toExisting) {
+                        toExisting = true
+                    }
                     if (toExisting) {
                         Column(Modifier.padding(start = 32.dp)) {
                             ChipFlow {
@@ -856,9 +881,11 @@ private fun SaveAsDialog(
                         else SaveTarget.NewSong(title, settings.capo)
                     onSave(name, target)
                 },
-            ) { Text("Save") }
+            ) { Text(stringResource(R.string.action_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
     )
 }
 
@@ -879,10 +906,17 @@ private fun RadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
 }
 
 /** Say what moving the run onto a song at a different capo does — and, quietly, what it does not. */
+@Composable
 private fun capoMoveNote(from: Int, to: Int): String {
-    val here = if (from == 0) "without a capo" else "behind capo $from"
-    val there = if (to == 0) "has no capo" else "is at capo $to"
-    return "You played this $here; that song $there. The chords keep their sound — only the shapes change."
+    // Whole clauses rather than a sentence assembled from fragments: which capo goes in which half
+    // of the sentence is a matter of grammar, and grammar is the translator's business.
+    val here =
+        if (from == 0) stringResource(R.string.capo_move_here_none)
+        else stringResource(R.string.capo_move_here, from)
+    val there =
+        if (to == 0) stringResource(R.string.capo_move_there_none)
+        else stringResource(R.string.capo_move_there, to)
+    return stringResource(R.string.capo_move_note, here, there)
 }
 
 /**

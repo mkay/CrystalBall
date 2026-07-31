@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -103,7 +104,7 @@ fun Claim(modifier: Modifier = Modifier) {
                 .aspectRatio(CLAIM_ASPECT),
         )
         Text(
-            text = "detects guitar chords\nand combines them into song sheets",
+            text = stringResource(R.string.app_tagline),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -189,7 +190,10 @@ private const val MIN_LEVEL = 0.001f
  * yesterday would otherwise stay invisible. It stops at stating it — that a button can be pressed is
  * the button's job to say, not the sentence's.
  */
-fun capoLabel(capo: Int): String = if (capo == 0) "Set capo" else "Capo set to $capo"
+@Composable
+fun capoLabel(capo: Int): String =
+    if (capo == 0) stringResource(R.string.capo_set)
+    else stringResource(R.string.capo_set_to, capo)
 
 /**
  * The way to the capo, from wherever you are when you notice it is wrong.
@@ -346,14 +350,14 @@ fun VoicingPicker(
     capo: Int,
     onSelectVoicing: (Voicing) -> Unit,
 ) {
-    SectionLabel("Other ways to play ${view.title}")
+    SectionLabel(stringResource(R.string.other_ways_to_play, view.title))
     DiagramFlow {
         view.voicings.forEach { voicing ->
             val selected = voicing == chosen
             ChordDiagram(
                 voicing = voicing,
                 width = SMALL_DIAGRAM_WIDTH,
-                caption = voicing.label,
+                caption = voicingCaption(voicing),
                 capo = capo,
                 modifier = Modifier
                     .clip(ControlShape)
@@ -392,6 +396,7 @@ fun openCustomTab(context: android.content.Context, url: String, toolbarColor: C
     try {
         intent.launchUrl(context, Uri.parse(url))
     } catch (_: android.content.ActivityNotFoundException) {
-        Toast.makeText(context, "No browser found", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.error_no_browser), Toast.LENGTH_SHORT)
+            .show()
     }
 }

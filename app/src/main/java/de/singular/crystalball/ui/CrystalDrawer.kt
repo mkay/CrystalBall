@@ -2,6 +2,7 @@
 
 package de.singular.crystalball.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,42 +62,42 @@ fun CrystalDrawer(
     ModalDrawerSheet(Modifier.fillMaxWidth(0.8f)) {
         Column(Modifier.fillMaxSize()) {
             Text(
-                "Crystal Ball",
+                stringResource(R.string.app_name),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(start = 28.dp, top = 20.dp, bottom = 12.dp),
             )
 
             val itemPadding = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
             NavigationDrawerItem(
-                label = { Text("Detect chord") },
+                label = { Text(stringResource(R.string.drawer_detect)) },
                 icon = { Icon(Icons.Default.Mic, contentDescription = null) },
                 selected = false,
                 onClick = onDetect,
                 modifier = itemPadding,
             )
             NavigationDrawerItem(
-                label = { Text("Chord Library") },
+                label = { Text(stringResource(R.string.drawer_chord_library)) },
                 icon = { Icon(Icons.Default.LibraryMusic, contentDescription = null) },
                 selected = false,
                 onClick = onShowChords,
                 modifier = itemPadding,
             )
             NavigationDrawerItem(
-                label = { Text("Songs") },
+                label = { Text(stringResource(R.string.drawer_songs)) },
                 icon = { Icon(Icons.Default.QueueMusic, contentDescription = null) },
                 selected = false,
                 onClick = onSongs,
                 modifier = itemPadding,
             )
             NavigationDrawerItem(
-                label = { Text("Settings") },
+                label = { Text(stringResource(R.string.settings_title)) },
                 icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                 selected = false,
                 onClick = onSettings,
                 modifier = itemPadding,
             )
             NavigationDrawerItem(
-                label = { Text("Support Crystal Ball") },
+                label = { Text(stringResource(R.string.drawer_support)) },
                 icon = {
                     Icon(
                         ImageVector.vectorResource(R.drawable.ic_heart_smile),
@@ -114,7 +116,7 @@ fun CrystalDrawer(
             // Below the destinations rather than above them: this is a shortcut into Songs, and a
             // shortcut that pushes the fixed navigation down the panel has stopped being one.
             if (recents.isNotEmpty()) {
-                DrawerSectionLabel("Recent songs")
+                DrawerSectionLabel(R.string.drawer_recent_songs)
                 recents.forEach { song ->
                     NavigationDrawerItem(
                         label = { Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -130,7 +132,7 @@ fun CrystalDrawer(
             Spacer(Modifier.weight(1f))
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
             NavigationDrawerItem(
-                label = { Text("Quick help") },
+                label = { Text(stringResource(R.string.help_title)) },
                 icon = { Icon(Icons.Default.HelpOutline, contentDescription = null) },
                 selected = false,
                 onClick = onQuickHelp,
@@ -144,9 +146,9 @@ fun CrystalDrawer(
 
 /** The quiet heading over a group of panel items, matching the settings screen's section labels. */
 @Composable
-private fun DrawerSectionLabel(text: String) {
+private fun DrawerSectionLabel(@StringRes text: Int) {
     Text(
-        text.uppercase(),
+        stringResource(text).uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 28.dp, top = 16.dp, bottom = 4.dp),

@@ -2,6 +2,7 @@
 
 package de.singular.crystalball.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
@@ -26,7 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import de.singular.crystalball.R
 
 /**
  * The "easy way" out of [SupportDialog]: a page carrying a like button the visitor presses. The
@@ -56,55 +59,52 @@ fun SupportDialog(onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Keep this app alive") },
+        title = { Text(stringResource(R.string.support_title)) },
         text = {
             Column(
                 Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 Text(
-                    "This app doesn't track. Anything.\n" +
-                        "The downside is I have no idea if or how often it's used or downloaded.\n" +
-                        "Could be zero, could be a secret cult following. I genuinely don't know.",
+                    stringResource(R.string.support_no_tracking),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    "Am I wasting my time publishing it? You tell me.",
+                    stringResource(R.string.support_question),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    "There are three (maybe more) ways to keep me motivated:",
+                    stringResource(R.string.support_three_ways),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 SupportWay(
-                    title = "The easy way",
-                    action = "Give it a like",
+                    title = R.string.support_easy_title,
+                    action = R.string.support_easy_action,
                     icon = Icons.Default.Favorite,
                     // The one that costs nothing, so it gets the filled button.
                     emphasised = true,
-                    note = "Opens a page on my website with a like button. Nothing is counted " +
-                        "until you press it — just the press and an anonymised IP.",
+                    note = R.string.support_easy_note,
                     onClick = { openCustomTab(context, LIKE_URL, toolbarColor) },
                 )
                 SupportWay(
-                    title = "The nerdy way",
-                    action = "Star it on GitHub",
+                    title = R.string.support_nerdy_title,
+                    action = R.string.support_nerdy_action,
                     icon = Icons.Default.Star,
-                    note = "A star is a number I can actually see, and it helps others find it.",
+                    note = R.string.support_nerdy_note,
                     onClick = { openCustomTab(context, REPO_URL, toolbarColor) },
                 )
                 SupportWay(
-                    title = "The generous way",
-                    action = "Support it on Ko-fi",
+                    title = R.string.support_generous_title,
+                    action = R.string.support_generous_action,
                     icon = Icons.Default.Paid,
-                    note = "Entirely optional. The app is and stays free either way.",
+                    note = R.string.support_generous_note,
                     onClick = { openCustomTab(context, KOFI_URL, toolbarColor) },
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
         },
     )
 }
@@ -112,10 +112,10 @@ fun SupportDialog(onDismiss: () -> Unit) {
 /** One row of [SupportDialog]: a heading, the button that does the thing, and the small print. */
 @Composable
 private fun SupportWay(
-    title: String,
-    action: String,
+    @StringRes title: Int,
+    @StringRes action: Int,
     icon: ImageVector,
-    note: String,
+    @StringRes note: Int,
     onClick: () -> Unit,
     emphasised: Boolean = false,
 ) {
@@ -124,17 +124,17 @@ private fun SupportWay(
     val content: @Composable RowScope.() -> Unit = {
         Icon(icon, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
         Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-        Text(action)
+        Text(stringResource(action))
     }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(title, style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
         if (emphasised) {
             Button(onClick = onClick, shape = ControlShape, content = content)
         } else {
             OutlinedButton(onClick = onClick, shape = ControlShape, content = content)
         }
         Text(
-            note,
+            stringResource(note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

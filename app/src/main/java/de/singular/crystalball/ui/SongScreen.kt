@@ -3,6 +3,7 @@
 package de.singular.crystalball.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -63,8 +64,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -72,6 +76,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import de.singular.crystalball.Capo
+import de.singular.crystalball.R
 import de.singular.crystalball.ChordView
 import de.singular.crystalball.Settings
 import de.singular.crystalball.SongState
@@ -103,7 +108,7 @@ fun SongScreen(
     song: Song,
     state: SongState,
     library: List<Song>,
-    error: String?,
+    @StringRes error: Int?,
     settings: Settings,
     onRenameCurrentSong: (String) -> Unit,
     onAddPart: () -> Unit,
@@ -187,25 +192,37 @@ fun SongScreen(
                 navigationIcon = {
                     if (selecting) {
                         IconButton(onClick = { selection = emptySet() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Cancel selection")
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = stringResource(R.string.cd_cancel_selection),
+                            )
                         }
                     } else {
                         IconButton(onClick = back) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
+                            )
                         }
                     }
                 },
                 actions = {
                     if (selecting) {
                         IconButton(onClick = { pendingDelete = selection }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete selected")
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = stringResource(R.string.cd_delete_selected),
+                            )
                         }
                     }
                     // The title is the top bar now, so renaming belongs here rather than as a
                     // field competing with Save for what "commit" means.
                     if (state is SongState.Editor) {
                         IconButton(onClick = { renameOpen = true }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Rename song")
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = stringResource(R.string.action_rename_song),
+                            )
                         }
                     }
                     // Export sits on the song view, which is the page it prints. Two ways out of
@@ -215,21 +232,24 @@ fun SongScreen(
                         var exportMenu by remember { mutableStateOf(false) }
                         Box {
                             IconButton(onClick = { exportMenu = true }) {
-                                Icon(Icons.Default.Share, contentDescription = "Export as PDF")
+                                Icon(
+                                    Icons.Default.Share,
+                                    contentDescription = stringResource(R.string.cd_export_pdf),
+                                )
                             }
                             DropdownMenu(
                                 expanded = exportMenu,
                                 onDismissRequest = { exportMenu = false },
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Share…") },
+                                    text = { Text(stringResource(R.string.action_share)) },
                                     leadingIcon = {
                                         Icon(Icons.Default.Share, contentDescription = null)
                                     },
                                     onClick = { exportMenu = false; onSharePdf() },
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Save as file…") },
+                                    text = { Text(stringResource(R.string.action_save_as_file)) },
                                     leadingIcon = {
                                         Icon(Icons.Default.Download, contentDescription = null)
                                     },
@@ -241,13 +261,22 @@ fun SongScreen(
                 },
                 title = {
                     Text(
-                        if (selecting) "${selection.size} selected" else when (state) {
-                            is SongState.Library -> "Songs"
-                            is SongState.Editor -> song.title.ifBlank { "Song" }
-                            is SongState.PartView -> state.partName
-                            is SongState.SongView -> song.title.ifBlank { "Song" }
-                            is SongState.Comment -> "Comment"
-                            is SongState.EditPartChord -> "Chord ${state.index + 1}"
+                        if (selecting) {
+                            pluralStringResource(
+                                R.plurals.selection_count,
+                                selection.size,
+                                selection.size,
+                            )
+                        } else {
+                            when (state) {
+                                is SongState.Library -> stringResource(R.string.drawer_songs)
+                                is SongState.Editor -> songTitle(song)
+                                is SongState.PartView -> state.partName
+                                is SongState.SongView -> songTitle(song)
+                                is SongState.Comment -> stringResource(R.string.comment_title)
+                                is SongState.EditPartChord ->
+                                    stringResource(R.string.chord_number, state.index + 1)
+                            }
                         },
                     )
                 },
@@ -318,16 +347,23 @@ fun SongScreen(
             onDismissRequest = { pendingDelete = emptySet() },
             title = {
                 Text(
-                    if (single != null) "Delete ${single.title}?"
-                    else "Delete ${doomed.size} songs?",
+                    if (single != null) {
+                        stringResource(R.string.delete_song_title, single.title)
+                    } else {
+                        pluralStringResource(
+                            R.plurals.delete_songs_title,
+                            doomed.size,
+                            doomed.size,
+                        )
+                    },
                 )
             },
             text = {
                 Text(
                     if (single != null) {
-                        "Its parts and the shapes you chose go with it. This can't be undone."
+                        stringResource(R.string.delete_song_body)
                     } else {
-                        "Their parts and the shapes you chose go with them. This can't be undone."
+                        stringResource(R.string.delete_songs_body)
                     },
                 )
             },
@@ -336,10 +372,12 @@ fun SongScreen(
                     onDeleteSongs(doomed)
                     pendingDelete = emptySet()
                     selection = emptySet()
-                }) { Text("Delete") }
+                }) { Text(stringResource(R.string.action_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDelete = emptySet() }) { Text("Cancel") }
+                TextButton(onClick = { pendingDelete = emptySet() }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             },
         )
     }
@@ -360,7 +398,7 @@ fun SongScreen(
 @Composable
 private fun LibraryPane(
     library: List<Song>,
-    error: String?,
+    @StringRes error: Int?,
     selection: Set<String>,
     onOpenSong: (Song) -> Unit,
     onToggleSelect: (String) -> Unit,
@@ -375,13 +413,13 @@ private fun LibraryPane(
         // be parsed, and pretending there are no songs is how you end up saving over them.
         error != null -> {
             Text(
-                "Your songs could not be read.",
+                stringResource(R.string.library_unreadable_title),
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "$error\n\nNothing has been changed or lost. Saving is disabled until this is sorted out.",
+                stringResource(R.string.library_unreadable_body, stringResource(error)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -391,14 +429,13 @@ private fun LibraryPane(
         library.isEmpty() -> {
             Spacer(Modifier.height(24.dp))
             Text(
-                "No songs yet.",
+                stringResource(R.string.library_empty_title),
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Write one down: on the detect screen, tap “Detect multiple chords”, play its parts, " +
-                    "and save them here.",
+                stringResource(R.string.library_empty_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -501,7 +538,9 @@ private fun SongRow(
                     Icon(
                         if (selected) Icons.Default.CheckCircle
                         else Icons.Default.RadioButtonUnchecked,
-                        contentDescription = if (selected) "Selected" else "Not selected",
+                        contentDescription = stringResource(
+                            if (selected) R.string.cd_selected else R.string.cd_not_selected,
+                        ),
                         tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -511,18 +550,18 @@ private fun SongRow(
                     IconButton(onClick = { menu = true }) {
                         Icon(
                             Icons.Default.MoreVert,
-                            contentDescription = "Options for ${song.title}",
+                            contentDescription = stringResource(R.string.cd_options_for, song.title),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(
-                            text = { Text("Rename") },
+                            text = { Text(stringResource(R.string.action_rename)) },
                             leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                             onClick = { menu = false; onRename() },
                         )
                         DropdownMenuItem(
-                            text = { Text("Delete") },
+                            text = { Text(stringResource(R.string.action_delete)) },
                             leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
                             onClick = { menu = false; onDelete() },
                         )
@@ -547,12 +586,12 @@ private fun RenameSongDialog(song: Song, onRename: (String) -> Unit, onDismiss: 
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Rename song") },
+        title = { Text(stringResource(R.string.rename_song_title)) },
         text = {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text("Song title") },
+                label = { Text(stringResource(R.string.save_song_title)) },
                 singleLine = true,
                 shape = ControlShape,
                 keyboardOptions = NameKeyboard,
@@ -560,19 +599,33 @@ private fun RenameSongDialog(song: Song, onRename: (String) -> Unit, onDismiss: 
         },
         confirmButton = {
             TextButton(enabled = text.isNotBlank(), onClick = { onRename(text) }) {
-                Text("Rename")
+                Text(stringResource(R.string.action_rename))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
     )
 }
 
+/** What to head a song with when it has no name of its own yet. */
+@Composable
+private fun songTitle(song: Song): String =
+    song.title.ifBlank { stringResource(R.string.untitled_song) }
+
 /** A song at a glance: what it asks of your hands, and what is in it. */
+@Composable
 private fun songSummary(song: Song): String {
-    val capo = if (song.capo == 0) "No capo" else "Capo ${song.capo}"
+    val capo = capoStatus(song.capo)
     val parts = song.parts.joinToString(", ") { it.name }
-    return if (parts.isEmpty()) capo else "$capo · $parts"
+    return if (parts.isEmpty()) capo else stringResource(R.string.song_summary, capo, parts)
 }
+
+/** "No capo" or "Capo 3" — what the song asks of your hands before a note is played. */
+@Composable
+private fun capoStatus(capo: Int): String =
+    if (capo == 0) stringResource(R.string.capo_none_set)
+    else stringResource(R.string.capo_at, capo)
 
 /**
  * The song's comment, on its own page like the title.
@@ -586,13 +639,13 @@ private fun CommentPane(song: Song, onCommentDone: (String) -> Unit) {
 
     Spacer(Modifier.height(16.dp))
     Text(
-        "Anything the chords don't say",
+        stringResource(R.string.comment_prompt),
         style = MaterialTheme.typography.titleMedium,
         textAlign = TextAlign.Center,
     )
     Spacer(Modifier.height(4.dp))
     Text(
-        "A tuning, a strumming pattern, which verse drops out — whatever you'd want to be told.",
+        stringResource(R.string.comment_hint),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -601,7 +654,7 @@ private fun CommentPane(song: Song, onCommentDone: (String) -> Unit) {
     OutlinedTextField(
         value = text,
         onValueChange = { text = it },
-        label = { Text("Comment") },
+        label = { Text(stringResource(R.string.comment_title)) },
         minLines = 4,
         shape = ControlShape,
         keyboardOptions = NameKeyboard,
@@ -614,7 +667,7 @@ private fun CommentPane(song: Song, onCommentDone: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
     ) {
         // Not disabled when empty: clearing the field is how a comment is deleted.
-        Text("Save comment", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.action_save_comment), style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -632,7 +685,7 @@ private fun CommentPane(song: Song, onCommentDone: (String) -> Unit) {
 private fun SongViewPane(song: Song, settings: Settings) {
     Spacer(Modifier.height(8.dp))
     Text(
-        if (song.capo == 0) "No capo" else "Capo ${song.capo}",
+        capoStatus(song.capo),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -642,7 +695,7 @@ private fun SongViewPane(song: Song, settings: Settings) {
     // sheet music that explains the app it came from would be a strange thing to hand someone.
     Spacer(Modifier.height(12.dp))
     Text(
-        "The song as it prints.\nTo change a chord, go back and open the part it is in.",
+        stringResource(R.string.song_view_readonly),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -668,7 +721,7 @@ private fun SongViewPane(song: Song, settings: Settings) {
             // Headed exactly like a part, because on this page it is one: the last section of the
             // sheet, not a note the app is making about it.
             Text(
-                "Comment",
+                stringResource(R.string.comment_title),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -722,7 +775,7 @@ private fun ChordCell(
         ChordDiagram(
             voicing = chord.voicing,
             width = SMALL_DIAGRAM_WIDTH,
-            caption = chord.voicing.label,
+            caption = voicingCaption(chord.voicing),
             capo = settings.capo,
         )
     }
@@ -745,13 +798,7 @@ private fun PartViewPane(
     Text(
         // The gestures carry the weight: the two lines are one shape on the page, and what differs
         // between them is the first word.
-        buildAnnotatedString {
-            val gesture = SpanStyle(fontWeight = FontWeight.Bold)
-            withStyle(gesture) { append("Tap") }
-            append(" a chord to change how you play it.\n")
-            withStyle(gesture) { append("Long-press") }
-            append(" to say it is a different chord.")
-        },
+        gestureHint(),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -808,14 +855,13 @@ private fun CorrectChordSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                "Which chord is it?",
+                stringResource(R.string.correct_chord_title),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.align(Alignment.Start),
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "For a chord the app heard wrong. Naming it here beats playing it again — you know " +
-                    "what you played, and the microphone no longer does.",
+                stringResource(R.string.correct_chord_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.Start),
@@ -828,9 +874,9 @@ private fun CorrectChordSheet(
             // that tells you whether you picked the right one.
             Spacer(Modifier.height(20.dp))
             Text(view.title, style = MaterialTheme.typography.titleLarge)
-            view.subtitle?.let { subtitle ->
+            view.shapeLine?.let { shapeLine ->
                 Text(
-                    subtitle,
+                    chordSubtitle(shapeLine, settings.capo),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -839,7 +885,7 @@ private fun CorrectChordSheet(
             ChordDiagram(
                 voicing = chord.voicing,
                 width = SMALL_DIAGRAM_WIDTH,
-                caption = chord.voicing.label,
+                caption = voicingCaption(chord.voicing),
                 capo = settings.capo,
             )
         }
@@ -866,9 +912,9 @@ private fun EditPartChordPane(
 
     Spacer(Modifier.height(8.dp))
     Text(view.title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
-    view.subtitle?.let { subtitle ->
+    view.shapeLine?.let { shapeLine ->
         Text(
-            subtitle,
+            chordSubtitle(shapeLine, song.capo),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -877,7 +923,7 @@ private fun EditPartChordPane(
     ChordDiagram(
         voicing = chord.voicing,
         width = BEST_DIAGRAM_WIDTH,
-        caption = chord.voicing.label,
+        caption = voicingCaption(chord.voicing),
         capo = song.capo,
     )
     Spacer(Modifier.height(28.dp))
@@ -905,10 +951,10 @@ private fun SongEditorPane(
     Spacer(Modifier.height(8.dp))
     // Only over a list there is: with no parts yet the line below is already about their absence,
     // and heading it would be labelling an empty shelf.
-    if (song.parts.isNotEmpty()) SectionLabel("Song parts")
+    if (song.parts.isNotEmpty()) SectionLabel(stringResource(R.string.song_parts))
     if (song.parts.isEmpty()) {
         Text(
-            "No parts yet. Capture one and name it.",
+            stringResource(R.string.song_no_parts),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -939,7 +985,10 @@ private fun SongEditorPane(
                     onClick = { onMovePart(index, -1) },
                     enabled = index > 0,
                 ) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move ${part.name} up")
+                    Icon(
+                        Icons.Default.KeyboardArrowUp,
+                        contentDescription = stringResource(R.string.cd_move_part_up, part.name),
+                    )
                 }
                 IconButton(
                     onClick = { onMovePart(index, 1) },
@@ -947,7 +996,7 @@ private fun SongEditorPane(
                 ) {
                     Icon(
                         Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Move ${part.name} down",
+                        contentDescription = stringResource(R.string.cd_move_part_down, part.name),
                     )
                 }
                 // The same overflow the library's rows carry, for the same reason: a bare trash can
@@ -957,23 +1006,23 @@ private fun SongEditorPane(
                     IconButton(onClick = { menu = true }) {
                         Icon(
                             Icons.Default.MoreVert,
-                            contentDescription = "Options for ${part.name}",
+                            contentDescription = stringResource(R.string.cd_options_for, part.name),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(
-                            text = { Text("Rename") },
+                            text = { Text(stringResource(R.string.action_rename)) },
                             leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                             onClick = { menu = false; renameTarget = part.name },
                         )
                         DropdownMenuItem(
-                            text = { Text("Duplicate") },
+                            text = { Text(stringResource(R.string.action_duplicate)) },
                             leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
                             onClick = { menu = false; onDuplicatePart(part.name) },
                         )
                         DropdownMenuItem(
-                            text = { Text("Delete") },
+                            text = { Text(stringResource(R.string.action_delete)) },
                             leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
                             onClick = { menu = false; onRemovePart(part.name) },
                         )
@@ -996,13 +1045,13 @@ private fun SongEditorPane(
     ) {
         if (song.comment.isBlank()) {
             Text(
-                "Add a comment",
+                stringResource(R.string.action_add_comment),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
         } else {
             Text(
-                "Comment",
+                stringResource(R.string.comment_title),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1018,7 +1067,7 @@ private fun SongEditorPane(
     ) {
         Icon(Icons.Default.Mic, contentDescription = null)
         Spacer(Modifier.width(10.dp))
-        Text("Capture a part", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.action_capture_part), style = MaterialTheme.typography.titleMedium)
     }
     if (song.parts.isNotEmpty()) {
         Spacer(Modifier.height(8.dp))
@@ -1027,14 +1076,15 @@ private fun SongEditorPane(
             shape = ControlShape,
             modifier = Modifier.fillMaxWidth().widthIn(max = BUTTON_MAX_WIDTH).height(BUTTON_HEIGHT),
         ) {
-            Text("View song", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.action_view_song), style = MaterialTheme.typography.titleMedium)
         }
     }
     CapoLink(song.capo, onSetCapo)
     Text(
-        if (song.parts.isEmpty()) "The song is played behind this capo."
-        else "Changing the capo keeps the key — only the chord diagrams change. " +
-            "A shape you picked yourself goes back to the default.",
+        stringResource(
+            if (song.parts.isEmpty()) R.string.song_capo_note_empty
+            else R.string.song_capo_note,
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -1043,8 +1093,10 @@ private fun SongEditorPane(
     Spacer(Modifier.height(16.dp))
     // The answer to "is it saved?", now that nothing here asks you to save it.
     Text(
-        if (song.parts.isEmpty()) "The song joins your library once it has a part."
-        else "Saved as you go.",
+        stringResource(
+            if (song.parts.isEmpty()) R.string.song_saved_note_empty
+            else R.string.song_saved_note,
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
@@ -1079,18 +1131,18 @@ private fun RenamePartDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Rename part") },
+        title = { Text(stringResource(R.string.rename_part_title)) },
         text = {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text("Part name") },
+                label = { Text(stringResource(R.string.part_name_label)) },
                 singleLine = true,
                 shape = ControlShape,
                 keyboardOptions = NameKeyboard,
                 isError = clash,
                 supportingText = if (clash) {
-                    { Text("This song already has a part called “${text.trim()}”.") }
+                    { Text(stringResource(R.string.part_name_taken, text.trim())) }
                 } else {
                     null
                 },
@@ -1098,10 +1150,40 @@ private fun RenamePartDialog(
         },
         confirmButton = {
             TextButton(enabled = text.isNotBlank() && !clash, onClick = { onRename(text) }) {
-                Text("Rename")
+                Text(stringResource(R.string.action_rename))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
     )
+}
+
+/**
+ * "**Tap** a chord to change how you play it." — the two gestures, with the gesture itself in bold.
+ *
+ * Built from two whole sentences and a marker rather than from four fragments: which word carries
+ * the gesture is a matter of grammar, and in another language it is rarely the first one. The
+ * translation says where the bold goes by wrapping that word in asterisks, and this splits on them.
+ */
+@Composable
+private fun gestureHint(): AnnotatedString {
+    val lines = listOf(
+        stringResource(R.string.part_hint_tap),
+        stringResource(R.string.part_hint_long_press),
+    )
+    return buildAnnotatedString {
+        lines.forEachIndexed { index, line ->
+            if (index > 0) append("\n")
+            line.split("*").forEachIndexed { part, text ->
+                // Odd pieces are the ones that were between the markers.
+                if (part % 2 == 1) {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(text) }
+                } else {
+                    append(text)
+                }
+            }
+        }
+    }
 }
 

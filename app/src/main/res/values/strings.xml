@@ -1,4 +1,348 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Every word the app says, in English.
+
+  A translation is a copy of this file under res/values-<tag>, plus the tag in locales.xml. Anything
+  a locale has not translated falls back to the string here, so a half-finished language renders
+  correctly rather than blank.
+
+  Chord names and chord symbols are not in here. "Am" is a symbol that has to match the diagrams and
+  the tab sites people cross-reference, and its root is a pitch class the app spells itself — see
+  NoteNaming for the one spelling that is a preference rather than a language.
+-->
 <resources>
-    <string name="app_name">Crystal Ball</string>
+
+    <!-- ===== Brand ===== -->
+
+    <!-- The app's name. Not licensed for use by forks, and never translated. -->
+    <string name="app_name" translatable="false">Crystal Ball</string>
+    <!-- Sits under the wordmark on the home screen. Two lines on purpose. -->
+    <string name="app_tagline">detects guitar chords\nand combines them into song sheets</string>
+
+    <!-- ===== Common actions ===== -->
+
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_ok">OK</string>
+    <string name="action_back">Back</string>
+    <string name="action_save">Save</string>
+    <string name="action_done">Done</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_share">Share…</string>
+    <string name="action_save_as">Save as…</string>
+    <string name="action_save_as_file">Save as file…</string>
+
+    <!-- ===== Content descriptions (spoken, never shown) ===== -->
+
+    <string name="cd_open_menu">Menu</string>
+    <string name="cd_screen_kept_on">Screen kept on</string>
+    <string name="cd_cancel_selection">Cancel selection</string>
+    <string name="cd_delete_selected">Delete selected</string>
+    <string name="cd_selected">Selected</string>
+    <string name="cd_not_selected">Not selected</string>
+    <string name="cd_export_pdf">Export as PDF</string>
+    <!-- %1$s is a song or part name. -->
+    <string name="cd_options_for">Options for %1$s</string>
+    <string name="cd_move_part_up">Move %1$s up</string>
+    <string name="cd_move_part_down">Move %1$s down</string>
+
+    <!-- ===== Side panel ===== -->
+
+    <string name="drawer_detect">Detect chord</string>
+    <string name="drawer_chord_library">Chord Library</string>
+    <string name="drawer_songs">Songs</string>
+    <string name="drawer_support">Support Crystal Ball</string>
+    <string name="drawer_recent_songs">Recent songs</string>
+
+    <!-- ===== Detecting ===== -->
+
+    <string name="action_detect">Detect Chord</string>
+    <string name="action_detect_again">Detect Again</string>
+    <string name="action_detect_single">Detect single chord</string>
+    <string name="action_detect_multiple">Detect multiple chords</string>
+    <string name="detect_prompt">Play a chord and I\'ll name it.</string>
+    <string name="strum_a_chord">Strum a chord</string>
+    <string name="listening">Listening…</string>
+    <string name="silence_title">I didn\'t hear anything.</string>
+    <string name="silence_body">Hold the phone near the guitar and strum.</string>
+    <string name="or_did_you_mean">Or did you mean</string>
+    <!-- %1$s is a chord name, e.g. Am7. -->
+    <string name="other_ways_to_play">Other ways to play %1$s</string>
+
+    <!-- ===== Capturing a run of chords ===== -->
+
+    <string name="capture_first_chord">Strum the first chord</string>
+    <!-- %1$d is which chord in the run is being played, counting from one. -->
+    <string name="capture_next_chord">Chord %1$d — strum and let it ring</string>
+    <string name="capture_mute_hint">Mute the strings once it lands. A chord still ringing bleeds into the next one and blurs it.</string>
+    <string name="capture_stops_itself">Or just stop playing — it ends on its own.</string>
+    <!-- Stands in for the diagrams before the first chord has landed. -->
+    <string name="capture_none_yet" translatable="false">—</string>
+    <string name="capture_nothing_title">Nothing captured.</string>
+    <string name="capture_nothing_body">Hold the phone near the guitar and try again.</string>
+    <plurals name="captured_chords">
+        <item quantity="one">%1$d chord</item>
+        <item quantity="other">%1$d chords</item>
+    </plurals>
+    <string name="capture_review_hint">Tap a chord to fix it, or to say how you play it.</string>
+    <string name="action_remove_chord">Remove this chord</string>
+
+    <!-- ===== Saving a capture ===== -->
+
+    <string name="save_capture_title">Save these chords</string>
+    <string name="save_name_this_part">Name this part</string>
+    <string name="save_own_name">Or a name of your own</string>
+    <!-- %1$s is the part name that is already in use. -->
+    <string name="save_part_exists">\"%1$s\" already exists in that song — saving replaces it.</string>
+    <string name="save_it_to">Save it to</string>
+    <string name="save_new_song">A new song</string>
+    <string name="save_existing_song">An existing song</string>
+    <string name="save_song_title">Song title</string>
+    <!-- %1$s is the part name, %2$s the song it was saved to. -->
+    <string name="save_capture_done">Saved “%1$s” to %2$s</string>
+
+    <!--
+      Two clauses of one sentence about moving a run onto a song at a different capo. Whole clauses
+      rather than fragments, because which half of the sentence a capo lands in is grammar.
+    -->
+    <string name="capo_move_here_none">without a capo</string>
+    <string name="capo_move_here">behind capo %1$d</string>
+    <string name="capo_move_there_none">has no capo</string>
+    <string name="capo_move_there">is at capo %1$d</string>
+    <!-- %1$s is one of capo_move_here*, %2$s one of capo_move_there*. -->
+    <string name="capo_move_note">You played this %1$s; that song %2$s. The chords keep their sound — only the shapes change.</string>
+
+    <!-- ===== The part names offered as chips ===== -->
+
+    <string name="part_intro">Intro</string>
+    <string name="part_verse">Verse</string>
+    <string name="part_chorus">Chorus</string>
+    <string name="part_bridge">Bridge</string>
+    <string name="part_solo">Solo</string>
+    <string name="part_outro">Outro</string>
+
+    <!-- ===== Shapes and grips ===== -->
+
+    <!--
+      The caption under a chord diagram: where the grip sits, then which shape it is.
+      %1$s is voicing_open or voicing_fret, %2$s is one of the shape_* strings.
+    -->
+    <string name="voicing_caption">%1$s · %2$s</string>
+    <string name="voicing_open">open</string>
+    <!--
+      Which fret the grip is named after, as an ordinal. An ICU pattern rather than a plain
+      placeholder, because the ordinal is not "the number plus a suffix" in every language: English
+      needs four branches (1st, 2nd, 3rd, 5th), German only one ("5."). Add or drop branches to suit
+      the language — the platform picks the right one.
+    -->
+    <string name="voicing_fret">{0, ordinal, one{#st fret} two{#nd fret} few{#rd fret} other{#th fret}}</string>
+    <!-- %1$s is the open chord this grip transposes — a symbol, e.g. Em or A7. -->
+    <string name="shape_grip">%1$s shape</string>
+    <string name="shape_top_triad">top triad</string>
+    <string name="shape_middle_triad">middle triad</string>
+
+    <!--
+      The second name under a chord, when a capo makes the chord you hear and the chord you finger
+      different things. %1$s is a chord name, %2$s a shape.
+    -->
+    <string name="shape_line_fingered">%1$s, %2$s</string>
+    <string name="shape_line_sounds">sounds as %1$s</string>
+    <!-- %1$s is one of the two lines above, %2$d the capo fret. -->
+    <string name="shape_line_with_capo">%1$s · capo %2$d</string>
+
+    <!-- ===== The capo ===== -->
+
+    <string name="capo_title">Capo</string>
+    <string name="capo_show_on_start">Show on start</string>
+    <string name="capo_explainer">Detection is unaffected — the microphone hears the real chord either way. This changes the shapes you\'re shown, so they match your hands.</string>
+    <!-- The chip for "no capo", beside the fret numbers. -->
+    <string name="capo_none">None</string>
+    <string name="capo_set">Set capo</string>
+    <!-- %1$d is the fret. -->
+    <string name="capo_set_to">Capo set to %1$d</string>
+    <!-- Stating a song\'s capo, rather than offering to change it. -->
+    <string name="capo_none_set">No capo</string>
+    <string name="capo_at">Capo %1$d</string>
+
+    <!-- ===== Songs ===== -->
+
+    <!-- Heading for a song that has not been given a name yet. -->
+    <string name="untitled_song">Song</string>
+    <string name="song_parts">Song parts</string>
+    <string name="song_no_parts">No parts yet. Capture one and name it.</string>
+    <!-- %1$s is the capo line, %2$s the part names. -->
+    <string name="song_summary">%1$s · %2$s</string>
+    <string name="library_empty_title">No songs yet.</string>
+    <!-- The quoted phrase is the button on the detect screen; keep it matching. -->
+    <string name="library_empty_body">Write one down: on the detect screen, tap “Detect multiple chords”, play its parts, and save them here.</string>
+    <string name="action_capture_part">Capture a part</string>
+    <string name="action_view_song">View song</string>
+    <string name="song_view_readonly">The song as it prints.\nTo change a chord, go back and open the part it is in.</string>
+    <string name="song_capo_note_empty">The song is played behind this capo.</string>
+    <string name="song_capo_note">Changing the capo keeps the key — only the chord diagrams change. A shape you picked yourself goes back to the default.</string>
+    <string name="song_saved_note_empty">The song joins your library once it has a part.</string>
+    <string name="song_saved_note">Saved as you go.</string>
+
+    <string name="rename_song_title">Rename song</string>
+    <string name="action_rename_song">Rename song</string>
+    <string name="rename_part_title">Rename part</string>
+    <string name="part_name_label">Part name</string>
+    <!-- %1$s is the name already taken by another part. -->
+    <string name="part_name_taken">This song already has a part called “%1$s”.</string>
+
+    <!--
+      The two gestures a part page offers. The word in *asterisks* is drawn bold — put them around
+      whichever word carries the gesture in your language, which is rarely the first one.
+    -->
+    <string name="part_hint_tap">*Tap* a chord to change how you play it.</string>
+    <string name="part_hint_long_press">*Long-press* to say it is a different chord.</string>
+
+    <!-- %1$d counts from one. -->
+    <string name="chord_number">Chord %1$d</string>
+    <string name="correct_chord_title">Which chord is it?</string>
+    <string name="correct_chord_body">For a chord the app heard wrong. Naming it here beats playing it again — you know what you played, and the microphone no longer does.</string>
+
+    <string name="comment_title">Comment</string>
+    <string name="comment_prompt">Anything the chords don\'t say</string>
+    <string name="comment_hint">A tuning, a strumming pattern, which verse drops out — whatever you\'d want to be told.</string>
+    <string name="action_add_comment">Add a comment</string>
+    <string name="action_save_comment">Save comment</string>
+
+    <plurals name="selection_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <!-- %1$s is the song's title. -->
+    <string name="delete_song_title">Delete %1$s?</string>
+    <plurals name="delete_songs_title">
+        <item quantity="one">Delete %1$d song?</item>
+        <item quantity="other">Delete %1$d songs?</item>
+    </plurals>
+    <string name="delete_song_body">Its parts and the shapes you chose go with it. This can\'t be undone.</string>
+    <string name="delete_songs_body">Their parts and the shapes you chose go with them. This can\'t be undone.</string>
+
+    <string name="pdf_saved">PDF saved</string>
+
+    <!-- ===== Backup and restore ===== -->
+
+    <string name="backup_exported">Songs backed up</string>
+    <plurals name="backup_restored">
+        <item quantity="one">%1$d song restored</item>
+        <item quantity="other">%1$d songs restored</item>
+    </plurals>
+    <string name="restore_confirm_title">Restore songs?</string>
+    <string name="restore_confirm_body">This replaces every song in your library with the ones in the backup. This can\'t be undone.</string>
+    <string name="restore_choose">Choose backup</string>
+
+    <!-- ===== Errors ===== -->
+
+    <string name="library_unreadable_title">Your songs could not be read.</string>
+    <!-- %1$s is one of the error_* sentences below. -->
+    <string name="library_unreadable_body">%1$s\n\nNothing has been changed or lost. Saving is disabled until this is sorted out.</string>
+    <string name="error_library_unreadable">The song library could not be read.</string>
+    <string name="error_song_gone">That song is no longer in your library.</string>
+    <string name="error_backup_newer">This backup is from a newer version of Crystal Ball.</string>
+    <string name="error_not_a_backup">This file isn\'t a Crystal Ball backup.</string>
+    <string name="error_backup_empty">This backup has no songs in it.</string>
+    <string name="error_file_unusable">That file could not be used.</string>
+    <string name="error_no_browser">No browser found</string>
+
+    <!-- ===== Settings ===== -->
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_tab_chords">Chords</string>
+    <string name="settings_tab_system">System</string>
+    <string name="settings_tab_about">About</string>
+
+    <string name="settings_section_capo">Capo</string>
+    <string name="setting_show_capo_on_start">Show capo on start</string>
+    <string name="setting_show_capo_on_start_caption">Opens the capo sheet each time the app opens, so a capo you moved since yesterday is the first thing you set.</string>
+
+    <string name="settings_section_chord_names">Chord names</string>
+    <string name="setting_name_style_caption">With a capo, the chord you hear and the shape you finger have different names.</string>
+    <string name="setting_name_sounding">Name the chord you hear</string>
+    <!-- The chord names are symbols and stay as they are; the sentence around them is not. -->
+    <string name="setting_name_sounding_example">E, with \"D shape · capo 2\" beneath</string>
+    <string name="setting_name_shape">Name the shape you play</string>
+    <string name="setting_name_shape_example">D, with \"sounds as E · capo 2\" beneath</string>
+
+    <string name="settings_section_screen">Screen</string>
+    <string name="setting_keep_screen_on">Keep screen on</string>
+    <string name="setting_keep_screen_on_caption">The display won\'t dim or lock while the app is open. Handy with a guitar in your hands, but it uses more battery.</string>
+    <string name="keep_awake_title">Screen stays on</string>
+    <!-- The quoted phrase is the name of the setting in the System tab; keep it matching. -->
+    <string name="keep_awake_body">“Keep screen on” is enabled, so the display won\'t dim or lock while the app is open. Handy for practice, but it uses more battery.</string>
+
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <string name="settings_section_language">Language</string>
+    <string name="setting_language">Language</string>
+    <!-- The picker's first option: whatever the device is set to. -->
+    <string name="language_system">System default</string>
+
+    <string name="settings_section_songs">Songs</string>
+    <string name="setting_backup">Back up songs</string>
+    <string name="setting_backup_subtitle">Save every song to a file</string>
+    <string name="setting_restore">Restore songs</string>
+    <string name="setting_restore_subtitle">Replace every song from a backup file</string>
+    <string name="setting_backup_caption">A backup holds your songs and nothing else — the settings on this page stay as you set them here.</string>
+
+    <!-- ===== Quick help ===== -->
+
+    <string name="help_title">Quick help</string>
+    <string name="help_detecting_title">Detecting a chord</string>
+    <string name="help_detecting_body">Press Detect Chord and strum. It listens until the answer settles — usually well under a second — and strumming again restarts it, so a bad take needs no second press. Hold the phone near the guitar; a quiet unplugged instrument across the room is hard work.</string>
+    <string name="help_wrong_chord_title">If it picks the wrong chord</string>
+    <string name="help_wrong_chord_body">The best fit is a guess, not gospel. Tap anything in the \"Or did you mean\" row to see that chord instead.</string>
+    <string name="help_capo_title">Using a capo</string>
+    <string name="help_capo_body">Press Set Capo, under the Detect Chord button. It does not change detection — the microphone hears the real chord either way — but it changes the shapes you are shown so they match your hands, and fret numbers are the ones printed on your neck.</string>
+    <string name="help_vocabulary_title">What it knows</string>
+    <string name="help_vocabulary_body">Major, minor, 7, maj7, m7, sus2 and sus4, in standard tuning. Richer chords (6ths, 9ths, altered dominants) are out of scope and will come back as the nearest chord it does know.</string>
+
+    <!-- ===== Support ===== -->
+
+    <string name="support_title">Keep this app alive</string>
+    <string name="support_no_tracking">This app doesn\'t track. Anything.\nThe downside is I have no idea if or how often it\'s used or downloaded.\nCould be zero, could be a secret cult following. I genuinely don\'t know.</string>
+    <string name="support_question">Am I wasting my time publishing it? You tell me.</string>
+    <string name="support_three_ways">There are three (maybe more) ways to keep me motivated:</string>
+    <string name="support_easy_title">The easy way</string>
+    <string name="support_easy_action">Give it a like</string>
+    <string name="support_easy_note">Opens a page on my website with a like button. Nothing is counted until you press it — just the press and an anonymised IP.</string>
+    <string name="support_nerdy_title">The nerdy way</string>
+    <string name="support_nerdy_action">Star it on GitHub</string>
+    <string name="support_nerdy_note">A star is a number I can actually see, and it helps others find it.</string>
+    <string name="support_generous_title">The generous way</string>
+    <string name="support_generous_action">Support it on Ko-fi</string>
+    <string name="support_generous_note">Entirely optional. The app is and stays free either way.</string>
+
+    <!-- ===== About ===== -->
+
+    <!-- %1$s is the version name and code, e.g. 0.4 (4). -->
+    <string name="about_version">v%1$s</string>
+    <string name="about_version_copied">Version copied</string>
+    <!-- What lands on the clipboard: the app's name and version, for pasting into a bug report. -->
+    <string name="about_version_copied_text" translatable="false">Crystal Ball %1$s</string>
+    <string name="about_section_about">About</string>
+    <string name="about_blurb">I built Crystal Ball primarily for myself — maybe you\'ll find it just as useful as I do.</string>
+    <string name="about_section_website">Website</string>
+    <string name="about_website_body">The app lives here:</string>
+    <string name="about_section_bugs">Bugs</string>
+    <string name="about_bugs_body">Found a hiccup? Let me know:</string>
+    <string name="about_section_support">Support</string>
+    <string name="about_support_body">If you can, support its development:</string>
+    <string name="about_section_license">License</string>
+    <!--
+      The licence terms, in English only and deliberately so: these two state the exact terms the app
+      is released under, and a paraphrase in another language could change what they mean. GPL §5
+      also requires a derivative to keep legal notices intact, which a translation would complicate.
+    -->
+    <string name="about_copyright" translatable="false">Copyright © 2026 Kreuder</string>
+    <string name="about_license" translatable="false">Crystal Ball is free software under the GPL-3.0-only. The wordmark and the icon are CC BY 4.0; the name is not licensed, so a fork needs its own. Built with AndroidX and Jetpack Compose, licensed under Apache 2.0.</string>
+
 </resources>

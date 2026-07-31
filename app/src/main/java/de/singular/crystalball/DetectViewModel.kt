@@ -18,7 +18,6 @@ import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.audio.ListenEvent
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.Voicing
-import de.singular.crystalball.chords.englishName
 import de.singular.crystalball.songs.CapturedChord
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -134,11 +133,11 @@ data class ChordView(
      */
     val best: Voicing get() = voicings.firstOrNull { it == chosen } ?: voicings.first()
 
-    /** The second name, with the capo. Tracks [best], so promoting a variation renames the grip. */
-    val subtitle: String? get() = Capo.subtitle(sounding, capo, nameStyle, best.shape?.englishName)
-
-    /** The same line without the capo, for pages that state the capo themselves. */
-    val shapeLine: String? get() = Capo.shapeLine(sounding, capo, nameStyle, best.shape?.englishName)
+    /**
+     * The second name, as parts for the screen to word. Tracks [best], so promoting a variation
+     * renames the grip.
+     */
+    val shapeLine: ShapeLine? get() = Capo.shapeLine(sounding, capo, nameStyle, best.shape)
 
     /**
      * The other ways to play the same chord, walking up the neck, capped at
