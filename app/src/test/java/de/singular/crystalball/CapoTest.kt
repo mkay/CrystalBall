@@ -6,6 +6,7 @@ import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.STANDARD_TUNING
+import de.singular.crystalball.chords.englishName
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -55,7 +56,7 @@ class CapoTest {
         val promoted = ChordView.of(chord("Dm"), settings, other)
 
         assertEquals(other, promoted.best)
-        assertEquals("Cm, ${other.movableShape} · capo 2", promoted.subtitle)
+        assertEquals("Cm, ${other.shape?.englishName} · capo 2", promoted.subtitle)
         assertNotEquals(lead.subtitle, promoted.subtitle)
     }
 
@@ -64,7 +65,7 @@ class CapoTest {
     fun `a grip with no movable shape leaves the clause out`() {
         val settings = Settings(capo = 2, nameStyle = NameStyle.SOUNDING_FIRST)
         val view = ChordView.of(chord("E"), settings)
-        val open = view.voicings.first { it.movableShape == null }
+        val open = view.voicings.first { it.shape == null }
 
         assertEquals("D · capo 2", ChordView.of(chord("E"), settings, open).subtitle)
     }

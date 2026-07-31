@@ -18,6 +18,7 @@ import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.audio.ListenEvent
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.Voicing
+import de.singular.crystalball.chords.englishName
 import de.singular.crystalball.songs.CapturedChord
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -128,16 +129,16 @@ data class ChordView(
      * gone. Falling back to the leader beats drawing a grip this chord no longer has.
      *
      * The library's instance is handed back, not the caller's. They are equal by definition — the
-     * frets are the identity — but only the library's carries [Voicing.movableShape] and a label numbered
+     * frets are the identity — but only the library's carries [Voicing.shape] and a position numbered
      * from the current capo, both of which a voicing read back from a song has lost.
      */
     val best: Voicing get() = voicings.firstOrNull { it == chosen } ?: voicings.first()
 
     /** The second name, with the capo. Tracks [best], so promoting a variation renames the grip. */
-    val subtitle: String? get() = Capo.subtitle(sounding, capo, nameStyle, best.movableShape)
+    val subtitle: String? get() = Capo.subtitle(sounding, capo, nameStyle, best.shape?.englishName)
 
     /** The same line without the capo, for pages that state the capo themselves. */
-    val shapeLine: String? get() = Capo.shapeLine(sounding, capo, nameStyle, best.movableShape)
+    val shapeLine: String? get() = Capo.shapeLine(sounding, capo, nameStyle, best.shape?.englishName)
 
     /**
      * The other ways to play the same chord, walking up the neck, capped at

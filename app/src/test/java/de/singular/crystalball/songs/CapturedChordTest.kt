@@ -88,7 +88,7 @@ class CapturedChordTest {
 
     @Test
     fun `a stored grip round-trips through the format`() {
-        val written = captured(c).copy(voicing = Voicing.parse("x32010", "open")).toSongChord(0)
+        val written = captured(c).copy(voicing = Voicing.parse("x32010")).toSongChord(0)
         val song = Song("id", "T", 0, listOf(Part("Verse", listOf(written))))
         assertEquals(song, SongJson.decode(SongJson.encode(listOf(song))).single())
     }

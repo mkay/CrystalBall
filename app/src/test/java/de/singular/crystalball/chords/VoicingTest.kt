@@ -10,23 +10,23 @@ class VoicingTest {
 
     @Test
     fun `spec round-trips an open shape`() {
-        val c = Voicing.parse("x32010", "open")
+        val c = Voicing.parse("x32010")
         assertEquals("x32010", c.spec)
-        assertEquals(c, Voicing.parse(c.spec, c.label))
+        assertEquals(c, Voicing.parse(c.spec))
     }
 
     @Test
     fun `spec round-trips a shape with two-digit frets`() {
-        val up = Voicing.parse("10-12-12-11-10-10", "10th fret")
+        val up = Voicing.parse("10-12-12-11-10-10")
         assertEquals("10-12-12-11-10-10", up.spec)
-        assertEquals(up, Voicing.parse(up.spec, up.label))
+        assertEquals(up, Voicing.parse(up.spec))
     }
 
     @Test
     fun `spec separates when a muted string sits beside two-digit frets`() {
-        val shape = Voicing.parse("x-10-12-12-12-10", "10th fret")
+        val shape = Voicing.parse("x-10-12-12-12-10")
         assertEquals("x-10-12-12-12-10", shape.spec)
-        assertEquals(shape, Voicing.parse(shape.spec, shape.label))
+        assertEquals(shape, Voicing.parse(shape.spec))
     }
 
     @Test
@@ -38,7 +38,7 @@ class VoicingTest {
                     assertEquals(
                         "round trip failed for ${chord.name} ${voicing.spec}",
                         voicing,
-                        Voicing.parse(voicing.spec, voicing.label),
+                        Voicing.parse(voicing.spec),
                     )
                 }
             }

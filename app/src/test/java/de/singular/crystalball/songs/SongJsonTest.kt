@@ -4,15 +4,17 @@ package de.singular.crystalball.songs
 
 import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.audio.Quality
+import de.singular.crystalball.chords.ShapeKind
 import de.singular.crystalball.chords.Voicing
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SongJsonTest {
 
-    private fun chord(root: Int, quality: Quality, spec: String, label: String = "open") =
-        SongChord(Chord(root, quality), Voicing.parse(spec, label))
+    private fun chord(root: Int, quality: Quality, spec: String) =
+        SongChord(Chord(root, quality), Voicing.parse(spec))
 
     private val song = Song(
         id = "abc",
@@ -90,6 +92,41 @@ class SongJsonTest {
         // dropped song.
         val json = """{"format":1,"songs":[{"id":"a","title":"T","capo":0,"parts":[]}]}"""
         assertEquals("", SongJson.decode(json).single().comment)
+    }
+
+    @Test
+    fun `a grip is described by the library on read, not by the caption in the file`() {
+        // The stored caption says what the app that wrote it called this grip, in whatever language
+        // that was. What comes back is the library's own account of the same frets — which is what
+        // lets a sheet written in one language be read in another.
+        val json = """
+            {"format":1,"songs":[{"id":"a","title":"T","capo":2,"parts":[
+              {"name":"Verse","chords":[
+                {"root":4,"quality":"MAJ","frets":"x-5-7-7-7-5","label":"whatever the writer said"}
+              ]}
+            ]}]}
+        """.trimIndent()
+        val voicing = SongJson.decode(json).single().parts.single().chords.single().voicing
+        // E sounding behind a capo at 2 is fingered as D, and the library knows this barre as the
+        // A shape — held at the 5th fret from the capo, which is the 7th on the neck.
+        assertEquals(ShapeKind.Grip("A"), voicing.shape)
+        assertEquals(7, voicing.position)
+    }
+
+    @Test
+    fun `a grip the library does not offer keeps its position and claims no shape`() {
+        // Fingered by hand, so there is nothing to recognise. Named for the fret it is held at,
+        // counted from the player's nut — hence the capo — and nothing more is claimed.
+        val json = """
+            {"format":1,"songs":[{"id":"a","title":"T","capo":2,"parts":[
+              {"name":"Verse","chords":[
+                {"root":0,"quality":"MAJ","frets":"x-5-5-5-x-x","label":"5th fret"}
+              ]}
+            ]}]}
+        """.trimIndent()
+        val voicing = SongJson.decode(json).single().parts.single().chords.single().voicing
+        assertNull(voicing.shape)
+        assertEquals(7, voicing.position)
     }
 
     @Test

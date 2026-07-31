@@ -7,6 +7,7 @@ import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.audio.Quality
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -77,7 +78,9 @@ class ChordLibraryTest {
     fun `curated open shapes are offered first`() {
         val c = ChordLibrary.voicingsFor(Chord(0, Quality.MAJ)).first()
         assertEquals(listOf(MUTED, 3, 2, 0, 1, 0), c.frets.toList())
-        assertEquals("open", c.label)
+        // Open position and a transposition of nothing: a curated grip has a name of its own.
+        assertEquals(0, c.position)
+        assertNull(c.shape)
 
         val am = ChordLibrary.voicingsFor(Chord(9, Quality.MIN)).first()
         assertEquals(listOf(MUTED, 0, 2, 2, 1, 0), am.frets.toList())
@@ -103,7 +106,7 @@ class ChordLibraryTest {
     @Test
     fun `voicings are ordered from the nut upwards`() {
         for (chord in ChordLibrary.allChords()) {
-            val generated = ChordLibrary.voicingsFor(chord).filter { it.label != "open" }
+            val generated = ChordLibrary.voicingsFor(chord).filter { it.shape != null }
             val positions = generated.map { it.lowestFret }
             assertEquals("${chord.name} generated shapes are out of order", positions.sorted(), positions)
         }
@@ -165,11 +168,12 @@ class ChordLibraryTest {
         // A shape held at its own 5th fret is at the guitar's 7th when the capo is at 2 — the label
         // must say what the player reads off their own neck.
         val chord = ChordLibrary.allChords().first { it.name == "D" }
-        val plain = ChordLibrary.voicingsFor(chord, capo = 0).first { it.label.contains("fret") }
-        val capoed = ChordLibrary.voicingsFor(chord, capo = 2).first { it.label.contains("fret") }
+        val plain = ChordLibrary.voicingsFor(chord, capo = 0).first { it.position > 0 }
+        val capoed = ChordLibrary.voicingsFor(chord, capo = 2).first { it.position > 0 }
         assertEquals(plain.frets.toList(), capoed.frets.toList()) // same grip…
-        assertEquals("2nd fret · C shape", plain.label)
-        assertEquals("4th fret · C shape", capoed.label) // …named two frets higher
+        assertEquals(2, plain.position)
+        assertEquals(4, capoed.position) // …named two frets higher
+        assertEquals(ShapeKind.Grip("C"), capoed.shape) // and it is the same shape either way
     }
 
     @Test
@@ -180,30 +184,23 @@ class ChordLibraryTest {
             val plain = ChordLibrary.voicingsFor(chord, capo = 0).associateBy { it.frets.toList() }
             for (v in ChordLibrary.voicingsFor(chord, capo = 2)) {
                 val before = plain.getValue(v.frets.toList())
-                val expected = if (v.lowestFret == 0) before.label
-                else before.label.replace(Regex("^\\S+ fret"), "${v.lowestFret + 2}${suffix(v.lowestFret + 2)} fret")
-                assertEquals("${chord.name} ${v.frets.toList()}", expected, v.label)
+                // A shape named for the nut stays named for the nut; every other one moves by the capo.
+                val expected = if (before.position == 0) 0 else before.position + 2
+                assertEquals("${chord.name} ${v.frets.toList()}", expected, v.position)
+                assertEquals("${chord.name} ${v.frets.toList()}", before.shape, v.shape)
             }
         }
-    }
-
-    private fun suffix(n: Int): String = when {
-        n % 100 in 11..13 -> "th"
-        n % 10 == 1 -> "st"
-        n % 10 == 2 -> "nd"
-        n % 10 == 3 -> "rd"
-        else -> "th"
     }
 
     @Test
     fun `open-position shapes stay named open behind a capo`() {
         val chord = ChordLibrary.allChords().first { it.name == "D" }
-        assertEquals("open", ChordLibrary.voicingsFor(chord, capo = 4).first().label)
+        assertEquals(0, ChordLibrary.voicingsFor(chord, capo = 4).first().position)
     }
 
     @Test
     fun `parse reads muted strings and two-digit frets`() {
-        assertEquals(listOf(MUTED, 3, 2, 0, 1, 0), Voicing.parse("x32010", "open").frets.toList())
-        assertEquals(listOf(10, 12, 12, 11, 10, 10), Voicing.parse("10-12-12-11-10-10", "x").frets.toList())
+        assertEquals(listOf(MUTED, 3, 2, 0, 1, 0), Voicing.parse("x32010").frets.toList())
+        assertEquals(listOf(10, 12, 12, 11, 10, 10), Voicing.parse("10-12-12-11-10-10").frets.toList())
     }
 }

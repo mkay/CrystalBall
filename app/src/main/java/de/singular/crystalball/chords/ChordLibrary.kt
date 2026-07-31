@@ -39,54 +39,57 @@ object ChordLibrary {
      * the rest of the grip sits behind it. Such a shape is simply unreachable when the root lands too
      * near the nut for it to fit, and [generate] drops it there.
      */
-    private class MovableShape(val rootString: Int, val offsets: IntArray, val name: String)
+    private class MovableShape(val rootString: Int, val offsets: IntArray, val kind: ShapeKind)
+
+    /** Shorthand for the common case: a shape named after the open chord it transposes. */
+    private fun grip(name: String) = ShapeKind.Grip(name)
 
     /** Movable shapes per quality. Order is the fallback ranking: E shape, then A, then D, then C, G. */
     private val MOVABLE: Map<Quality, List<MovableShape>> = mapOf(
         Quality.MAJ to listOf(
-            MovableShape(0, intArrayOf(0, 2, 2, 1, 0, 0), "E shape"),
-            MovableShape(1, intArrayOf(X, 0, 2, 2, 2, 0), "A shape"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 2), "D shape"),
-            MovableShape(1, intArrayOf(X, 0, -1, -3, -2, -3), "C shape"),
-            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, 0), "G shape"),
-            MovableShape(3, intArrayOf(X, X, X, 0, 0, -2), "top triad"),
-            MovableShape(2, intArrayOf(X, X, 0, -1, -2, X), "middle triad"),
+            MovableShape(0, intArrayOf(0, 2, 2, 1, 0, 0), grip("E")),
+            MovableShape(1, intArrayOf(X, 0, 2, 2, 2, 0), grip("A")),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 2), grip("D")),
+            MovableShape(1, intArrayOf(X, 0, -1, -3, -2, -3), grip("C")),
+            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, 0), grip("G")),
+            MovableShape(3, intArrayOf(X, X, X, 0, 0, -2), ShapeKind.TopTriad),
+            MovableShape(2, intArrayOf(X, X, 0, -1, -2, X), ShapeKind.MiddleTriad),
         ),
         Quality.MIN to listOf(
-            MovableShape(0, intArrayOf(0, 2, 2, 0, 0, 0), "Em shape"),
-            MovableShape(1, intArrayOf(X, 0, 2, 2, 1, 0), "Am shape"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 1), "Dm shape"),
-            MovableShape(3, intArrayOf(X, X, X, 0, -1, -2), "top triad"),
-            MovableShape(2, intArrayOf(X, X, 0, -2, -2, X), "middle triad"),
+            MovableShape(0, intArrayOf(0, 2, 2, 0, 0, 0), grip("Em")),
+            MovableShape(1, intArrayOf(X, 0, 2, 2, 1, 0), grip("Am")),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 1), grip("Dm")),
+            MovableShape(3, intArrayOf(X, X, X, 0, -1, -2), ShapeKind.TopTriad),
+            MovableShape(2, intArrayOf(X, X, 0, -2, -2, X), ShapeKind.MiddleTriad),
         ),
         Quality.DOM7 to listOf(
-            MovableShape(0, intArrayOf(0, 2, 0, 1, 0, 0), "E7 shape"),
-            MovableShape(1, intArrayOf(X, 0, 2, 0, 2, 0), "A7 shape"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 1, 2), "D7 shape"),
-            MovableShape(1, intArrayOf(X, 0, -1, 0, -2, -3), "C7 shape"),
-            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, -2), "G7 shape"),
+            MovableShape(0, intArrayOf(0, 2, 0, 1, 0, 0), grip("E7")),
+            MovableShape(1, intArrayOf(X, 0, 2, 0, 2, 0), grip("A7")),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 1, 2), grip("D7")),
+            MovableShape(1, intArrayOf(X, 0, -1, 0, -2, -3), grip("C7")),
+            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, -2), grip("G7")),
         ),
         Quality.MAJ7 to listOf(
-            MovableShape(0, intArrayOf(0, 2, 1, 1, 0, 0), "Emaj7 shape"),
-            MovableShape(1, intArrayOf(X, 0, 2, 1, 2, 0), "Amaj7 shape"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 2, 2), "Dmaj7 shape"),
-            MovableShape(1, intArrayOf(X, 0, -1, -3, -3, -3), "Cmaj7 shape"),
-            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, -1), "Gmaj7 shape"),
+            MovableShape(0, intArrayOf(0, 2, 1, 1, 0, 0), grip("Emaj7")),
+            MovableShape(1, intArrayOf(X, 0, 2, 1, 2, 0), grip("Amaj7")),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 2, 2), grip("Dmaj7")),
+            MovableShape(1, intArrayOf(X, 0, -1, -3, -3, -3), grip("Cmaj7")),
+            MovableShape(0, intArrayOf(0, -1, -3, -3, -3, -1), grip("Gmaj7")),
         ),
         Quality.MIN7 to listOf(
-            MovableShape(0, intArrayOf(0, 2, 0, 0, 0, 0), "Em7 shape"),
-            MovableShape(1, intArrayOf(X, 0, 2, 0, 1, 0), "Am7 shape"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 1, 1), "Dm7 shape"),
+            MovableShape(0, intArrayOf(0, 2, 0, 0, 0, 0), grip("Em7")),
+            MovableShape(1, intArrayOf(X, 0, 2, 0, 1, 0), grip("Am7")),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 1, 1), grip("Dm7")),
         ),
         Quality.SUS2 to listOf(
-            MovableShape(1, intArrayOf(X, 0, 2, 2, 0, 0), "Asus2 shape"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 0), "Dsus2 shape"),
-            MovableShape(0, intArrayOf(0, 2, 4, 4, X, X), "Esus2 shape"),
+            MovableShape(1, intArrayOf(X, 0, 2, 2, 0, 0), grip("Asus2")),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 0), grip("Dsus2")),
+            MovableShape(0, intArrayOf(0, 2, 4, 4, X, X), grip("Esus2")),
         ),
         Quality.SUS4 to listOf(
-            MovableShape(0, intArrayOf(0, 2, 2, 2, 0, 0), "Esus4 shape"),
-            MovableShape(1, intArrayOf(X, 0, 2, 2, 3, 0), "Asus4 shape"),
-            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 3), "Dsus4 shape"),
+            MovableShape(0, intArrayOf(0, 2, 2, 2, 0, 0), grip("Esus4")),
+            MovableShape(1, intArrayOf(X, 0, 2, 2, 3, 0), grip("Asus4")),
+            MovableShape(2, intArrayOf(X, X, 0, 2, 3, 3), grip("Dsus4")),
         ),
     )
 
@@ -144,7 +147,10 @@ object ChordLibrary {
      */
     fun voicingsFor(chord: Chord, capo: Int = 0): List<Voicing> {
         val out = LinkedHashSet<Voicing>() // insertion-ordered, and dedupes generated vs curated
-        CURATED[chord.name]?.forEach { out.add(Voicing.parse(it, "open")) }
+        // Curated grips are open-position by definition — that is what earns them a place in the
+        // table — so they are named for the nut rather than for the fret their lowest finger lands
+        // on, capo or no capo.
+        CURATED[chord.name]?.forEach { out.add(Voicing.parse(it).copy(position = 0)) }
         out.addAll(generate(chord, capo))
         return out.filter { it.highestFret + capo <= MAX_FRET }
     }
@@ -166,8 +172,17 @@ object ChordLibrary {
                 val frets = IntArray(STRING_COUNT) { s ->
                     if (shape.offsets[s] == X) MUTED else shape.offsets[s] + position
                 }
+                val lowest = frets.filter { it > 0 }.minOrNull() ?: 0
                 found.add(
-                    Voicing(frets, label = positionLabel(frets, shape.name, capo), movableShape = shape.name)
+                    Voicing(
+                        frets,
+                        // Named for the fret the player reads off their own neck, which is why the
+                        // capo is added: the frets in a shape are counted from it, the dots on the
+                        // neck are not. With a capo at 2, a shape held at its own 5th fret is the
+                        // guitar's 7th, and saying "5th" leaves them counting up from the capo.
+                        position = if (lowest == 0) 0 else lowest + capo,
+                        shape = shape.kind,
+                    ),
                 )
             }
         }
@@ -176,28 +191,17 @@ object ChordLibrary {
     }
 
     /**
-     * Where the shape sits, named by the fret you actually put your finger on.
+     * The library's own account of [voicing] as a grip for [shape] at [capo] — which shape it is,
+     * and where it sits.
      *
-     * The [capo] is added because the fret numbers in a shape are counted from it, while the marks
-     * on the neck are not: with a capo at 2, a shape held at its own 5th fret is at the guitar's
-     * 7th, and telling a player "5th fret" leaves them counting frets from a capo instead of
-     * reading the dots on their own fretboard.
+     * A song records the frets and nothing else: they are the grip's identity, and everything said
+     * about it is derivable from them, which is what keeps a sheet readable in a language it was
+     * not written in. Recognising it here is the deriving. A grip the library does not offer — one
+     * fingered by hand — is returned as it came, named by its position alone, which is all that can
+     * honestly be said about it.
      */
-    private fun positionLabel(frets: IntArray, shapeName: String, capo: Int): String {
-        val lowest = frets.filter { it > 0 }.minOrNull() ?: 0
-        return if (lowest == 0) "open · $shapeName" else "${ordinal(lowest + capo)} fret · $shapeName"
-    }
-
-    private fun ordinal(n: Int): String {
-        val suffix = when {
-            n % 100 in 11..13 -> "th"
-            n % 10 == 1 -> "st"
-            n % 10 == 2 -> "nd"
-            n % 10 == 3 -> "rd"
-            else -> "th"
-        }
-        return "$n$suffix"
-    }
+    fun describe(voicing: Voicing, shape: Chord, capo: Int): Voicing =
+        voicingsFor(shape, capo).firstOrNull { it == voicing } ?: voicing
 
     /** Every chord the library can draw — the vocabulary, for tests and future browsing UI. */
     fun allChords(): List<Chord> =

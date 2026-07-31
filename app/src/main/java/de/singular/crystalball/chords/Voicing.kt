@@ -11,6 +11,38 @@ const val STRING_COUNT = 6
 const val MUTED = -1
 
 /**
+ * What a grip is called, aside from where on the neck it sits.
+ *
+ * A name, not a caption: "Em shape" is a sentence about a grip and has to be written differently in
+ * another language, so what is kept here is the fact — which shape — and the words are chosen where
+ * they are shown. The grips are named after the open chords they transpose, which is how players
+ * name them; the two triad shapes are named after the strings they sit on, having no open chord.
+ */
+sealed interface ShapeKind {
+    /** A movable grip, named for the open chord it is a transposition of — "Em", "A7", "Dmaj7". */
+    data class Grip(val chordName: String) : ShapeKind
+
+    /** The three-string triad on the top strings. */
+    data object TopTriad : ShapeKind
+
+    /** The three-string triad in the middle of the neck. */
+    data object MiddleTriad : ShapeKind
+}
+
+/**
+ * The shape's name in fixed English, for the places that record one rather than show one.
+ *
+ * Screens name a shape in the language they are running in; this is what a song file says, so that
+ * a sheet written on one phone reads the same on the next.
+ */
+val ShapeKind.englishName: String
+    get() = when (this) {
+        is ShapeKind.Grip -> "$chordName shape"
+        ShapeKind.TopTriad -> "top triad"
+        ShapeKind.MiddleTriad -> "middle triad"
+    }
+
+/**
  * One way to fret a chord: a fret number per string, low E first.
  *
  * A value of 0 is an open string, [MUTED] is one that is not sounded, and anything else is a fret.
@@ -18,18 +50,23 @@ const val MUTED = -1
  */
 data class Voicing(
     val frets: IntArray,
-    /** Short position label, e.g. "open · Am shape" or "5th fret · E shape". */
-    val label: String,
     /**
-     * The movable shape this grip is a transposition of, e.g. "Am shape" — null for a curated open
-     * grip, which is not a transposition of anything, and for a voicing parsed back from a song.
+     * The fret this grip is named after, read off the player's own neck — 0 for open position.
      *
-     * Kept apart from [label] rather than sliced out of it, so the name block can say the shape
-     * without depending on how the caption happens to be punctuated. Not part of [equals]: two
-     * grips with the same frets are the same grip however they were arrived at, which is what lets
-     * a curated shape dedupe against its generated twin.
+     * Not derived from [frets], because a capo makes the two differ: the numbers in [frets] are
+     * counted from the capo while the dots on the neck are not, so a shape held at its own 5th fret
+     * behind a capo at 2 is the 7th fret to the player. Carrying the answer means whoever generated
+     * the shape, who knew where the capo was, is the one who did the arithmetic.
      */
-    val movableShape: String? = null,
+    val position: Int = 0,
+    /**
+     * The movable shape this grip is a transposition of — null for a curated open grip, which is a
+     * transposition of nothing, and for a grip the library does not recognise.
+     *
+     * Not part of [equals]: two grips with the same frets are the same grip however they were
+     * arrived at, which is what lets a curated shape dedupe against its generated twin.
+     */
+    val shape: ShapeKind? = null,
 ) {
     init {
         require(frets.size == STRING_COUNT) { "a voicing needs $STRING_COUNT strings, got ${frets.size}" }
@@ -65,6 +102,19 @@ data class Voicing(
             else tokens.joinToString("-")
         }
 
+    /**
+     * The caption in fixed English: "open", "open · Am shape", "5th fret · E shape".
+     *
+     * This is the form a song file records, so a sheet written on one phone reads the same on the
+     * next whatever either device is set to. Screens compose their own caption from [position] and
+     * [shape] instead, in the language the app is running in.
+     */
+    val label: String
+        get() {
+            val where = if (position == 0) "open" else "${ordinal(position)} fret"
+            return listOfNotNull(where, shape?.englishName).joinToString(" · ")
+        }
+
     /** The pitch classes this voicing actually sounds. */
     fun soundedPitchClasses(tuning: IntArray = STANDARD_TUNING): Set<Int> =
         buildSet {
@@ -93,8 +143,13 @@ data class Voicing(
         /**
          * Parse a compact shape string like "x32010" or "10-12-12-11-10-10". Single digits may be
          * written without separators; anything with two-digit frets must use "-".
+         *
+         * The result knows only what the frets say: its [position] is where the hand goes, given
+         * [capo], and it claims no [shape]. A grip read back from a song is described properly by
+         * [ChordLibrary.describe], which can recognise it; this is the honest fallback for one it
+         * cannot.
          */
-        fun parse(spec: String, label: String): Voicing {
+        fun parse(spec: String, capo: Int = 0): Voicing {
             val tokens =
                 if (spec.contains('-')) spec.split('-')
                 else spec.map { it.toString() }
@@ -102,7 +157,22 @@ data class Voicing(
                 if (token.equals("x", ignoreCase = true)) MUTED
                 else token.toIntOrNull() ?: error("bad fret '$token' in shape '$spec'")
             }
-            return Voicing(frets.toIntArray(), label)
+            val lowest = frets.filter { it > 0 }.minOrNull() ?: 0
+            return Voicing(
+                frets.toIntArray(),
+                position = if (lowest == 0) 0 else lowest + capo,
+            )
+        }
+
+        private fun ordinal(n: Int): String {
+            val suffix = when {
+                n % 100 in 11..13 -> "th"
+                n % 10 == 1 -> "st"
+                n % 10 == 2 -> "nd"
+                n % 10 == 3 -> "rd"
+                else -> "th"
+            }
+            return "$n$suffix"
         }
     }
 }

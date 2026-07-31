@@ -13,7 +13,7 @@ class SongTest {
 
     private fun part(name: String, spec: String) = Part(
         name,
-        listOf(SongChord(Chord(0, Quality.MAJ), Voicing.parse(spec, "open"))),
+        listOf(SongChord(Chord(0, Quality.MAJ), Voicing.parse(spec))),
     )
 
     private val song = Song(id = "a", title = "T", capo = 0)

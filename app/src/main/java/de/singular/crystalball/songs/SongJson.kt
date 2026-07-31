@@ -5,6 +5,7 @@ package de.singular.crystalball.songs
 import de.singular.crystalball.Capo
 import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.audio.Quality
+import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.Voicing
 import org.json.JSONArray
 import org.json.JSONObject
@@ -69,6 +70,10 @@ object SongJson {
         // the enum is documented as append-only, but a file outlives that promise.
         put("quality", chord.sounding.quality.name)
         put("frets", chord.voicing.spec)
+        // Written in fixed English, and read back only by something that cannot do better: the
+        // frets are what a grip *is*, and everything the app says about one it works out from them
+        // (see [ChordLibrary.describe]). Kept in the file because 0.3 wrote it and reads it, and
+        // because a caption is the one thing a person opening the JSON by hand can use.
         put("label", chord.voicing.label)
     }
 
@@ -76,15 +81,18 @@ object SongJson {
         val id = o.optString("id")
         if (id.isEmpty()) return null
         val parts = o.optJSONArray("parts") ?: JSONArray()
+        // Read before the parts, because a grip is described relative to it: the frets in a shape
+        // are counted from the capo, so what to call the fret they sit on depends on where it is.
+        val capo = o.optInt("capo").coerceIn(0, Capo.MAX_FRET)
         return Song(
             id = id,
             title = o.optString("title"),
-            capo = o.optInt("capo").coerceIn(0, Capo.MAX_FRET),
+            capo = capo,
             // Absent in songs written before comments existed, and "" is exactly right for them.
             comment = o.optString("comment"),
             // Repairs a file that breaks the uniqueness rule; the model promises it holds.
             parts = (0 until parts.length())
-                .mapNotNull { parts.optJSONObject(it)?.let(::decodePart) }
+                .mapNotNull { parts.optJSONObject(it)?.let { part -> decodePart(part, capo) } }
                 .distinctBy { it.name },
             updatedAt = o.optLong("updatedAt"),
             // Absent in songs written before recents existed; 0 reads as "never opened",
@@ -93,24 +101,30 @@ object SongJson {
         )
     }
 
-    private fun decodePart(o: JSONObject): Part? {
+    private fun decodePart(o: JSONObject, capo: Int): Part? {
         val name = o.optString("name")
         if (name.isEmpty()) return null
         val chords = o.optJSONArray("chords") ?: JSONArray()
         return Part(
             name = name,
-            chords = (0 until chords.length()).mapNotNull { chords.optJSONObject(it)?.let(::decodeChord) },
+            chords = (0 until chords.length())
+                .mapNotNull { chords.optJSONObject(it)?.let { chord -> decodeChord(chord, capo) } },
         )
     }
 
-    private fun decodeChord(o: JSONObject): SongChord? {
+    private fun decodeChord(o: JSONObject, capo: Int): SongChord? {
         val root = o.optInt("root", -1)
         if (root !in 0..11) return null
         val quality = Quality.entries.firstOrNull { it.name == o.optString("quality") } ?: return null
         // parse rejects a bad spec, and Voicing itself rejects a wrong string count.
-        val voicing = runCatching {
-            Voicing.parse(o.optString("frets"), o.optString("label"))
-        }.getOrNull() ?: return null
-        return SongChord(Chord(root, quality), voicing)
+        val voicing = runCatching { Voicing.parse(o.optString("frets"), capo) }.getOrNull() ?: return null
+        val sounding = Chord(root, quality)
+        // The stored caption is not read: it says what the app that wrote it called this grip, in
+        // whatever language that was. Asking the library instead gets the same answer, in the one
+        // the reader is using now.
+        return SongChord(
+            sounding,
+            ChordLibrary.describe(voicing, Capo.shapeChord(sounding, capo), capo),
+        )
     }
 }

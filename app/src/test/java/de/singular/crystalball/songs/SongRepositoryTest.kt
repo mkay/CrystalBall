@@ -35,7 +35,7 @@ class SongRepositoryTest {
         title = title,
         capo = 0,
         parts = listOf(
-            Part("Verse", listOf(SongChord(Chord(0, Quality.MAJ), Voicing.parse("x32010", "open")))),
+            Part("Verse", listOf(SongChord(Chord(0, Quality.MAJ), Voicing.parse("x32010")))),
         ),
     )
 
