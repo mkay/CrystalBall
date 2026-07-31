@@ -4,13 +4,15 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [0.4] - 2026-07-31
+
+Crystal Ball speaks German, and the licence it ships under now says what was always meant.
+
 ### Added
 - An "About this app" page (Settings → About): the version, where the source lives, where to report a bug, and the licence. Long-pressing the version copies it, so a bug report can name the exact build.
 - A `COPYRIGHT` file carrying the copyright notice, the artwork's licence and the terms on the name, and an `SPDX-License-Identifier` header on every source file.
-
 - **German**, and a language picker (Settings → System → Language) to choose it without changing the whole phone. On Android 13 and up the choice is the system's own per-app language, so the two agree; below that the app remembers it itself. Anything not yet translated falls back to English.
 - **German note names (H/B)** as a setting of its own (Settings → Chords), independent of the app's language: what is elsewhere a B is written H, and B is what is elsewhere B flat. Spelling only — the songs you have already written down are re-spelled, not changed.
-
 - A **Recent songs** list in the side panel: the last five songs you opened or changed, straight to the song rather than by way of the library. Recency counts both — a sheet you read from the stand every evening stays at the top even if you never edit it.
 
 ### Changed
@@ -52,7 +54,8 @@ Tagged but never published.
 ### Added
 - Detect a chord by ear, with ranked runner-ups, chord shapes, capo-aware redrawing, a chord dictionary, and System/Light/Dark themes.
 
-[Unreleased]: https://github.com/mkay/CrystalBall/compare/v0.3...HEAD
+[Unreleased]: https://github.com/mkay/CrystalBall/compare/v0.4...HEAD
+[0.4]: https://github.com/mkay/CrystalBall/releases/tag/v0.4
 [0.3]: https://github.com/mkay/CrystalBall/releases/tag/v0.3
 [0.2]: https://github.com/mkay/CrystalBall/releases/tag/v0.2
 [0.1]: https://github.com/mkay/CrystalBall/releases/tag/v0.1

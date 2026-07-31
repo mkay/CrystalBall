@@ -1,0 +1,7 @@
+German, and a couple of things that were only ever in English.
+
+• German throughout, with a language picker in Settings → System.
+• German note names (H/B) as a switch of its own: being taught H is not the same as reading German.
+• Recent songs in the side panel — the last five you opened or read from.
+• Settings split into Chords, System and About tabs, with the version and licence on About.
+• Relicensed to GPL-3.0-only; wordmark and icon are CC BY 4.0.
