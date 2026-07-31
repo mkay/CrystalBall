@@ -46,14 +46,14 @@
     <string name="strum_a_chord">Spiel einen Akkord</string>
     <string name="listening">Höre zu…</string>
     <string name="silence_title">Ich habe nichts gehört.</string>
-    <string name="silence_body">Halte das Handy nah an die Gitarre und schlag an.</string>
+    <string name="silence_body">Halte das Handy nah an die Gitarre und spiele.</string>
     <string name="or_did_you_mean">Oder meintest du</string>
     <string name="other_ways_to_play">Andere Griffe für %1$s</string>
 
     <string name="capture_first_chord">Schlag den ersten Akkord an</string>
     <string name="capture_next_chord">Akkord %1$d — anschlagen und ausklingen lassen</string>
-    <string name="capture_mute_hint">Dämpfe die Saiten, sobald er steht. Ein nachklingender Akkord färbt den nächsten ein und verwischt ihn.</string>
-    <string name="capture_stops_itself">Oder hör einfach auf zu spielen — es endet von selbst.</string>
+    <string name="capture_mute_hint">Dämpfe die Saiten, sobald er steht. Ein nachklingender Akkord verwischt den nächsten.</string>
+    <string name="capture_stops_itself">Oder hör einfach auf zu spielen — die Erkennung endet von selbst.</string>
     <string name="capture_nothing_title">Nichts aufgenommen.</string>
     <string name="capture_nothing_body">Halte das Handy nah an die Gitarre und versuch es nochmal.</string>
     <plurals name="captured_chords">
@@ -76,7 +76,7 @@
     <string name="capo_move_here_none">ohne Kapo</string>
     <string name="capo_move_here">mit Kapo am %1$d. Bund</string>
     <string name="capo_move_there_none">hat kein Kapo</string>
-    <string name="capo_move_there">hat eins im %1$d. Bund</string>
+    <string name="capo_move_there">hat eins am %1$d. Bund</string>
     <string name="capo_move_note">Du hast das %1$s gespielt, dieser Song %2$s. Die Akkorde klingen gleich — nur die Griffe ändern sich.</string>
 
     <string name="part_intro">Intro</string>
