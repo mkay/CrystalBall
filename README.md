@@ -23,7 +23,6 @@ Early-stage release — expect rough edges. Feedback and bug reports welcome via
 - **Songs, written down as you play them** — capture a part chord by chord, name it *Intro* or *Chorus*, and reorder the parts as the song takes shape. The finished sheet reads back as diagrams rather than chord letters, so it is playable from the music stand.
 - **A song sheet stays correctable** — a part can be renamed, a wrong chord fixed by hand without playing it again, and a voicing you prefer picked and kept. Changing the capo keeps the key and redraws the shapes.
 - **Take the sheet with you** — a song shares out to any app that accepts it, and the whole collection backs up to a file and restores from one.
-- **Session comforts** — System/Light/Dark themes, keep-screen-on with a quiet notice that it is on, an optional capo prompt at launch, and an in-app quick help sheet. Preferences persist across launches.
 
 ## How it works
 
