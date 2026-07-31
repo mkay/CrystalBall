@@ -5,7 +5,7 @@
 -->
 <resources>
 
-    <string name="app_tagline">erkennt Gitarrenakkorde\nund fügt sie zu Songblättern zusammen</string>
+    <string name="app_tagline">Gitarrenakkord-Detektor\nund Songblatt-Generator</string>
 
     <string name="action_cancel">Abbrechen</string>
     <string name="action_close">Schließen</string>
@@ -42,8 +42,8 @@
     <string name="action_detect_again">Nochmal erkennen</string>
     <string name="action_detect_single">Einzelnen Akkord erkennen</string>
     <string name="action_detect_multiple">Mehrere Akkorde erkennen</string>
-    <string name="detect_prompt">Spiel einen Akkord, ich sage dir welcher.</string>
-    <string name="strum_a_chord">Schlag einen Akkord an</string>
+    <string name="detect_prompt">Spiel einen Akkord, ich sage dir welcher es ist.</string>
+    <string name="strum_a_chord">Spiel einen Akkord</string>
     <string name="listening">Höre zu…</string>
     <string name="silence_title">Ich habe nichts gehört.</string>
     <string name="silence_body">Halte das Handy nah an die Gitarre und schlag an.</string>
@@ -74,7 +74,7 @@
     <string name="save_capture_done">„%1$s“ in %2$s gespeichert</string>
 
     <string name="capo_move_here_none">ohne Kapo</string>
-    <string name="capo_move_here">mit Kapo im %1$d. Bund</string>
+    <string name="capo_move_here">mit Kapo am %1$d. Bund</string>
     <string name="capo_move_there_none">hat kein Kapo</string>
     <string name="capo_move_there">hat eins im %1$d. Bund</string>
     <string name="capo_move_note">Du hast das %1$s gespielt, dieser Song %2$s. Die Akkorde klingen gleich — nur die Griffe ändern sich.</string>
@@ -103,7 +103,7 @@
     <string name="capo_explainer">Die Erkennung bleibt davon unberührt — das Mikrofon hört so oder so den echten Akkord. Es ändert die gezeigten Griffe, damit sie zu deinen Händen passen.</string>
     <string name="capo_none">Keins</string>
     <string name="capo_set">Kapo setzen</string>
-    <string name="capo_set_to">Kapo im %1$d. Bund</string>
+    <string name="capo_set_to">Kapo am %1$d. Bund</string>
     <string name="capo_none_set">Kein Kapo</string>
     <string name="capo_at">Kapo %1$d</string>
 
@@ -117,9 +117,9 @@
     <string name="action_view_song">Song ansehen</string>
     <string name="song_view_readonly">Der Song, wie er gedruckt wird.\nUm einen Akkord zu ändern, geh zurück und öffne den Teil, in dem er steht.</string>
     <string name="song_capo_note_empty">Der Song wird mit diesem Kapo gespielt.</string>
-    <string name="song_capo_note">Ein anderes Kapo lässt die Tonart, wie sie ist — es ändert nur die Griffbilder. Ein selbst gewählter Griff fällt dabei auf den Standard zurück.</string>
+    <string name="song_capo_note">Umpositioniertes Kapo lässt die Tonart, wie sie ist — es ändert nur die Griffbilder. Ein selbst gewählter Griff fällt dabei auf den Standard zurück.</string>
     <string name="song_saved_note_empty">Der Song kommt in deine Bibliothek, sobald er einen Teil hat.</string>
-    <string name="song_saved_note">Wird nebenbei gespeichert.</string>
+    <string name="song_saved_note">Wird automatisch gespeichert.</string>
 
     <string name="rename_song_title">Song umbenennen</string>
     <string name="action_rename_song">Song umbenennen</string>
@@ -134,11 +134,11 @@
     <string name="correct_chord_title">Welcher Akkord ist es?</string>
     <string name="correct_chord_body">Für einen Akkord, den die App falsch gehört hat. Ihn hier zu benennen ist besser, als ihn nochmal zu spielen — du weißt, was du gespielt hast, das Mikrofon nicht mehr.</string>
 
-    <string name="comment_title">Kommentar</string>
-    <string name="comment_prompt">Alles, was die Akkorde nicht sagen</string>
-    <string name="comment_hint">Eine Stimmung, ein Schlagmuster, welche Strophe leiser wird — was immer du wissen wollen würdest.</string>
-    <string name="action_add_comment">Kommentar hinzufügen</string>
-    <string name="action_save_comment">Kommentar speichern</string>
+    <string name="comment_title">Anmerkung</string>
+    <string name="comment_prompt">Alles, was Akkorde nicht erzählen</string>
+    <string name="comment_hint">Stimmung, Anschlag, lauter, leiser — was auch immer wichtig ist.</string>
+    <string name="action_add_comment">Anmerkung hinzufügen</string>
+    <string name="action_save_comment">Anmerkung speichern</string>
 
     <plurals name="selection_count">
         <item quantity="one">%1$d ausgewählt</item>
@@ -179,8 +179,8 @@
     <string name="settings_tab_about">Über</string>
 
     <string name="settings_section_capo">Kapo</string>
-    <string name="setting_show_capo_on_start">Kapo beim Start zeigen</string>
-    <string name="setting_show_capo_on_start_caption">Öffnet das Kapo-Blatt bei jedem Start, damit ein seit gestern verschobenes Kapo das Erste ist, was du setzt.</string>
+    <string name="setting_show_capo_on_start">Kapo-Hinweis beim Start zeigen</string>
+    <string name="setting_show_capo_on_start_caption">Öffnet den Kapo-Hinweis bei jedem Start, damit ein Kapo das Erste ist, was du setzt.</string>
 
     <string name="settings_section_chord_names">Akkordnamen</string>
     <string name="setting_german_notes">Deutsche Notennamen (H/B)</string>
@@ -189,7 +189,7 @@
     <string name="setting_name_style_caption">Mit Kapo heißen der Akkord, den du hörst, und der Griff, den du greifst, verschieden.</string>
     <string name="setting_name_sounding">Den gehörten Akkord benennen</string>
     <string name="setting_name_sounding_example">E, darunter \"D-Form · Kapo 2\"</string>
-    <string name="setting_name_shape">Den gegriffenen Akkord benennen</string>
+    <string name="setting_name_shape">Die gegriffene Akkord-Form benennen</string>
     <string name="setting_name_shape_example">D, darunter \"klingt wie E · Kapo 2\"</string>
 
     <string name="settings_section_screen">Bildschirm</string>
@@ -225,29 +225,29 @@
     <string name="help_vocabulary_body">Dur, Moll, 7, maj7, m7, sus2 und sus4, in Standardstimmung. Reichere Akkorde (Sexten, Nonen, alterierte Dominanten) sind nicht vorgesehen und kommen als der nächstgelegene bekannte Akkord zurück.</string>
 
     <string name="support_title">Halte diese App am Leben</string>
-    <string name="support_no_tracking">Diese App trackt nicht. Gar nicht.\nDer Haken daran: Ich habe keine Ahnung, ob und wie oft sie benutzt oder geladen wird.\nKönnten null sein, könnte eine geheime Anhängerschaft sein. Ich weiß es wirklich nicht.</string>
-    <string name="support_question">Verschwende ich meine Zeit damit? Sag du es mir.</string>
-    <string name="support_three_ways">Es gibt drei (vielleicht mehr) Wege, mich bei Laune zu halten:</string>
+    <string name="support_no_tracking">Diese App trackt nicht. Gar nicht.\nDer Nachteil: Ich habe keine Ahnung, ob und wie oft sie benutzt oder heruntergeladen wird.\nKönnte null sein, es könnten bereits Tattoos davon existieren. Ich weiß es nicht.</string>
+    <string name="support_question">Lohnt sich der Aufwand, sie zu veröffentlichen? Sag es mir.</string>
+    <string name="support_three_ways">Es gibt (mindestens) drei Wege, mich zu motivieren:</string>
     <string name="support_easy_title">Der einfache Weg</string>
-    <string name="support_easy_action">Ein Like dalassen</string>
-    <string name="support_easy_note">Öffnet eine Seite auf meiner Website mit einem Like-Knopf. Gezählt wird erst, wenn du ihn drückst — nur der Druck und eine anonymisierte IP.</string>
+    <string name="support_easy_action">App bewerten</string>
+    <string name="support_easy_note">Öffnet eine Seite auf meiner Website mit einem Like-Button. Gezählt wird erst, wenn du ihn drückst — nur der Klick und eine anonymisierte IP.</string>
     <string name="support_nerdy_title">Der nerdige Weg</string>
-    <string name="support_nerdy_action">Auf GitHub einen Stern geben</string>
-    <string name="support_nerdy_note">Ein Stern ist eine Zahl, die ich tatsächlich sehen kann, und er hilft anderen, die App zu finden.</string>
+    <string name="support_nerdy_action">GitHub Stern</string>
+    <string name="support_nerdy_note">Ein Stern ist eine Zahl, die ich sehen kann, und er hilft anderen, die App zu finden.</string>
     <string name="support_generous_title">Der großzügige Weg</string>
     <string name="support_generous_action">Auf Ko-fi unterstützen</string>
-    <string name="support_generous_note">Völlig freiwillig. Die App ist und bleibt so oder so kostenlos.</string>
+    <string name="support_generous_note">Völlig freiwillig. Die App ist und bleibt kostenlos.</string>
 
     <string name="about_version">v%1$s</string>
     <string name="about_version_copied">Version kopiert</string>
     <string name="about_section_about">Über</string>
-    <string name="about_blurb">Ich habe Crystal Ball in erster Linie für mich selbst gebaut — vielleicht ist sie dir ja genauso nützlich wie mir.</string>
+    <string name="about_blurb">Crystal Ball ist in erster Linie eine App für mich selbst — aber vielleicht findest du sie ja ähnlich nützlich wie ich.</string>
     <string name="about_section_website">Website</string>
-    <string name="about_website_body">Die App wohnt hier:</string>
+    <string name="about_website_body">Die App liegt hier:</string>
     <string name="about_section_bugs">Fehler</string>
     <string name="about_bugs_body">Etwas hakt? Sag mir Bescheid:</string>
     <string name="about_section_support">Unterstützen</string>
-    <string name="about_support_body">Wenn du kannst, unterstütze die Entwicklung:</string>
+    <string name="about_support_body">Falls du kannst, unterstütze die Entwicklung:</string>
     <string name="about_section_license">Lizenz</string>
 
 </resources>
