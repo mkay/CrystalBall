@@ -74,7 +74,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(16.dp))
-        Logo()
+        Logo(size = ABOUT_LOGO_SIZE)
         Spacer(Modifier.height(12.dp))
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
         // Long-press to copy, mirroring the song library's press-and-hold idiom. Android 13 and

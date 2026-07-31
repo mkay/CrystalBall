@@ -117,17 +117,26 @@ fun Claim(modifier: Modifier = Modifier) {
 /** The wordmark's width-to-height, from its 1263×270 artwork. */
 private const val CLAIM_ASPECT = 1263f / 270f
 
-/** The app mark. [rotation] turns the swirl, which the listening screens animate. */
+/**
+ * The app mark. [rotation] turns the swirl, which the listening screens animate.
+ *
+ * [size] is the full [LOGO_SIZE] where the mark *is* the page — home, and listening. The About tab
+ * asks for a smaller one: there the mark is a letterhead over a column of text, matching Rubber
+ * Ring's About page.
+ */
 @Composable
-fun Logo(rotation: Float = 0f, modifier: Modifier = Modifier) {
+fun Logo(rotation: Float = 0f, size: Dp = LOGO_SIZE, modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(R.drawable.ic_ball),
         contentDescription = null,
         modifier = modifier
-            .size(LOGO_SIZE)
+            .size(size)
             .graphicsLayer { rotationZ = rotation },
     )
 }
+
+/** The mark as a heading rather than as the page: Rubber Ring's About size. */
+val ABOUT_LOGO_SIZE = 88.dp
 
 /**
  * The mark, turning while the microphone is open — the one moving thing on screen, so it is obvious
