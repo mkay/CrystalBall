@@ -137,8 +137,11 @@
       placeholder, because the ordinal is not "the number plus a suffix" in every language: English
       needs four branches (1st, 2nd, 3rd, 5th), German only one ("5."). Add or drop branches to suit
       the language — the platform picks the right one.
+
+      "selectordinal" and not "ordinal": the latter is ICU's spell-out formatter, which quietly
+      ignores the branches below and prints the bare "3rd", losing the noun.
     -->
-    <string name="voicing_fret">{0, ordinal, one{#st fret} two{#nd fret} few{#rd fret} other{#th fret}}</string>
+    <string name="voicing_fret">{0, selectordinal, one{#st fret} two{#nd fret} few{#rd fret} other{#th fret}}</string>
     <!-- %1$s is the open chord this grip transposes — a symbol, e.g. Em or A7. -->
     <string name="shape_grip">%1$s shape</string>
     <string name="shape_top_triad">top triad</string>
