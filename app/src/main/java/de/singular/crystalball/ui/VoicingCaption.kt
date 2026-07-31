@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import de.singular.crystalball.Capo
 import de.singular.crystalball.R
 import de.singular.crystalball.ShapeLine
+import de.singular.crystalball.audio.NoteNaming
 import de.singular.crystalball.chords.ShapeKind
 import de.singular.crystalball.chords.Voicing
 
@@ -45,14 +46,15 @@ fun voicingCaption(voicing: Voicing): String = voicingCaption(LocalContext.curre
  * shape clause is dropped rather than guessed at when the grip is a transposition of nothing.
  */
 @Composable
-fun chordShapeLine(line: ShapeLine): String {
+fun chordShapeLine(line: ShapeLine, naming: NoteNaming): String {
     val context = LocalContext.current
     return when (line) {
         is ShapeLine.Fingered -> {
-            val shape = line.shape ?: return line.chord.name
-            stringResource(R.string.shape_line_fingered, line.chord.name, context.shapeName(shape))
+            val chord = line.chord.name(naming)
+            val shape = line.shape ?: return chord
+            stringResource(R.string.shape_line_fingered, chord, context.shapeName(shape))
         }
-        is ShapeLine.Sounds -> stringResource(R.string.shape_line_sounds, line.chord.name)
+        is ShapeLine.Sounds -> stringResource(R.string.shape_line_sounds, line.chord.name(naming))
     }
 }
 
@@ -63,8 +65,8 @@ fun chordShapeLine(line: ShapeLine): String {
  * [chordShapeLine] instead, so the capo is not said twice in three lines.
  */
 @Composable
-fun chordSubtitle(line: ShapeLine, capo: Int): String =
-    stringResource(R.string.shape_line_with_capo, chordShapeLine(line), capo)
+fun chordSubtitle(line: ShapeLine, capo: Int, naming: NoteNaming): String =
+    stringResource(R.string.shape_line_with_capo, chordShapeLine(line, naming), capo)
 
 /** A shape's name: the open chord it transposes, or one of the two triads. */
 private fun Context.shapeName(shape: ShapeKind): String = when (shape) {

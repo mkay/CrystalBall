@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import de.singular.crystalball.Capo
 import de.singular.crystalball.NameStyle
 import de.singular.crystalball.R
+import de.singular.crystalball.audio.NoteNaming
 import de.singular.crystalball.songs.Song
 import de.singular.crystalball.songs.SongChord
 import java.io.OutputStream
@@ -46,10 +47,17 @@ object SongPdf {
     /**
      * Write [song] to [out] as a PDF. Does file I/O; call it off the main thread.
      *
-     * [nameStyle] comes from the live setting because it is a preference about reading, not a fact
-     * about the song — the sheet should name chords the way its reader wants them named.
+     * [nameStyle] and [naming] come from the live settings because they are preferences about
+     * reading, not facts about the song — the sheet should name chords the way its reader wants
+     * them named, and spell them the way its reader spells them.
      */
-    fun write(context: Context, song: Song, nameStyle: NameStyle, out: OutputStream) {
+    fun write(
+        context: Context,
+        song: Song,
+        nameStyle: NameStyle,
+        naming: NoteNaming,
+        out: OutputStream,
+    ) {
         val doc = PdfDocument()
         val density = Density(1f)
         val measurer = TextMeasurer(
@@ -74,7 +82,7 @@ object SongPdf {
                 writer.reserve(PART_NAME_HEIGHT + CELL_HEIGHT)
                 writer.text(part.name, HEADING)
                 writer.gap(6f)
-                writer.chords(context, part.chords, song.capo, nameStyle)
+                writer.chords(context, part.chords, song.capo, nameStyle, naming)
                 writer.gap(14f)
             }
 
@@ -136,7 +144,13 @@ object SongPdf {
         }
 
         /** A part's chords, wrapping across as many rows as it takes. */
-        fun chords(context: Context, chords: List<SongChord>, capo: Int, nameStyle: NameStyle) {
+        fun chords(
+            context: Context,
+            chords: List<SongChord>,
+            capo: Int,
+            nameStyle: NameStyle,
+            naming: NoteNaming,
+        ) {
             val perRow = ((contentWidth + CELL_GAP) / (DIAGRAM_WIDTH + CELL_GAP)).toInt().coerceAtLeast(1)
             var index = 0
             while (index < chords.size) {
@@ -150,6 +164,7 @@ object SongPdf {
                         chord,
                         capo,
                         nameStyle,
+                        naming,
                     )
                 }
                 y += CELL_HEIGHT
@@ -165,9 +180,10 @@ object SongPdf {
             chord: SongChord,
             capo: Int,
             nameStyle: NameStyle,
+            naming: NoteNaming,
         ) {
             val name = measure(
-                Capo.shortName(chord.sounding, capo, nameStyle),
+                Capo.shortName(chord.sounding, capo, nameStyle, naming),
                 CHORD_NAME,
                 DIAGRAM_WIDTH,
             )

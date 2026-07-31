@@ -242,7 +242,7 @@ class MainActivity : AppCompatActivity() {
                     // the moment it exists — no storage permission, nothing left in our sandbox.
                     val pdfLauncher = rememberLauncherForActivityResult(
                         ActivityResultContracts.CreateDocument("application/pdf"),
-                    ) { uri -> if (uri != null) songViewModel.exportPdf(uri, settings.nameStyle) }
+                    ) { uri -> if (uri != null) songViewModel.exportPdf(uri, settings.nameStyle, settings.noteNaming) }
 
                     LaunchedEffect(exported) {
                         if (exported) {
@@ -296,7 +296,11 @@ class MainActivity : AppCompatActivity() {
                         onViewSong = songViewModel::viewSong,
                         onExportPdf = { pdfLauncher.launch(pdfFileName(song.title)) },
                         onSharePdf = {
-                            songViewModel.sharePdf(settings.nameStyle, pdfFileName(song.title))
+                            songViewModel.sharePdf(
+                                settings.nameStyle,
+                                settings.noteNaming,
+                                pdfFileName(song.title),
+                            )
                         },
                         onEditComment = songViewModel::editComment,
                         onCommentDone = songViewModel::commentDone,
@@ -338,6 +342,7 @@ class MainActivity : AppCompatActivity() {
                         onKeepScreenOnChange = viewModel::setKeepScreenOn,
                         onThemeModeChange = viewModel::setThemeMode,
                         onNameStyleChange = viewModel::setNameStyle,
+                        onGermanNotesChange = viewModel::setGermanNotes,
                         onShowCapoOnStartChange = viewModel::setShowCapoOnStart,
                         onBackupSongs = { backupLauncher.launch(backupName) },
                         onRestoreSongs = { confirmRestore = true },

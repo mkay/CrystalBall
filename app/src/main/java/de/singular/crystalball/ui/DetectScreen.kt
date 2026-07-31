@@ -289,7 +289,7 @@ private fun BrowsePane(
     // width — without this they would pass underneath them.
     Spacer(Modifier.height(ICON_ROW_HEIGHT))
 
-    ChordChooser(state.chord, onSelect)
+    ChordChooser(state.chord, settings.noteNaming, onSelect)
 
     Spacer(Modifier.height(20.dp))
     Text(
@@ -300,7 +300,7 @@ private fun BrowsePane(
     // The capo says itself, on its own line, so the shape line does not repeat it.
     view.shapeLine?.let { shapeLine ->
         Text(
-            chordShapeLine(shapeLine),
+            chordShapeLine(shapeLine, settings.noteNaming),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -403,7 +403,7 @@ private fun ResultPane(
     )
     view.shapeLine?.let { shapeLine ->
         Text(
-            chordSubtitle(shapeLine, settings.capo),
+            chordSubtitle(shapeLine, settings.capo, settings.noteNaming),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -488,7 +488,7 @@ private fun AlternativeDiagram(
             .padding(4.dp),
     ) {
         Text(
-            Capo.shortName(candidate.chord, settings.capo, settings.nameStyle),
+            Capo.shortName(candidate.chord, settings.capo, settings.nameStyle, settings.noteNaming),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
         )
@@ -675,7 +675,7 @@ private fun CapturedDiagrams(
                     .padding(4.dp),
             ) {
                 Text(
-                    Capo.shortName(chord.selected, settings.capo, settings.nameStyle),
+                    Capo.shortName(chord.selected, settings.capo, settings.nameStyle, settings.noteNaming),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium,
                 )
@@ -709,7 +709,7 @@ private fun EditCapturedPane(
     Text(view.title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
     view.shapeLine?.let { shapeLine ->
         Text(
-            chordSubtitle(shapeLine, settings.capo),
+            chordSubtitle(shapeLine, settings.capo, settings.noteNaming),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

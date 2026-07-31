@@ -262,6 +262,15 @@
     <string name="setting_show_capo_on_start_caption">Opens the capo sheet each time the app opens, so a capo you moved since yesterday is the first thing you set.</string>
 
     <string name="settings_section_chord_names">Chord names</string>
+    <!--
+      H and B are note names, not initials — in German notation what is elsewhere called B is
+      written H, and B is used for what is elsewhere B flat. A preference and not a translation:
+      plenty of German speakers read tabs in international notation, and plenty of players
+      elsewhere were taught H.
+    -->
+    <string name="setting_german_notes">German note names (H/B)</string>
+    <string name="setting_german_notes_caption">Spelling only. A chord is stored as a pitch, so this re-spells the songs you have already written down rather than changing them.</string>
+    <string name="settings_section_capo_names">Names with a capo</string>
     <string name="setting_name_style_caption">With a capo, the chord you hear and the shape you finger have different names.</string>
     <string name="setting_name_sounding">Name the chord you hear</string>
     <!-- The chord names are symbols and stay as they are; the sentence around them is not. -->

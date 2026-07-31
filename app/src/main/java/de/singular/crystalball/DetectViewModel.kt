@@ -16,6 +16,7 @@ import de.singular.crystalball.audio.ChordCandidate
 import de.singular.crystalball.audio.ChordListener
 import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.audio.ListenEvent
+import de.singular.crystalball.audio.NoteNaming
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.Voicing
 import de.singular.crystalball.songs.CapturedChord
@@ -117,6 +118,8 @@ data class ChordView(
     val title: String,
     val capo: Int,
     val nameStyle: NameStyle,
+    /** How this view spells note names, so the screen names the same chord the same way. */
+    val noteNaming: NoteNaming,
     val voicings: List<Voicing>,
     val chosen: Voicing? = null,
 ) {
@@ -155,9 +158,10 @@ data class ChordView(
             return ChordView(
                 sounding = sounding,
                 shape = shape,
-                title = Capo.title(sounding, settings.capo, settings.nameStyle),
+                title = Capo.title(sounding, settings.capo, settings.nameStyle, settings.noteNaming),
                 capo = settings.capo,
                 nameStyle = settings.nameStyle,
+                noteNaming = settings.noteNaming,
                 voicings = ChordLibrary.voicingsFor(shape, settings.capo),
                 chosen = chosen,
             )
@@ -180,6 +184,9 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
             capo = prefs.getInt(KEY_CAPO, 0).coerceIn(0, Capo.MAX_FRET),
             nameStyle = runCatching { NameStyle.valueOf(prefs.getString(KEY_NAME_STYLE, null) ?: "") }
                 .getOrDefault(NameStyle.SOUNDING_FIRST),
+            noteNaming =
+                if (prefs.getBoolean(KEY_GERMAN_NOTES, false)) NoteNaming.GERMAN
+                else NoteNaming.INTERNATIONAL,
             keepScreenOn = prefs.getBoolean(KEY_KEEP_SCREEN_ON, false),
             themeMode = readThemeMode(prefs.getString(KEY_THEME_MODE, null)),
             showCapoOnStart = prefs.getBoolean(KEY_SHOW_CAPO_ON_START, true),
@@ -211,6 +218,16 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
     fun setNameStyle(style: NameStyle) {
         _settings.value = _settings.value.copy(nameStyle = style)
         prefs.edit { putString(KEY_NAME_STYLE, style.name) }
+    }
+
+    /**
+     * Switch the spelling of note names. Display only: a chord is a pitch class either way, so this
+     * re-spells the chords already written down, including hand edits, rather than altering them.
+     */
+    fun setGermanNotes(on: Boolean) {
+        val naming = if (on) NoteNaming.GERMAN else NoteNaming.INTERNATIONAL
+        _settings.value = _settings.value.copy(noteNaming = naming)
+        prefs.edit { putBoolean(KEY_GERMAN_NOTES, on) }
     }
 
     private var job: Job? = null
@@ -426,6 +443,7 @@ class DetectViewModel(application: Application) : AndroidViewModel(application) 
     private companion object {
         const val KEY_CAPO = "capo"
         const val KEY_NAME_STYLE = "name_style"
+        const val KEY_GERMAN_NOTES = "german_notes"
         const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
         const val KEY_THEME_MODE = "theme_mode"
         const val KEY_SHOW_CAPO_ON_START = "show_capo_on_start"

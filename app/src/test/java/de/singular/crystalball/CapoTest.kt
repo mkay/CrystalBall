@@ -3,13 +3,16 @@
 package de.singular.crystalball
 
 import de.singular.crystalball.audio.Chord
+import de.singular.crystalball.audio.NoteNaming
 import de.singular.crystalball.audio.Quality
+import de.singular.crystalball.audio.rootNames
 import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.STANDARD_TUNING
 import de.singular.crystalball.chords.ShapeKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CapoTest {
@@ -122,5 +125,39 @@ class CapoTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun `german naming moves only B and H`() {
+        // The whole difference, stated as a test: ten of the twelve are spelled the same either
+        // way, and the two that differ swap in the one direction German notation swaps them.
+        val international = rootNames(NoteNaming.INTERNATIONAL)
+        val german = rootNames(NoteNaming.GERMAN)
+        for (pitch in 0..9) {
+            assertEquals("pitch class $pitch should not move", international[pitch], german[pitch])
+        }
+        assertEquals("A#", international[10])
+        assertEquals("B", german[10])
+        assertEquals("B", international[11])
+        assertEquals("H", german[11])
+    }
+
+    @Test
+    fun `a chord keeps its quality when it is re-spelled`() {
+        // Display only: the suffix is a symbol and the pitch class has not moved, so the two names
+        // are the same chord written twice.
+        val chord = Chord(11, Quality.MIN7)
+        assertEquals("Bm7", chord.name(NoteNaming.INTERNATIONAL))
+        assertEquals("Hm7", chord.name(NoteNaming.GERMAN))
+        assertEquals(11, chord.root)
+    }
+
+    @Test
+    fun `the shape tables are keyed by the international spelling`() {
+        // The curated grips are looked up by chord name, so they must not depend on a preference:
+        // switching to German notation cannot be allowed to lose H major its open shape.
+        val b = chord("B")
+        assertEquals("B", b.name)
+        assertTrue(ChordLibrary.voicingsFor(b).isNotEmpty())
     }
 }

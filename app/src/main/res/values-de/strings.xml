@@ -183,6 +183,9 @@
     <string name="setting_show_capo_on_start_caption">Öffnet das Kapo-Blatt bei jedem Start, damit ein seit gestern verschobenes Kapo das Erste ist, was du setzt.</string>
 
     <string name="settings_section_chord_names">Akkordnamen</string>
+    <string name="setting_german_notes">Deutsche Notennamen (H/B)</string>
+    <string name="setting_german_notes_caption">Nur die Schreibweise. Ein Akkord wird als Tonhöhe gespeichert, das schreibt deine bereits notierten Songs also um, ohne sie zu ändern.</string>
+    <string name="settings_section_capo_names">Namen mit Kapo</string>
     <string name="setting_name_style_caption">Mit Kapo heißen der Akkord, den du hörst, und der Griff, den du greifst, verschieden.</string>
     <string name="setting_name_sounding">Den gehörten Akkord benennen</string>
     <string name="setting_name_sounding_example">E, darunter \"D-Form · Kapo 2\"</string>

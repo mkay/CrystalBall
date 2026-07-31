@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
@@ -56,6 +57,7 @@ import de.singular.crystalball.NameStyle
 import de.singular.crystalball.R
 import de.singular.crystalball.Settings
 import de.singular.crystalball.ThemeMode
+import de.singular.crystalball.audio.NoteNaming
 import androidx.core.os.LocaleListCompat
 import java.util.Locale
 
@@ -104,6 +106,7 @@ fun SettingsScreen(
     onKeepScreenOnChange: (Boolean) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onNameStyleChange: (NameStyle) -> Unit,
+    onGermanNotesChange: (Boolean) -> Unit,
     onShowCapoOnStartChange: (Boolean) -> Unit,
     onBackupSongs: () -> Unit,
     onRestoreSongs: () -> Unit,
@@ -152,6 +155,7 @@ fun SettingsScreen(
                     ChordSettings(
                         settings = settings,
                         onNameStyleChange = onNameStyleChange,
+                        onGermanNotesChange = onGermanNotesChange,
                         onShowCapoOnStartChange = onShowCapoOnStartChange,
                     )
                 }
@@ -188,6 +192,7 @@ private fun SettingsPage(content: @Composable ColumnScope.() -> Unit) {
 private fun ChordSettings(
     settings: Settings,
     onNameStyleChange: (NameStyle) -> Unit,
+    onGermanNotesChange: (Boolean) -> Unit,
     onShowCapoOnStartChange: (Boolean) -> Unit,
 ) {
     SettingsSectionLabel(R.string.settings_section_capo)
@@ -200,6 +205,15 @@ private fun ChordSettings(
     SettingsCaption(R.string.setting_show_capo_on_start_caption)
 
     SettingsSectionLabel(R.string.settings_section_chord_names)
+    SettingSwitchRow(
+        R.string.setting_german_notes,
+        Icons.Default.MusicNote,
+        settings.noteNaming == NoteNaming.GERMAN,
+        onGermanNotesChange,
+    )
+    SettingsCaption(R.string.setting_german_notes_caption)
+
+    SettingsSectionLabel(R.string.settings_section_capo_names)
     SettingsCaption(R.string.setting_name_style_caption)
     Column(Modifier.selectableGroup()) {
         NameStyleOption(

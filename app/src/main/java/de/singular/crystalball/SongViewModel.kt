@@ -13,6 +13,7 @@ import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import de.singular.crystalball.audio.Chord
+import de.singular.crystalball.audio.NoteNaming
 import de.singular.crystalball.chords.Voicing
 import de.singular.crystalball.songs.BackupException
 import de.singular.crystalball.songs.BackupProblem
@@ -528,10 +529,10 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Write the current song to [uri] as a chord sheet.
      *
-     * [nameStyle] is passed in rather than read here: it lives with the detect screen's settings,
-     * and this view-model has no business knowing about them.
+     * [nameStyle] and [naming] are passed in rather than read here: they live with the detect
+     * screen's settings, and this view-model has no business knowing about them.
      */
-    fun exportPdf(uri: Uri, nameStyle: NameStyle) {
+    fun exportPdf(uri: Uri, nameStyle: NameStyle, naming: NoteNaming) {
         val song = _song.value
         if (song.parts.isEmpty()) return
         viewModelScope.launch {
@@ -539,7 +540,7 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     val resolver = getApplication<Application>().contentResolver
                     checkNotNull(resolver.openOutputStream(uri)) { "could not write to that file" }
-                        .use { SongPdf.write(localeContext(), song, nameStyle, it) }
+                        .use { SongPdf.write(localeContext(), song, nameStyle, naming, it) }
                 }
             }
                 .onSuccess { _exported.value = true }
@@ -562,7 +563,7 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
      * The directory is emptied first rather than accumulating. A share is a copy handed over —
      * once the receiving app has it, ours is litter, and litter with song titles on it.
      */
-    fun sharePdf(nameStyle: NameStyle, fileName: String) {
+    fun sharePdf(nameStyle: NameStyle, naming: NoteNaming, fileName: String) {
         val song = _song.value
         if (song.parts.isEmpty()) return
         viewModelScope.launch {
@@ -573,7 +574,9 @@ class SongViewModel(application: Application) : AndroidViewModel(application) {
                     dir.listFiles()?.forEach { it.delete() }
                     dir.mkdirs()
                     val file = File(dir, fileName)
-                    file.outputStream().use { SongPdf.write(localeContext(), song, nameStyle, it) }
+                    file.outputStream().use {
+                        SongPdf.write(localeContext(), song, nameStyle, naming, it)
+                    }
                     FileProvider.getUriForFile(context, "${context.packageName}.files", file)
                 }
             }

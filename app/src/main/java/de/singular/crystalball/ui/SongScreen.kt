@@ -767,7 +767,7 @@ private fun ChordCell(
             .padding(4.dp),
     ) {
         Text(
-            Capo.shortName(chord.sounding, settings.capo, settings.nameStyle),
+            Capo.shortName(chord.sounding, settings.capo, settings.nameStyle, settings.noteNaming),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
         )
@@ -868,7 +868,7 @@ private fun CorrectChordSheet(
             )
 
             Spacer(Modifier.height(16.dp))
-            ChordChooser(chord.sounding, onCorrect)
+            ChordChooser(chord.sounding, settings.noteNaming, onCorrect)
 
             // The name is chosen in sounding terms, so behind a capo it is the shape underneath it
             // that tells you whether you picked the right one.
@@ -876,7 +876,7 @@ private fun CorrectChordSheet(
             Text(view.title, style = MaterialTheme.typography.titleLarge)
             view.shapeLine?.let { shapeLine ->
                 Text(
-                    chordSubtitle(shapeLine, settings.capo),
+                    chordSubtitle(shapeLine, settings.capo, settings.noteNaming),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -914,7 +914,7 @@ private fun EditPartChordPane(
     Text(view.title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
     view.shapeLine?.let { shapeLine ->
         Text(
-            chordSubtitle(shapeLine, song.capo),
+            chordSubtitle(shapeLine, song.capo, settings.noteNaming),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -972,7 +972,7 @@ private fun SongEditorPane(
                     Text(part.name, style = MaterialTheme.typography.titleSmall)
                     Text(
                         part.chords.joinToString("  ") {
-                            Capo.shortName(it.sounding, song.capo, settings.nameStyle)
+                            Capo.shortName(it.sounding, song.capo, settings.nameStyle, settings.noteNaming)
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

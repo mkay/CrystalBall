@@ -3,6 +3,7 @@
 package de.singular.crystalball
 
 import de.singular.crystalball.audio.Chord
+import de.singular.crystalball.audio.NoteNaming
 import de.singular.crystalball.chords.ShapeKind
 
 /** Which name leads when a capo makes the chord you finger differ from the chord you hear. */
@@ -37,6 +38,11 @@ data class Settings(
     /** Fret the capo is clamped at; 0 for none. */
     val capo: Int = 0,
     val nameStyle: NameStyle = NameStyle.SOUNDING_FIRST,
+    /**
+     * How note names are spelled — the B/H question. A preference rather than a consequence of the
+     * app's language; see [NoteNaming].
+     */
+    val noteNaming: NoteNaming = NoteNaming.INTERNATIONAL,
     /** Hold the display awake — you are holding a guitar, not the phone. Off by default: battery. */
     val keepScreenOn: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -80,10 +86,15 @@ object Capo {
         else Chord(((sounding.root - capo) % 12 + 12) % 12, sounding.quality)
 
     /** The name shown large. */
-    fun title(sounding: Chord, capo: Int, style: NameStyle): String = when {
-        capo == 0 -> sounding.name
-        style == NameStyle.SOUNDING_FIRST -> sounding.name
-        else -> shapeChord(sounding, capo).name
+    fun title(
+        sounding: Chord,
+        capo: Int,
+        style: NameStyle,
+        naming: NoteNaming = NoteNaming.INTERNATIONAL,
+    ): String = when {
+        capo == 0 -> sounding.name(naming)
+        style == NameStyle.SOUNDING_FIRST -> sounding.name(naming)
+        else -> shapeChord(sounding, capo).name(naming)
     }
 
     /**
@@ -115,8 +126,13 @@ object Capo {
     }
 
     /** How a chord is named where there is no room for a subtitle, e.g. the alternatives row. */
-    fun shortName(sounding: Chord, capo: Int, style: NameStyle): String = when {
-        capo == 0 || style == NameStyle.SOUNDING_FIRST -> sounding.name
-        else -> shapeChord(sounding, capo).name
+    fun shortName(
+        sounding: Chord,
+        capo: Int,
+        style: NameStyle,
+        naming: NoteNaming = NoteNaming.INTERNATIONAL,
+    ): String = when {
+        capo == 0 || style == NameStyle.SOUNDING_FIRST -> sounding.name(naming)
+        else -> shapeChord(sounding, capo).name(naming)
     }
 }

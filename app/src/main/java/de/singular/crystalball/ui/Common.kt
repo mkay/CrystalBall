@@ -56,7 +56,8 @@ import de.singular.crystalball.ChordView
 import de.singular.crystalball.R
 import de.singular.crystalball.audio.Chord
 import de.singular.crystalball.audio.Quality
-import de.singular.crystalball.audio.ROOT_NAMES
+import de.singular.crystalball.audio.NoteNaming
+import de.singular.crystalball.audio.rootNames
 import de.singular.crystalball.chords.Voicing
 import kotlin.math.log10
 
@@ -227,9 +228,9 @@ fun CapoLink(capo: Int, onSetCapo: () -> Unit) {
  * shape nearby, so a player behind a capo can check the name by its diagram.
  */
 @Composable
-fun ChordChooser(chord: Chord, onSelect: (Chord) -> Unit) {
+fun ChordChooser(chord: Chord, naming: NoteNaming, onSelect: (Chord) -> Unit) {
     ChipRow {
-        ROOT_NAMES.forEachIndexed { root, name ->
+        rootNames(naming).forEachIndexed { root, name ->
             FilterChip(
                 selected = chord.root == root,
                 onClick = { onSelect(chord.copy(root = root)) },
