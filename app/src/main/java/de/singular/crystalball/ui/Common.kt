@@ -35,8 +35,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.FilterChip
@@ -297,9 +296,14 @@ fun ChordChooser(chord: Chord, naming: NoteNaming, onSelect: (Chord) -> Unit) {
                 )
             },
             leadingIcon = {
+                // The same icon in both tiers, deliberately. It says what the chip does — swap one
+                // set of chords for the other — and the label is already saying which way, so an
+                // icon that flipped too would be a second voice repeating it. A music note was the
+                // other candidate and lost: the plain one already means "a recent song" in the
+                // drawer and "German note names" in settings, and a plus small enough to fit here
+                // is too small to read.
                 Icon(
-                    if (showExtended) Icons.AutoMirrored.Filled.KeyboardArrowLeft
-                    else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    Icons.Default.SwapHoriz,
                     contentDescription = null,
                     modifier = Modifier.size(AssistChipDefaults.IconSize),
                 )
