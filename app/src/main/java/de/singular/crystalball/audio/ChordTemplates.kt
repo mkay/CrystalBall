@@ -18,11 +18,23 @@ import kotlin.math.sqrt
  */
 object ChordTemplates {
 
-    /** Every (root, quality) pair, in label order: `label = root * qualities + quality.ordinal`. */
+    /**
+     * Every (root, quality) pair the recogniser scores: all twelve roots against the *detectable*
+     * qualities only.
+     *
+     * The library's wider vocabulary is deliberately absent. A template for a chord the chroma
+     * cannot separate would not win its own chord and would cost accuracy on the ones it can, so
+     * the extensions are drawn without ever being scored — see [Quality.detectable].
+     *
+     * A label is an index into this list and nothing more: not arithmetic over the root and the
+     * quality's ordinal, and never written to a file. [TEMPLATES] and [QUALITY_BIAS] are both built
+     * from this list, so all three stay aligned by construction rather than by promise.
+     */
     val CHORDS: List<Chord> = buildList {
-        for (root in 0 until 12) for (q in Quality.entries) add(Chord(root, q))
+        for (root in 0 until 12) for (q in Quality.DETECTABLE) add(Chord(root, q))
     }
 
+    /** Twelve roots times the detectable qualities. */
     val COUNT = CHORDS.size // 84
 
     /**

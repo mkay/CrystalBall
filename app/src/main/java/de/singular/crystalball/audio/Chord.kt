@@ -27,14 +27,27 @@ fun rootNames(naming: NoteNaming): Array<String> =
     if (naming == NoteNaming.GERMAN) ROOT_NAMES_DE else ROOT_NAMES
 
 /**
- * A chord quality. The triads and sevenths a single-mic chromagram can actually tell apart:
- * denser extensions (9ths, 6ths, altered dominants) overlap the templates below too heavily to
- * survive template matching, so they are deliberately out of scope.
+ * A chord quality — and whether the microphone gets a say in it.
  *
- * The declaration order *is* the template order — [ChordTemplates] indexes qualities by [ordinal],
- * so reordering this enum silently reshuffles every template. Append, don't insert.
+ * Two vocabularies share this one enum, and the difference between them is [detectable]. Those are
+ * the triads and sevenths a single-mic chromagram can actually tell apart, and the only ones
+ * [ChordTemplates] builds a template for. The rest are drawn but never heard: denser extensions
+ * (6ths, 9ths, altered dominants) overlap those templates too heavily to survive matching, so
+ * scoring them would cost accuracy on the chords people actually play — while a player still
+ * needs to look one up, and to write into a song a chord the recogniser was never going to offer.
+ *
+ * So the flag is not a to-do. Marking a quality undetectable is a statement about the microphone
+ * and nothing else; it says the chord is out of earshot, not that it is out of the library, which
+ * is why ChordLibrary.allChords takes the whole enum on purpose.
+ *
+ * [suffix] is what a chord name is built from ("Am" needs the bare "m"); [label] is what a chooser
+ * shows on its own, where an empty string would be a blank button.
+ *
+ * Declaration order is the order templates are built in, and the order the quality chips appear in.
+ * Both are derived from this list rather than recorded anywhere — a song stores a quality by
+ * name, see SongJson — so reordering is safe, and the user can see it.
  */
-enum class Quality(val suffix: String, val label: String) {
+enum class Quality(val suffix: String, val label: String, val detectable: Boolean = true) {
     MAJ("", "maj"),
     MIN("m", "min"),
     DOM7("7", "7"),
@@ -44,11 +57,16 @@ enum class Quality(val suffix: String, val label: String) {
     SUS4("sus4", "sus4"),
     ;
 
-    /**
-     * [suffix] is what a chord name is built from ("Am" needs the bare "m"); [label] is what a
-     * chooser shows on its own, where an empty string would be a blank button.
-     */
-    companion object
+    companion object {
+        /**
+         * The qualities the recogniser scores, in declaration order.
+         *
+         * [ChordTemplates] enumerates this rather than [entries], which is the whole of the split:
+         * adding a quality to the enum widens what the app can draw, and only setting [detectable]
+         * widens what it can hear.
+         */
+        val DETECTABLE: List<Quality> = entries.filter { it.detectable }
+    }
 }
 
 /**

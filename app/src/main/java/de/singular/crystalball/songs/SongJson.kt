@@ -66,8 +66,9 @@ object SongJson {
 
     private fun encodeChord(chord: SongChord) = JSONObject().apply {
         put("root", chord.sounding.root)
-        // By name, not ordinal: Quality's declaration order is load-bearing for the templates and
-        // the enum is documented as append-only, but a file outlives that promise.
+        // By name, not ordinal: nothing in the app depends on Quality's declaration order any
+        // more, but a file outlives even that, and a name is what someone reading the JSON by hand
+        // can actually check.
         put("quality", chord.sounding.quality.name)
         put("frets", chord.voicing.spec)
         // Written in fixed English, and read back only by something that cannot do better: the
