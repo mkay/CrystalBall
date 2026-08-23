@@ -34,6 +34,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -273,13 +278,14 @@ fun ChordChooser(chord: Chord, naming: NoteNaming, onSelect: (Chord) -> Unit) {
         // and it costs width rather than height, which is what the correction sheet has to spare.
         // That sheet ends flush with the bottom of the screen, so a tier that opened downwards
         // would push the diagram off it, and the diagram is the confirmation the sheet is built on.
-        FilterChip(
-            // Never selected, in either tier. In this row a filled chip means "this is the chord
-            // you picked", and the toggle is not a chord — left to follow its own state it renders
-            // exactly like a chosen quality called "basic", and sits filled next to a genuinely
-            // chosen one whenever the chord is an extended chord. Which tier is showing is already
-            // said by the chips beside it, and said better.
-            selected = false,
+        // An AssistChip, not a FilterChip: the chips beside it hold a value and this one performs
+        // an action, which is the line Material draws between the two. Dressed as a filter chip it
+        // could only be wrong in one of two ways — filled, it read as a chosen quality called
+        // "basic"; outlined, it was pixel-identical to a quality nobody had chosen yet. Neither is
+        // fixable with colour, because both of those styles already mean something in this row.
+        // The chevron is what carries it: a thing that does something, at rest, with no state of
+        // its own to show.
+        AssistChip(
             onClick = { showExtended = !showExtended },
             shape = ControlShape,
             label = {
@@ -288,6 +294,14 @@ fun ChordChooser(chord: Chord, naming: NoteNaming, onSelect: (Chord) -> Unit) {
                         if (showExtended) R.string.quality_tier_basic
                         else R.string.quality_tier_extended,
                     ),
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    if (showExtended) Icons.AutoMirrored.Filled.KeyboardArrowLeft
+                    else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(AssistChipDefaults.IconSize),
                 )
             },
         )
