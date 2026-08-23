@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -39,6 +40,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
@@ -92,7 +95,7 @@ fun DetectScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 24.dp),
+                .padding(horizontal = 16.dp, vertical = PANE_PADDING),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             when (state) {
@@ -116,6 +119,28 @@ fun DetectScreen(
             }
         }
         var showKeepAwakeInfo by rememberSaveable { mutableStateOf(false) }
+
+        // Between the scrolling column and the icons floating over it: the page's own colour, fading
+        // out downwards, so content scrolled up under the corners dissolves instead of colliding
+        // with them. The panes each open with an ICON_ROW_HEIGHT spacer, which keeps the corners
+        // clear at rest — but only at rest, and this screen scrolls. Without this the root chips end
+        // up drawn straight through the wordmark.
+        //
+        // A fade rather than a solid fill, because a solid one is a top bar, and this app
+        // deliberately has none: the logo and the chord are the page.
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(SCRIM_HEIGHT)
+                .background(
+                    Brush.verticalGradient(
+                        0f to MaterialTheme.colorScheme.surface,
+                        SCRIM_SOLID_FRACTION to MaterialTheme.colorScheme.surface,
+                        1f to Color.Transparent,
+                    ),
+                ),
+        )
 
         // The app has no top bar — the logo and the chord are the page — so the bar's contents
         // float in the corners instead: the way in and the app's name on the left, the keep-awake
@@ -924,3 +949,27 @@ private fun capoMoveNote(from: Int, to: Int): String {
  * making you reach for shift with a guitar in your lap.
  */
 private val NameKeyboard = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+
+/** The scrolling column's own inset from the top and bottom of the screen. */
+private val PANE_PADDING = 24.dp
+
+/**
+ * How far down the page the fade behind the floating corners reaches: exactly the strip the panes
+ * already keep clear for them, and not a pixel more.
+ *
+ * Derived rather than chosen, because the two have to agree. Every pane opens with an
+ * [ICON_ROW_HEIGHT] spacer inside a column inset by [PANE_PADDING], which is what keeps the corners
+ * clear while the page sits still. Make the fade deeper than that and it reaches past the reserved
+ * strip onto the first row of content — which it did, at 96.dp, dimming the top of whichever chip
+ * was selected.
+ */
+private val SCRIM_HEIGHT = PANE_PADDING + ICON_ROW_HEIGHT
+
+/**
+ * How much of [SCRIM_HEIGHT] is the page's flat colour before the fade begins.
+ *
+ * Enough to carry the icons themselves — they sit 4.dp down and stand 48.dp tall — so that anything
+ * passing behind them is hidden outright rather than showing through faintly. The fade is what is
+ * left, and it has to finish before the strip does.
+ */
+private const val SCRIM_SOLID_FRACTION = 0.8f
