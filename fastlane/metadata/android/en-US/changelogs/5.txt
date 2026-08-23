@@ -1,0 +1,6 @@
+The chord library now goes well past what the microphone can name.
+
+• Thirteen more qualities — dim, aug, m7b5, dim7, 7sus4, 6, m6, add9, 9, maj9, m9, 6/9 and 13, at every root. 240 chords, up from 84.
+• Look them up, or name one by hand when writing a part down. Use the new chip beside the qualities to swap tiers.
+• Detection is unchanged — it still hears the same seven, just as accurately.
+• Content no longer scrolls up through the wordmark.

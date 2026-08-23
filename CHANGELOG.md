@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [0.5] - 2026-08-23
+
+The chord library goes well past what the microphone can name.
+
+### Added
+- **Thirteen more chord qualities** — `dim`, `aug`, `m7b5`, `dim7`, `7sus4`, `6`, `m6`, `add9`, `9`, `maj9`, `m9`, `6/9` and `13`, at all twelve roots. The library draws 240 chords now, up from 84. Look one up without playing a note, or name one by hand when writing a part down — a bossa chart finally comes out right.
+- The quality row holds one tier at a time, with a chip that swaps between the seven the app can hear and the thirteen it can only draw. Twenty chips in one scrolling row said nothing about how far it went.
+
+### Changed
+- **Detection is unchanged**, deliberately: it still hears the same seven qualities, ranks them the same way, and is as accurate as it was. The extensions are drawn but never scored, because scoring them would cost accuracy on the chords people actually play — and several cannot be resolved at all, a C6 and an Am7 being the same four pitch classes. Altered dominants stay out under a rule rather than a preference: admit `7b9` and you owe `7#9`, `7#11`, `7b13` and every combination.
+- The extended shapes have no open chord to be named after, so they are named by the string their root sits on — "6th-string root" rather than a grip that does not exist.
+- Following **Settings** from the "screen stays on" notice lands on the System tab, where that switch actually is, instead of on Chords.
+
+### Fixed
+- Content no longer scrolls up through the menu icon and the wordmark. The page now fades out behind them rather than colliding with them — most visible in the chord library, whose chip rows were drawn straight through "Crystal Ball".
+
 ## [0.4] - 2026-07-31
 
 Crystal Ball speaks German, and the licence it ships under now says what was always meant.
@@ -54,7 +70,8 @@ Tagged but never published.
 ### Added
 - Detect a chord by ear, with ranked runner-ups, chord shapes, capo-aware redrawing, a chord dictionary, and System/Light/Dark themes.
 
-[Unreleased]: https://github.com/mkay/CrystalBall/compare/v0.4...HEAD
+[Unreleased]: https://github.com/mkay/CrystalBall/compare/v0.5...HEAD
+[0.5]: https://github.com/mkay/CrystalBall/releases/tag/v0.5
 [0.4]: https://github.com/mkay/CrystalBall/releases/tag/v0.4
 [0.3]: https://github.com/mkay/CrystalBall/releases/tag/v0.3
 [0.2]: https://github.com/mkay/CrystalBall/releases/tag/v0.2
