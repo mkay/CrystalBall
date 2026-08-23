@@ -203,7 +203,21 @@ object ChordLibrary {
     fun describe(voicing: Voicing, shape: Chord, capo: Int): Voicing =
         voicingsFor(shape, capo).firstOrNull { it == voicing } ?: voicing
 
-    /** Every chord the library can draw — the vocabulary, for tests and future browsing UI. */
+    /**
+     * The qualities this library has shapes for, in the enum's own order.
+     *
+     * Derived from [MOVABLE] rather than declared, because having a shape is what being drawable
+     * *is*: [voicingsFor] promises never to come back empty, and callers take its first entry
+     * without looking (see `defaultVoicing`). A quality with no movable shape would break that
+     * promise the moment someone picked it, so it must not be offered at all.
+     *
+     * Which makes this the switch the extended qualities come up on, one at a time: a quality is
+     * in the enum from the day its intervals are written down, and appears in the dictionary and
+     * the chooser on the day it earns a grip. Nothing halfway is ever reachable.
+     */
+    val DRAWABLE: List<Quality> = Quality.entries.filter { MOVABLE.containsKey(it) }
+
+    /** Every chord the library can draw — the dictionary's vocabulary, and the chooser's. */
     fun allChords(): List<Chord> =
-        ROOT_NAMES.indices.flatMap { root -> Quality.entries.map { Chord(root, it) } }
+        ROOT_NAMES.indices.flatMap { root -> DRAWABLE.map { Chord(root, it) } }
 }

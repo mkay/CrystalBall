@@ -37,8 +37,12 @@ fun rootNames(naming: NoteNaming): Array<String> =
  * needs to look one up, and to write into a song a chord the recogniser was never going to offer.
  *
  * So the flag is not a to-do. Marking a quality undetectable is a statement about the microphone
- * and nothing else; it says the chord is out of earshot, not that it is out of the library, which
- * is why ChordLibrary.allChords takes the whole enum on purpose.
+ * and nothing else — the chord is out of earshot, not out of the library, and nothing downstream
+ * of here consults it when deciding what can be drawn or written into a song.
+ *
+ * Several of the extensions are not merely hard to hear but *impossible*: a C6 and an Am7 are the
+ * same four pitch classes, so are a Cm6 and an Am7b5, and a diminished seventh is the same chord
+ * four times over. No chromagram resolves those, and no amount of work on the recogniser will.
  *
  * [suffix] is what a chord name is built from ("Am" needs the bare "m"); [label] is what a chooser
  * shows on its own, where an empty string would be a blank button.
@@ -55,6 +59,23 @@ enum class Quality(val suffix: String, val label: String, val detectable: Boolea
     MIN7("m7", "m7"),
     SUS2("sus2", "sus2"),
     SUS4("sus4", "sus4"),
+
+    // Everything below is drawn but never heard. The rule is unaltered extensions only: that is a
+    // closed family you can enumerate and be done with, where alterations are not — admit 7b9 and
+    // you owe 7#9, 7#11, 7b13 and every combination, with no principled place to stop.
+    DIM("dim", "dim", detectable = false),
+    AUG("aug", "aug", detectable = false),
+    MIN7B5("m7b5", "m7b5", detectable = false),
+    DIM7("dim7", "dim7", detectable = false),
+    DOM7SUS4("7sus4", "7sus4", detectable = false),
+    SIX("6", "6", detectable = false),
+    MIN6("m6", "m6", detectable = false),
+    ADD9("add9", "add9", detectable = false),
+    DOM9("9", "9", detectable = false),
+    MAJ9("maj9", "maj9", detectable = false),
+    MIN9("m9", "m9", detectable = false),
+    SIX_NINE("6/9", "6/9", detectable = false),
+    DOM13("13", "13", detectable = false),
     ;
 
     companion object {
@@ -101,5 +122,21 @@ data class Chord(val root: Int, val quality: Quality) {
             Quality.MIN7 -> intArrayOf(0, 3, 7, 10)
             Quality.SUS2 -> intArrayOf(0, 2, 7)
             Quality.SUS4 -> intArrayOf(0, 5, 7)
+            Quality.DIM -> intArrayOf(0, 3, 6)
+            Quality.AUG -> intArrayOf(0, 4, 8)
+            Quality.MIN7B5 -> intArrayOf(0, 3, 6, 10)
+            Quality.DIM7 -> intArrayOf(0, 3, 6, 9)
+            Quality.DOM7SUS4 -> intArrayOf(0, 5, 7, 10)
+            Quality.SIX -> intArrayOf(0, 4, 7, 9)
+            Quality.MIN6 -> intArrayOf(0, 3, 7, 9)
+            Quality.ADD9 -> intArrayOf(0, 2, 4, 7)
+            Quality.DOM9 -> intArrayOf(0, 2, 4, 7, 10)
+            Quality.MAJ9 -> intArrayOf(0, 2, 4, 7, 11)
+            Quality.MIN9 -> intArrayOf(0, 2, 3, 7, 10)
+            Quality.SIX_NINE -> intArrayOf(0, 2, 4, 7, 9)
+            // The ninth a full 13th chord also carries is left out: on six strings it is the first
+            // note to go, and a shape that dropped it would then be sounding a note the chord does
+            // not claim. Root, third, seventh and the thirteenth are what makes it one.
+            Quality.DOM13 -> intArrayOf(0, 4, 7, 9, 10)
         }
 }

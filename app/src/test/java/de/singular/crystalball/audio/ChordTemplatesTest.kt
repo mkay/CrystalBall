@@ -43,16 +43,40 @@ class ChordTemplatesTest {
     }
 
     @Test
-    fun `the library draws every quality, heard or not`() {
-        // The other half of the split: undetectable is a statement about the microphone, so it must
-        // never thin out what can be looked up or written into a song.
+    fun `everything the app can hear, it can also draw`() {
+        // The other half of the split, and the direction that must never break: being undetectable
+        // may keep a chord out of the recogniser, but nothing may keep a *detected* chord out of the
+        // library — the result screen has a diagram to fill either way.
+        for (quality in Quality.DETECTABLE) {
+            assertTrue(
+                "${quality.label} can be heard but not drawn",
+                quality in ChordLibrary.DRAWABLE,
+            )
+        }
+    }
+
+    @Test
+    fun `a drawable quality is drawable at every root`() {
         val drawn = ChordLibrary.allChords()
-        assertEquals(12 * Quality.entries.size, drawn.size)
-        for (quality in Quality.entries) {
+        assertEquals(12 * ChordLibrary.DRAWABLE.size, drawn.size)
+        for (quality in ChordLibrary.DRAWABLE) {
             assertEquals(
                 "the library draws ${quality.label} at fewer than twelve roots",
                 12,
                 drawn.count { it.quality == quality },
+            )
+        }
+    }
+
+    @Test
+    fun `the library never offers a chord it cannot fret`() {
+        // What DRAWABLE is for. voicingsFor promises never to return empty and callers take its
+        // first entry without checking, so a quality that reached the chooser before its shapes did
+        // would not degrade — it would throw, on a chord the user had just tapped.
+        for (chord in ChordLibrary.allChords()) {
+            assertTrue(
+                "${chord.name} is offered with no shape behind it",
+                ChordLibrary.voicingsFor(chord).isNotEmpty(),
             )
         }
     }

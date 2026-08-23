@@ -74,6 +74,15 @@ object ChordTemplates {
             Quality.MAJ, Quality.MIN -> 0f
             Quality.DOM7, Quality.MAJ7, Quality.MIN7 -> -SEVENTH_BIAS
             Quality.SUS2, Quality.SUS4 -> -SUS_BIAS
+            // Unreachable, and listed rather than caught by an `else` on purpose: [CHORDS] holds
+            // only detectable qualities, so none of these has a template to bias. Spelling them out
+            // keeps the `when` exhaustive, so adding a quality to the enum fails to compile here
+            // until someone has decided which side of the split it belongs on — an `else` would
+            // silently swallow a *detectable* one and turn that decision into a runtime crash.
+            Quality.DIM, Quality.AUG, Quality.MIN7B5, Quality.DIM7, Quality.DOM7SUS4,
+            Quality.SIX, Quality.MIN6, Quality.ADD9, Quality.DOM9, Quality.MAJ9,
+            Quality.MIN9, Quality.SIX_NINE, Quality.DOM13,
+            -> error("${CHORDS[label].quality} is not detectable and has no template to bias")
         }
     }
 

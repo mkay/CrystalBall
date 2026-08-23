@@ -55,9 +55,9 @@ import androidx.compose.ui.unit.dp
 import de.singular.crystalball.ChordView
 import de.singular.crystalball.R
 import de.singular.crystalball.audio.Chord
-import de.singular.crystalball.audio.Quality
 import de.singular.crystalball.audio.NoteNaming
 import de.singular.crystalball.audio.rootNames
+import de.singular.crystalball.chords.ChordLibrary
 import de.singular.crystalball.chords.Voicing
 import kotlin.math.log10
 
@@ -250,7 +250,9 @@ fun ChordChooser(chord: Chord, naming: NoteNaming, onSelect: (Chord) -> Unit) {
     }
     Spacer(Modifier.height(6.dp))
     ChipRow {
-        Quality.entries.forEach { quality ->
+        // What the library can draw, not what the enum declares: a quality still waiting for its
+        // shapes would offer a chord with no diagram behind it.
+        ChordLibrary.DRAWABLE.forEach { quality ->
             FilterChip(
                 selected = chord.quality == quality,
                 onClick = { onSelect(chord.copy(quality = quality)) },
