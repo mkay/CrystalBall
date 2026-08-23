@@ -274,7 +274,12 @@ fun ChordChooser(chord: Chord, naming: NoteNaming, onSelect: (Chord) -> Unit) {
         // That sheet ends flush with the bottom of the screen, so a tier that opened downwards
         // would push the diagram off it, and the diagram is the confirmation the sheet is built on.
         FilterChip(
-            selected = showExtended,
+            // Never selected, in either tier. In this row a filled chip means "this is the chord
+            // you picked", and the toggle is not a chord — left to follow its own state it renders
+            // exactly like a chosen quality called "basic", and sits filled next to a genuinely
+            // chosen one whenever the chord is an extended chord. Which tier is showing is already
+            // said by the chips beside it, and said better.
+            selected = false,
             onClick = { showExtended = !showExtended },
             shape = ControlShape,
             label = {
