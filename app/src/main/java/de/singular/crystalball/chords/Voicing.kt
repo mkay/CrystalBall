@@ -27,6 +27,21 @@ sealed interface ShapeKind {
 
     /** The three-string triad in the middle of the neck. */
     data object MiddleTriad : ShapeKind
+
+    /**
+     * A movable grip named by the string its root sits on — "6th-string root".
+     *
+     * How the extended chords have to be named, because they transpose no open chord: there is no
+     * open 6/9 or m7b5 to call them after, so [Grip] would have to invent a name. Which string
+     * carries the root is what a player reads off the diagram anyway, and it is how these shapes
+     * are taught.
+     *
+     * [string] is the index into [frets] — 0 is the low E — while players count the other way,
+     * so [guitarString] does the turning around and the low E is the 6th.
+     */
+    data class RootOnString(val string: Int) : ShapeKind {
+        val guitarString: Int get() = STRING_COUNT - string
+    }
 }
 
 /**
@@ -40,6 +55,7 @@ val ShapeKind.englishName: String
         is ShapeKind.Grip -> "$chordName shape"
         ShapeKind.TopTriad -> "top triad"
         ShapeKind.MiddleTriad -> "middle triad"
+        is ShapeKind.RootOnString -> "${ordinal(guitarString)}-string root"
     }
 
 /**
@@ -164,15 +180,17 @@ data class Voicing(
             )
         }
 
-        private fun ordinal(n: Int): String {
-            val suffix = when {
-                n % 100 in 11..13 -> "th"
-                n % 10 == 1 -> "st"
-                n % 10 == 2 -> "nd"
-                n % 10 == 3 -> "rd"
-                else -> "th"
-            }
-            return "$n$suffix"
-        }
     }
+}
+
+/** English ordinals, for the fixed-English forms only — screens use ICU, see VoicingCaption. */
+private fun ordinal(n: Int): String {
+    val suffix = when {
+        n % 100 in 11..13 -> "th"
+        n % 10 == 1 -> "st"
+        n % 10 == 2 -> "nd"
+        n % 10 == 3 -> "rd"
+        else -> "th"
+    }
+    return "$n$suffix"
 }

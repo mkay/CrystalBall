@@ -144,6 +144,12 @@
     <string name="voicing_fret">{0, selectordinal, one{#st fret} two{#nd fret} few{#rd fret} other{#th fret}}</string>
     <!-- %1$s is the open chord this grip transposes — a symbol, e.g. Em or A7. -->
     <string name="shape_grip">%1$s shape</string>
+    <!--
+      A grip with no open chord to be named after, named by the string its root sits on. An ICU
+      ordinal for the same reason as voicing_fret above; {0} counts the way players do, so the low
+      E is the 6th string.
+    -->
+    <string name="shape_root_string">{0, selectordinal, one{#st-string root} two{#nd-string root} few{#rd-string root} other{#th-string root}}</string>
     <string name="shape_top_triad">top triad</string>
     <string name="shape_middle_triad">middle triad</string>
 

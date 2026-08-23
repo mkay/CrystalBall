@@ -74,6 +74,10 @@ private fun Context.shapeName(shape: ShapeKind): String = when (shape) {
     is ShapeKind.Grip -> getString(R.string.shape_grip, shape.chordName)
     ShapeKind.TopTriad -> getString(R.string.shape_top_triad)
     ShapeKind.MiddleTriad -> getString(R.string.shape_middle_triad)
+    // The string number is an ordinal too, so it goes through ICU for the same reason the fret does.
+    is ShapeKind.RootOnString ->
+        MessageFormat(getString(R.string.shape_root_string), primaryLocale())
+            .format(arrayOf<Any>(shape.guitarString))
 }
 
 /**

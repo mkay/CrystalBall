@@ -91,6 +91,79 @@ object ChordLibrary {
             MovableShape(1, intArrayOf(X, 0, 2, 2, 3, 0), grip("Asus4")),
             MovableShape(2, intArrayOf(X, X, 0, 2, 3, 3), grip("Dsus4")),
         ),
+
+        // The extended qualities, which have no open chord to be named after and so are named by
+        // the string their root sits on. Three apiece, chosen so that the set holds up where it is
+        // hardest: three shapes at every root with no capo, and at least one still reachable with a
+        // capo at the 7th fret, which is where a grip high on the neck runs out of frets. Each was
+        // searched for rather than remembered — sounding every note the chord claims, no note it
+        // does not, within a hand's span, root in the bass — and the familiar ones fell out of
+        // that search: x32333 for a 9th, x32233 for a 6/9, x2323x for a m7b5.
+        Quality.DIM to listOf(
+            MovableShape(0, intArrayOf(0, 1, 2, 0, -1, 0), ShapeKind.RootOnString(0)),
+            MovableShape(0, intArrayOf(0, 1, 2, 0, X, X), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, 1, 2, 1, X), ShapeKind.RootOnString(1)),
+        ),
+        Quality.AUG to listOf(
+            MovableShape(0, intArrayOf(0, -1, -2, -3, -3, 0), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, -1, -2, -2, X), ShapeKind.RootOnString(1)),
+            MovableShape(2, intArrayOf(X, X, 0, -1, -1, -2), ShapeKind.RootOnString(2)),
+        ),
+        Quality.MIN7B5 to listOf(
+            MovableShape(0, intArrayOf(0, 1, 0, 0, X, X), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, 1, 0, 1, X), ShapeKind.RootOnString(1)),
+            MovableShape(2, intArrayOf(X, X, 0, 1, 1, 1), ShapeKind.RootOnString(2)),
+        ),
+        Quality.DIM7 to listOf(
+            MovableShape(0, intArrayOf(0, -2, -1, 0, -1, 0), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, -2, -1, -2, -1), ShapeKind.RootOnString(1)),
+            MovableShape(2, intArrayOf(X, X, 0, 1, 0, 1), ShapeKind.RootOnString(2)),
+        ),
+        Quality.DOM7SUS4 to listOf(
+            MovableShape(0, intArrayOf(0, 0, 0, 2, 0, 0), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, 0, 0, -2, -2), ShapeKind.RootOnString(1)),
+            MovableShape(1, intArrayOf(X, 0, 0, 0, 3, 0), ShapeKind.RootOnString(1)),
+        ),
+        Quality.SIX to listOf(
+            MovableShape(0, intArrayOf(0, -1, -1, 1, 0, 0), ShapeKind.RootOnString(0)),
+            MovableShape(0, intArrayOf(0, 2, 2, 1, 2, 0), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, -1, -1, -2, 0), ShapeKind.RootOnString(1)),
+        ),
+        Quality.MIN6 to listOf(
+            MovableShape(0, intArrayOf(0, -2, -1, 0, 0, 0), ShapeKind.RootOnString(0)),
+            MovableShape(0, intArrayOf(0, 2, 2, 0, 2, 0), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, -2, -1, -2, 0), ShapeKind.RootOnString(1)),
+        ),
+        Quality.ADD9 to listOf(
+            MovableShape(0, intArrayOf(0, 2, 2, 1, 0, 2), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, -1, 2, 0, 0), ShapeKind.RootOnString(1)),
+            MovableShape(2, intArrayOf(X, X, 0, -1, -2, 0), ShapeKind.RootOnString(2)),
+        ),
+        Quality.DOM9 to listOf(
+            MovableShape(0, intArrayOf(0, -1, 0, -1, 0, -2), ShapeKind.RootOnString(0)),
+            MovableShape(0, intArrayOf(0, -1, 0, -1, 0, 0), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, -1, 0, 0, 0), ShapeKind.RootOnString(1)),
+        ),
+        Quality.MAJ9 to listOf(
+            MovableShape(0, intArrayOf(0, -1, 1, -1, 0, -1), ShapeKind.RootOnString(0)),
+            MovableShape(0, intArrayOf(0, 2, 1, 1, 0, 2), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, -1, 1, 0, 0), ShapeKind.RootOnString(1)),
+        ),
+        Quality.MIN9 to listOf(
+            MovableShape(0, intArrayOf(0, -2, 0, -1, 0, -2), ShapeKind.RootOnString(0)),
+            MovableShape(0, intArrayOf(0, 2, 0, 0, 0, 2), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, -2, 0, 0, 0), ShapeKind.RootOnString(1)),
+        ),
+        Quality.SIX_NINE to listOf(
+            MovableShape(0, intArrayOf(0, -1, -1, -1, 0, 0), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, -1, -1, 0, 0), ShapeKind.RootOnString(1)),
+            MovableShape(2, intArrayOf(X, X, 0, -1, 0, 0), ShapeKind.RootOnString(2)),
+        ),
+        Quality.DOM13 to listOf(
+            MovableShape(0, intArrayOf(0, -1, -1, -3, -3, -2), ShapeKind.RootOnString(0)),
+            MovableShape(0, intArrayOf(0, 2, 0, 1, 2, 0), ShapeKind.RootOnString(0)),
+            MovableShape(1, intArrayOf(X, 0, 2, 0, 2, 2), ShapeKind.RootOnString(1)),
+        ),
     )
 
     /**

@@ -91,6 +91,7 @@
     <!-- Ordinals need only the one branch in German: the number and a full stop, whatever it is. -->
     <string name="voicing_fret">{0, selectordinal, other{#. Bund}}</string>
     <string name="shape_grip">%1$s-Form</string>
+    <string name="shape_root_string">{0, selectordinal, other{Grundton auf der #. Saite}}</string>
     <string name="shape_top_triad">oberer Dreiklang</string>
     <string name="shape_middle_triad">mittlerer Dreiklang</string>
 
