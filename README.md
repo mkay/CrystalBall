@@ -19,7 +19,7 @@ Early-stage release — expect rough edges. Feedback and bug reports welcome via
 - **Ranked alternatives** — the best fit is a guess, not ground truth, so the runner-ups sit under it and one tap swaps the page over to any of them.
 - **Chord shapes, not just names** — the most idiomatic grip drawn large, plus other voicings walking up the neck. Open shapes are the ones a player expects to see, by name.
 - **Capo-aware** — detection is unaffected (the microphone hears the real chord either way), but the shapes are redrawn behind the capo, fret numbers stay as printed on your neck, and anything the capo pushes off the end is dropped rather than offered.
-- **Chord dictionary** — *Chord Library* looks any chord in the vocabulary up by hand, without playing a note.
+- **Chord dictionary** — *Chord Library* draws any of 240 chords by hand, without playing a note. Sixths, ninths, 6/9 and 13ths are in there too, to look up and to write into a song, though the microphone will never name them.
 - **Songs, written down as you play them** — capture a part chord by chord, name it *Intro* or *Chorus*, and reorder the parts as the song takes shape. The finished sheet reads back as diagrams rather than chord letters, so it is playable from the music stand.
 - **A song sheet stays correctable** — a part can be renamed, a wrong chord fixed by hand without playing it again, and a voicing you prefer picked and kept. Changing the capo keeps the key and redraws the shapes.
 - **Take the sheet with you** — a song shares out to any app that accepts it, and the whole collection backs up to a file and restores from one.
@@ -37,9 +37,11 @@ Under that:
 
 Honest about accuracy: template matching on clean triads is good, and degrades on a boomy room, a badly tuned guitar, or a phone held across the room. It is a practice aid, not ground truth — hence the runner-up row, which is one tap from correcting it.
 
-**Vocabulary:** `maj`, `min`, `dom7`, `maj7`, `min7`, `sus2`, `sus4`, across all 12 roots. Denser extensions (6ths, 9ths, altered dominants) are deliberately out of scope: their templates overlap the above too heavily to survive single-microphone matching, and adding them mostly degrades the chords people actually play.
+**Two vocabularies, deliberately.** Heard: `maj`, `min`, `dom7`, `maj7`, `min7`, `sus2`, `sus4` across all 12 roots — 84 chords. Drawn: those plus `dim`, `aug`, `m7b5`, `dim7`, `7sus4`, `6`, `m6`, `add9`, `9`, `maj9`, `m9`, `6/9`, `13` — 240.
 
-**Shapes:** standard tuning (EADGBE). A curated table of open-position grips, plus movable CAGED shapes transposed up the neck to cover all 84 chords — including those with no open shape. Every shape, curated or generated, is verified by unit test to sound its chord's notes and nothing else, so a mistyped fret cannot ship.
+The extensions are never scored: it would cost accuracy on the chords people actually play, and several are unresolvable in principle anyway (a C6 and an Am7 are the same four pitch classes; a dim7 is the same chord four times over). A chord you cannot hear is still one you need to look up. Altered dominants stay out under a rule rather than a preference — admit `7b9` and you owe `7#9`, `7#11`, `7b13` and every combination, with no end to the set.
+
+**Shapes:** standard tuning (EADGBE). A curated table of open-position grips, plus movable CAGED shapes transposed up the neck to cover all 240 chords — including those with no open shape. The extended qualities transpose no open chord, so they are named by the string their root sits on ("6th-string root") rather than after a grip that does not exist. Every shape, curated or generated, is verified by unit test to sound its chord's notes and nothing else, and to leave something playable at every capo position, so a mistyped fret cannot ship.
 
 ## Tech stack
 
