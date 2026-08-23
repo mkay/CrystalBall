@@ -44,6 +44,7 @@ import de.singular.crystalball.ui.CrystalDrawer
 import de.singular.crystalball.ui.QuickHelpSheet
 import de.singular.crystalball.ui.DetectScreen
 import de.singular.crystalball.ui.SettingsScreen
+import de.singular.crystalball.ui.SettingsTab
 import de.singular.crystalball.ui.SongScreen
 import de.singular.crystalball.ui.SupportDialog
 import de.singular.crystalball.ui.isDark
@@ -116,7 +117,9 @@ class MainActivity : AppCompatActivity() {
                 // the first thing they set. Saveable, so a rotation does not bring the
                 // sheet back after it has been dismissed.
                 var capoOpen by rememberSaveable { mutableStateOf(settings.showCapoOnStart) }
-                var settingsOpen by rememberSaveable { mutableStateOf(false) }
+                // Which tab settings should open on, and null for "not open" — the two facts are
+                // one, since every way in knows what it is sending the reader there to do.
+                var settingsTab by rememberSaveable { mutableStateOf<SettingsTab?>(null) }
                 var songsOpen by rememberSaveable { mutableStateOf(false) }
                 var songCapoOpen by rememberSaveable { mutableStateOf(false) }
                 var helpOpen by rememberSaveable { mutableStateOf(false) }
@@ -336,9 +339,10 @@ class MainActivity : AppCompatActivity() {
                 // own back handler. About used to stack on top of it as a screen of its own; it is a
                 // tab inside Settings now, so there is nowhere left to navigate to — see
                 // [SettingsTab].
-                if (settingsOpen) {
+                settingsTab?.let { openOn ->
                     SettingsScreen(
                         settings = settings,
+                        initialTab = openOn,
                         onKeepScreenOnChange = viewModel::setKeepScreenOn,
                         onThemeModeChange = viewModel::setThemeMode,
                         onNameStyleChange = viewModel::setNameStyle,
@@ -346,7 +350,7 @@ class MainActivity : AppCompatActivity() {
                         onShowCapoOnStartChange = viewModel::setShowCapoOnStart,
                         onBackupSongs = { backupLauncher.launch(backupName) },
                         onRestoreSongs = { confirmRestore = true },
-                        onClose = { settingsOpen = false },
+                        onClose = { settingsTab = null },
                     )
                     return@CrystalBallTheme
                 }
@@ -379,7 +383,7 @@ class MainActivity : AppCompatActivity() {
                             onDetect = { closeThen { viewModel.showDetect() } },
                             onSongs = { closeThen { songViewModel.open(); songsOpen = true } },
                             onShowChords = { closeThen { viewModel.showChords() } },
-                            onSettings = { closeThen { settingsOpen = true } },
+                            onSettings = { closeThen { settingsTab = SettingsTab.CHORDS } },
                             onSupport = { closeThen { supportOpen = true } },
                             onQuickHelp = { closeThen { helpOpen = true } },
                             recents = recents,
@@ -412,7 +416,10 @@ class MainActivity : AppCompatActivity() {
                             },
                             onSetCapo = { capoOpen = true },
                             onOpenMenu = { scope.launch { drawerState.open() } },
-                            onOpenAppSettings = { settingsOpen = true },
+                            // Straight to the tab the switch is on: this dialog exists to say the
+                            // screen is being held awake, so the only reason to follow it is to
+                            // stop that.
+                            onOpenAppSettings = { settingsTab = SettingsTab.SYSTEM },
                             modifier = Modifier.padding(
                                 WindowInsets.systemBars.asPaddingValues(),
                             ),

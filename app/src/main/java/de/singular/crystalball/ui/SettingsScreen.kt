@@ -103,6 +103,7 @@ enum class SettingsTab(@StringRes val title: Int) {
 @Composable
 fun SettingsScreen(
     settings: Settings,
+    initialTab: SettingsTab = SettingsTab.CHORDS,
     onKeepScreenOnChange: (Boolean) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onNameStyleChange: (NameStyle) -> Unit,
@@ -130,7 +131,12 @@ fun SettingsScreen(
     ) { innerPadding ->
         // Local, unlike the song library's tab: back from here leaves the settings altogether, so
         // there is no back chain a level up that needs to know which half is showing.
-        var tab by rememberSaveable { mutableStateOf(SettingsTab.CHORDS) }
+        //
+        // Where it *starts* is the caller's business, though. Arriving from the side panel is
+        // "show me the settings" and lands on the first tab; arriving from the keep-awake notice is
+        // "let me turn this off", and a page that opened on the wrong tab would leave the reader
+        // hunting for a switch they had just been told about.
+        var tab by rememberSaveable(initialTab) { mutableStateOf(initialTab) }
 
         Column(
             Modifier
