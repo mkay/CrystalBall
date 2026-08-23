@@ -211,6 +211,13 @@
 
     <!-- %1$d counts from one. -->
     <string name="chord_number">Chord %1$d</string>
+    <!--
+      The chip that swaps the quality row between the seven chords the app can hear and the
+      thirteen it can only draw. Each label names where tapping takes you, not where you are.
+      Kept short: it is pinned beside a scrolling row and every character costs a chip.
+    -->
+    <string name="quality_tier_extended">more…</string>
+    <string name="quality_tier_basic">basic</string>
     <string name="correct_chord_title">Which chord is it?</string>
     <string name="correct_chord_body">For a chord the app heard wrong. Naming it here beats playing it again — you know what you played, and the microphone no longer does.</string>
 

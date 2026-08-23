@@ -132,6 +132,8 @@
     <string name="part_hint_long_press">*Lang drücken*, um einen anderen Akkord anzugeben.</string>
 
     <string name="chord_number">Akkord %1$d</string>
+    <string name="quality_tier_extended">mehr…</string>
+    <string name="quality_tier_basic">Basis</string>
     <string name="correct_chord_title">Welcher Akkord ist es?</string>
     <string name="correct_chord_body">Für einen Akkord, den die App falsch gehört hat. Ihn hier zu benennen ist besser, als ihn nochmal zu spielen — du weißt, was du gespielt hast, das Mikrofon nicht mehr.</string>
 

@@ -41,6 +41,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -249,25 +252,58 @@ fun ChordChooser(chord: Chord, naming: NoteNaming, onSelect: (Chord) -> Unit) {
         }
     }
     Spacer(Modifier.height(6.dp))
-    ChipRow {
-        // What the library can draw, not what the enum declares: a quality still waiting for its
-        // shapes would offer a chord with no diagram behind it.
-        ChordLibrary.DRAWABLE.forEach { quality ->
-            FilterChip(
-                selected = chord.quality == quality,
-                onClick = { onSelect(chord.copy(quality = quality)) },
-                shape = ControlShape,
-                label = { Text(quality.label) },
-            )
+
+    // What the library can draw, not what the enum declares: a quality still waiting for its shapes
+    // would offer a chord with no diagram behind it. Split in two because twenty chips is four
+    // screens of scrolling, and a row that scrolls says nothing about how far it goes — fine for the
+    // roots above, which are a closed alphabet everybody already knows, and useless for a set where
+    // the whole difficulty is not knowing 6/9 is in there at all.
+    val basic = remember { ChordLibrary.DRAWABLE.filter { it.detectable } }
+    val extended = remember { ChordLibrary.DRAWABLE.filterNot { it.detectable } }
+    // Opens on whichever tier holds the chord being named, then stays where it is put: retuning it
+    // on every tap would throw you back to the basics the moment you picked a 6/9.
+    var showExtended by remember { mutableStateOf(chord.quality in extended) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Pinned, outside the scroll, because it is the only thing saying the other tier exists —
+        // and it costs width rather than height, which is what the correction sheet has to spare.
+        // That sheet ends flush with the bottom of the screen, so a tier that opened downwards
+        // would push the diagram off it, and the diagram is the confirmation the sheet is built on.
+        FilterChip(
+            selected = showExtended,
+            onClick = { showExtended = !showExtended },
+            shape = ControlShape,
+            label = {
+                Text(
+                    stringResource(
+                        if (showExtended) R.string.quality_tier_basic
+                        else R.string.quality_tier_extended,
+                    ),
+                )
+            },
+        )
+        ChipRow(Modifier.weight(1f)) {
+            (if (showExtended) extended else basic).forEach { quality ->
+                FilterChip(
+                    selected = chord.quality == quality,
+                    onClick = { onSelect(chord.copy(quality = quality)) },
+                    shape = ControlShape,
+                    label = { Text(quality.label) },
+                )
+            }
         }
     }
 }
 
 /** A scrolling row of choices — twelve roots do not fit across a phone. */
 @Composable
-fun ChipRow(content: @Composable () -> Unit) {
+fun ChipRow(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
